@@ -173,31 +173,41 @@ export class SortingScene extends Phaser.Scene {
 
     // спецмеханіки: власні міні-сцени
     if (id === 'ink') {
-      const cellSz = 34;
-      const gg = this.add.graphics();
-      gg.fillStyle(0x3b3e49, 1);
-      gg.fillRoundedRect(-cellSz / 2, -cellSz / 2, cellSz, cellSz, 11);
-      gg.lineStyle(2.2, 0x23252d, 1);
-      gg.strokeRoundedRect(-cellSz / 2, -cellSz / 2, cellSz, cellSz, 11);
-      gg.setPosition(-58, 6);
-      node.add(gg);
-      // пунктирна дуга до колонки (та сама, що в howto)
+      // колонка з двома плямами на дні + перекреслена стрілка: їх не зрушити
+      if (hasTexture(this, 'col_frame')) {
+        node.add(this.add.image(-52, 4, 'col_frame').setDisplaySize(34, 80));
+      }
+      const inkAt = (y: number) => {
+        if (hasTexture(this, 'block_ink')) {
+          node.add(this.add.image(-52, y, 'block_ink').setDisplaySize(24, 24));
+        } else {
+          const gg = this.add.graphics();
+          gg.fillStyle(0x3b3e49, 1);
+          gg.fillRoundedRect(-12, -12, 24, 24, 8);
+          gg.setPosition(-52, y);
+          node.add(gg);
+        }
+      };
+      inkAt(30);
+      inkAt(4);
+      // пунктирна стрілка з колонки назовні...
       g.lineStyle(2.6, COLORS.ink, 0.9);
       const pts = 9;
       for (let i = 0; i < pts; i += 2) {
         const t0 = i / pts;
         const t1 = (i + 1) / pts;
-        const px = (tt: number) => -38 + tt * 74;
-        const pyf = (tt: number) => 2 - Math.sin(tt * Math.PI) * 22;
+        const px = (tt: number) => -30 + tt * 74;
+        const pyf = (tt: number) => 12 - Math.sin(tt * Math.PI) * 20;
         g.lineBetween(px(t0), pyf(t0), px(t1), pyf(t1));
       }
-      g.lineBetween(36, 2, 29, -6);
-      g.lineBetween(36, 2, 27, 3);
+      g.lineBetween(44, 12, 37, 4);
+      g.lineBetween(44, 12, 35, 13);
+      // ...перекреслена: плями не переміщуються
+      g.lineStyle(3.2, 0xb23317, 0.95);
+      g.lineBetween(0, -18, 16, 2);
+      g.lineBetween(16, -18, 0, 2);
       node.add(g);
-      if (hasTexture(this, 'col_frame')) {
-        node.add(this.add.image(58, 4, 'col_frame').setDisplaySize(30, 74));
-      }
-      return { node, height: 84 };
+      return { node, height: 92 };
     }
     if (id === 'keyblock') {
       if (hasTexture(this, 'icon_key')) node.add(this.add.image(-50, 6, 'icon_key').setDisplaySize(30, 30));
