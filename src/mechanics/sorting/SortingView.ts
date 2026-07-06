@@ -622,10 +622,11 @@ export class SortingView implements SortingViewContract {
           return;
         }
         // split the chain sprite into two cropped halves that snap apart
-        const frame = this.scene.textures.getFrame('deco_chain');
+        const texKey = src.texture.key;
+        const frame = this.scene.textures.getFrame(texKey);
         const mk = (left: boolean) => {
           const img = this.scene.add
-            .image(ghost.x, ghost.y, 'deco_chain')
+            .image(ghost.x, ghost.y, texKey)
             .setScale(src.scaleX, src.scaleY)
             .setAngle(src.angle)
             .setDepth(41);
@@ -753,14 +754,18 @@ export class SortingView implements SortingViewContract {
     const cx = this.layout.colWidth / 2;
     const pos = this.layout.positions[ci];
     if (hasTexture(this.scene, 'deco_chain')) {
-      const frame = this.scene.textures.getFrame('deco_chain');
       chains.forEach((chain, k) => {
+        const colored = `deco_chain_c${chain.value}`;
+        const key =
+          chain.value >= 0 && hasTexture(this.scene, colored) ? colored : 'deco_chain';
+        const frame = this.scene.textures.getFrame(key);
         const y = 30 + k * 26;
         const img = this.scene.add
-          .image(cx, y, 'deco_chain')
+          .image(cx, y, key)
           .setScale((this.layout.colWidth * 1.18) / frame.width)
           .setAngle(k % 2 === 0 ? -3 : 3);
-        if (chain.value >= 0) img.setTint(BLOCK_STYLES[chain.value].ink);
+        // tint only when the baked colored texture is missing
+        if (chain.value >= 0 && key === 'deco_chain') img.setTint(BLOCK_STYLES[chain.value].ink);
         container.add(img);
         if (chain.isGhost && pos) {
           this.ghostChain = { sprite: img, x: this.area.x + pos.x + cx, y: this.area.y + pos.y + y };
