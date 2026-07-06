@@ -25,6 +25,8 @@ export class SortingView implements SortingViewContract {
   private blockContainers: Phaser.GameObjects.Container[][] = [];
   /** Chalk previews inside target columns, per column index (for the flash). */
   private targetGhosts = new Map<number, Phaser.GameObjects.Container[]>();
+  /** Tape overlays per taped column index (for the reject wiggle). */
+  private tapeOverlays = new Map<number, Phaser.GameObjects.GameObject>();
   private layout!: ColumnLayout;
   private area = { x: 0, y: 0, width: 0, height: 0 };
 
@@ -105,6 +107,7 @@ export class SortingView implements SortingViewContract {
     const targets = selected >= 0 ? new Set(this.model.validTargets(selected)) : new Set<number>();
 
     this.targetGhosts.clear();
+    this.tapeOverlays.clear();
     this.model.columns.forEach((column, ci) => {
       const pos = this.layout.positions[ci];
       const container = this.scene.add.container(this.area.x + pos.x, this.area.y + pos.y);
@@ -151,7 +154,11 @@ export class SortingView implements SortingViewContract {
 
       if (this.model.lockedColumn === ci) this.addLockDecor(container, ci);
       if (this.model.setLockedColumn === ci) this.addSetLockDecor(container, ci);
-      if (this.model.isTaped(ci)) container.add(this.buildTapeOverlay());
+      if (this.model.isTaped(ci)) {
+        const tape = this.buildTapeOverlay();
+        container.add(tape);
+        this.tapeOverlays.set(ci, tape);
+      }
 
       setContainerTapArea(container, this.layout.colWidth, this.layout.colHeights[ci], 'topLeft');
       container.on('pointerdown', (p: Phaser.Input.Pointer) => this.onColumnDown(ci, p));
@@ -369,6 +376,21 @@ export class SortingView implements SortingViewContract {
         onComplete: () => g.setAlpha(GAME_SETTINGS.targetColumn.ghostAlpha),
       });
     }
+  }
+
+  /** Rejected drop into a taped column: the tape wiggles briefly. */
+  wiggleTape(ci: number): void {
+    const tape = this.tapeOverlays.get(ci) as Phaser.GameObjects.Image | undefined;
+    if (!tape) return;
+    const baseAngle = tape.angle;
+    this.scene.tweens.add({
+      targets: tape,
+      angle: baseAngle - 7,
+      duration: 70,
+      yoyo: true,
+      repeat: 2,
+      onComplete: () => tape.setAngle(baseAngle),
+    });
   }
 
   /** Star badge on the set-locked column: complete N sets to open it. */

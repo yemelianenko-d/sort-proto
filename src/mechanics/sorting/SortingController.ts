@@ -74,12 +74,16 @@ export class SortingController {
       return;
     }
     this.selected = -1;
-    const mismatch = target !== null && this.model.isTargetMismatch(index, target);
     this.view.rebuild();
-    if (target !== null && target !== index) {
-      this.view.shakeColumn(target);
-      if (mismatch) this.view.flashTargetHint(target);
-    }
+    if (target !== null && target !== index) this.rejectDrop(index, target);
+  }
+
+  /** Impossible action: react (shake + specific hint), clear the selection —
+   * the next tap starts a fresh choice instead of silently reselecting. */
+  private rejectDrop(from: number, to: number): void {
+    this.view.shakeColumn(to);
+    if (this.model.isTargetMismatch(from, to)) this.view.flashTargetHint(to);
+    if (this.model.isTaped(to)) this.view.wiggleTape(to);
   }
 
   private onTap(index: number): void {
@@ -87,6 +91,7 @@ export class SortingController {
 
     if (index === this.model.lockedColumn || index === this.model.setLockedColumn) {
       this.view.shakeColumn(index);
+      if (this.selected !== -1) this.select(-1);
       return;
     }
 
@@ -105,15 +110,10 @@ export class SortingController {
 
     if (this.model.canDrop(this.selected, index)) {
       this.performMove(this.selected, index, 'tap');
-    } else if (this.model.isTargetMismatch(this.selected, index)) {
-      this.view.shakeColumn(index);
-      this.view.flashTargetHint(index);
-      this.select(-1);
-    } else if (canPick) {
-      this.select(index); // reselect another source
     } else {
-      this.view.shakeColumn(index);
-      this.select(-1);
+      const from = this.selected;
+      this.select(-1); // reaction first; the NEXT tap picks the next action
+      this.rejectDrop(from, index);
     }
   }
 

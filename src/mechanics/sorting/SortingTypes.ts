@@ -86,6 +86,8 @@ export interface SortingViewContract {
   shakeColumn(columnIndex: number): void;
   /** Brief target-pattern brightening on a wrong-color attempt. */
   flashTargetHint(columnIndex: number): void;
+  /** Brief tape wiggle when a drop into a taped column is rejected. */
+  wiggleTape(columnIndex: number): void;
   pulseColumn(columnIndex: number): void;
   clearPulse(): void;
 }

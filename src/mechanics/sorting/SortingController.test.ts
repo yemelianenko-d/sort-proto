@@ -35,6 +35,10 @@ class StubView implements SortingViewContract {
   flashTargetHint(columnIndex: number): void {
     void columnIndex;
   }
+  wiggles: number[] = [];
+  wiggleTape(columnIndex: number): void {
+    this.wiggles.push(columnIndex);
+  }
   pulses: number[] = [];
   pulseColumn(columnIndex: number): void {
     this.pulses.push(columnIndex);
@@ -86,6 +90,33 @@ function captureEvents(names: GameEventName[]): { name: GameEventName }[] {
 describe('SortingController', () => {
   beforeEach(() => {
     // EventBus is a module singleton; tests only add fresh listeners.
+  });
+
+  it('a failed drop reacts and clears the selection instead of reselecting', () => {
+    const { model, view, controller } = setup({
+      columns: [[0, 0], [1, 1], []],
+      cap: 3,
+    });
+    view.userTap(0); // select color-0 group
+    view.userTap(1); // impossible: 0 onto 1 (and column 1 is pickable!)
+    expect(model.moves).toBe(0);
+    expect(view.shakes).toContain(1); // reaction
+    expect(controller.selectedColumn).toBe(-1); // selection cleared, not moved to 1
+    view.userTap(1); // the NEXT tap picks the next action
+    expect(controller.selectedColumn).toBe(1);
+  });
+
+  it('a drop into a taped column shakes and wiggles the tape', () => {
+    const { model, view } = setup({
+      columns: [[0], [1, 1], []],
+      cap: 3,
+      tapedColumns: [1],
+    });
+    view.userTap(0);
+    view.userTap(1); // taped: take-only
+    expect(model.moves).toBe(0);
+    expect(view.shakes).toContain(1);
+    expect(view.wiggles).toContain(1);
   });
 
   it('select -> drop performs a move through taps', () => {
