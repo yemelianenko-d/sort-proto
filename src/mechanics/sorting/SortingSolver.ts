@@ -57,7 +57,7 @@ function settle(st: SolverState, emptied: number | null): void {
         st.cols[i] = col.slice(0, -1);
         if (st.locked >= 0 && --st.locks <= 0) st.locked = -1;
         changed = true;
-      } else if (isUniformFull(col, st.cap)) {
+      } else if (i !== st.locked && i !== st.chainCol && isUniformFull(col, st.cap)) {
         const setColor = col[0];
         st.cols[i] = [];
         if (st.taped.has(i)) {
@@ -103,6 +103,7 @@ export function solve(start: SolverState, nodeLimit = 50000): number {
     // matching non-empty targets first, empty-column dumps last
     for (const wantEmpty of [false, true]) {
       for (let i = 0; i < st.cols.length; i++) {
+        if (i === st.locked || i === st.chainCol) continue; // closed: untouchable
         const from = st.cols[i];
         const grp = topGroup(from);
         if (grp === 0) continue;
@@ -172,7 +173,7 @@ export function solveBest(start: SolverState, rounds = 2, nodeLimit = 50000): nu
 }
 
 /** Like solve(), but rejects branches once `depth` exceeds `maxDepth`. */
-function solveBounded(start: SolverState, maxDepth: number, nodeLimit: number): number {
+export function solveBounded(start: SolverState, maxDepth: number, nodeLimit: number): number {
   if (maxDepth <= 0) return -1;
   const seen = new Map<string, number>();
   let nodes = 0;
@@ -187,6 +188,7 @@ function solveBounded(start: SolverState, maxDepth: number, nodeLimit: number): 
     seen.set(key, depth);
     for (const wantEmpty of [false, true]) {
       for (let i = 0; i < st.cols.length; i++) {
+        if (i === st.locked || i === st.chainCol) continue; // closed: untouchable
         const from = st.cols[i];
         const grp = topGroup(from);
         if (grp === 0) continue;

@@ -60,7 +60,12 @@ export class SortingController {
   }
 
   private onDragStart(index: number): boolean {
-    if (this.busy || index === this.model.lockedColumn) return false;
+    if (this.busy) return false;
+    if (index === this.model.lockedColumn || index === this.model.chainedColumn) {
+      this.view.shakeColumn(index);
+      if (index === this.model.chainedColumn) this.view.rattleChains(index);
+      return false;
+    }
     if (this.model.topGroup(index) === 0) return false;
     this.selected = index;
     this.view.rebuild({ selected: index, hideTopGroup: index });

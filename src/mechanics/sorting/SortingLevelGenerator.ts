@@ -299,14 +299,13 @@ function specFor(index: number, rng: () => number): LevelSpec {
     spec.locks = 1;
     spec.keyInPile = false;
   }
-  // board width: colors + key slack + ink col + empties (2, +1 with two
-  // targets) + locked col + chained col <= 11
+  // board width: colors + key slack + ink col + empties + locked col +
+  // chained col <= 11 (see emptyCountFor for the empties rule)
   const width = () =>
     spec.colors +
     (spec.keyInPile ? 1 : 0) +
     (spec.ink > 0 ? 1 : 0) +
-    2 +
-    (spec.targets >= 2 ? 1 : 0) +
+    emptyCountFor(spec) +
     (spec.locked ? 1 : 0) +
     (spec.chains.length > 0 ? 1 : 0);
   while (width() > 11) spec.colors -= 1;
@@ -315,14 +314,26 @@ function specFor(index: number, rng: () => number): LevelSpec {
 
 /* ---------------- generation ---------------- */
 
-/** Guaranteed-solvable trivial layout (emergency fallback). */
+/** Lock with keys in the pile or chains: the player can open it in play
+ * (booster-only locks are excluded — forcing a booster would be pay-to-win). */
+function hasOpenableExtra(spec: LevelSpec): boolean {
+  return (spec.locked && spec.keyInPile) || spec.chains.length > 0;
+}
+
+function emptyCountFor(spec: LevelSpec): number {
+  return 2 + (spec.targets >= 2 ? 1 : 0);
+}
+
+/** Guaranteed-solvable trivial layout (emergency fallback): a cyclic
+ * shift — every column holds cap-1 of its color plus one neighbor block,
+ * so no column starts completed and the fix is one obvious move each. */
 function fallbackColumns(colors: number, cap: number): ColorId[][] {
   const cols: ColorId[][] = [];
-  for (let c = 0; c < colors; c++) cols.push(Array<ColorId>(cap).fill(c));
-  const a = cols[0].pop() as ColorId;
-  const b = cols[1].pop() as ColorId;
-  cols[0].push(b);
-  cols[1].push(a);
+  for (let c = 0; c < colors; c++) {
+    const col = Array<ColorId>(cap - 1).fill(c);
+    col.push((c + 1) % colors);
+    cols.push(col);
+  }
   cols.push([], []);
   return cols;
 }
@@ -344,6 +355,17 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
     }
     shuffle(pool, rng);
 
+    // trapped blocks for the openable extra column: 2-3 colors the player
+    // can see but not touch until it opens — this makes the lock/chains
+    // genuinely load-bearing (win needs every block cleared)
+    const vault: ColorId[] = [];
+    if (hasOpenableExtra(spec)) {
+      const take = Math.min(2 + ((rng() * 2) | 0), spec.cap - 1);
+      for (let i = pool.length - 1; i >= 0 && vault.length < take; i--) {
+        if (pool[i] >= 0) vault.push(pool.splice(i, 1)[0]); // colors only, never keys
+      }
+    }
+
     // ink column: dead bottom slots + a couple of color blocks parked on top
     const inkCol: ColorId[] = [];
     if (spec.ink > 0) {
@@ -364,9 +386,9 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
     if (p < pool.length) continue; // did not fit; reshuffle
     if (spec.ink > 0) cols.push(inkCol);
 
-    // empties: two universal, one of which may become a target column;
-    // with two targets a third universal empty is added
-    const emptyCount = 2 + (spec.targets >= 2 ? 1 : 0);
+    // Empties rule: an openable extra column (key lock / chains) replaces
+    // one universal empty — its space must be genuinely needed, not a bonus.
+    const emptyCount = emptyCountFor(spec);
     const targetCols: { col: number; color: number }[] = [];
     for (let e = 0; e < emptyCount; e++) {
       cols.push([]);
@@ -393,13 +415,14 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
     let lockedIdx = -1;
     let chainIdx = -1;
     if (spec.locked) {
-      solveCols.push([]);
+      solveCols.push(spec.keyInPile ? vault.slice() : []);
       lockedIdx = solveCols.length - 1;
     }
     if (spec.chains.length > 0) {
-      solveCols.push([]);
+      solveCols.push(vault.slice());
       chainIdx = solveCols.length - 1;
     }
+    const targetsMap = new Map(targetCols.map((t) => [t.col, t.color]));
     const solution = solveBest({
       cols: solveCols,
       cap: spec.cap,
@@ -408,7 +431,7 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
       chainCol: chainIdx,
       chains: spec.chains.slice(),
       taped: new Set(taped),
-      targets: new Map(targetCols.map((t) => [t.col, t.color])),
+      targets: targetsMap,
     });
     if (solution > 0) {
       return {
@@ -420,7 +443,10 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
         hiddenBelowTop: spec.hidden,
         lockedColumn: spec.locked,
         lockedColumnLocks: spec.locked && spec.locks > 1 ? spec.locks : undefined,
+        lockedColumnBlocks:
+          spec.locked && spec.keyInPile && vault.length > 0 ? vault : undefined,
         chains: spec.chains.length > 0 ? spec.chains : undefined,
+        chainedColumnBlocks: spec.chains.length > 0 && vault.length > 0 ? vault : undefined,
         targetColumns: targetCols.length ? targetCols : undefined,
         tapedColumns: taped.length ? taped : undefined,
       };
