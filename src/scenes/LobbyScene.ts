@@ -8,7 +8,7 @@ import { Popup } from '../ui/Popup';
 import { setContainerTapArea } from '../ui/containerTapArea';
 import { hasTexture } from '../core/assets/AssetLoader';
 import { scatterDoodles } from '../ui/doodles';
-import { readAppFlags } from '../app/gameConfig';
+import { persistDebugFlag, readAppFlags } from '../app/gameConfig';
 import { SPECIAL } from '../mechanics/sorting/SortingTypes';
 import { GAME_SETTINGS } from '../config/gameSettings';
 
@@ -27,8 +27,9 @@ export class LobbyScene extends Phaser.Scene {
   private paper!: PaperBackground;
   private doodles!: Phaser.GameObjects.Container;
   private doodleSeed = 0;
-  /** ?debug=true: show per-level mechanic glyphs on the cells. */
+  /** ?debug=true or the 5-tap title toggle: mechanic glyphs on the cells. */
   private debugMode = readAppFlags().debug;
+  private titleTaps: number[] = [];
   private header!: Phaser.GameObjects.Container;
   private gridWrap!: Phaser.GameObjects.Container;
   private bottom!: Phaser.GameObjects.Container;
@@ -153,6 +154,8 @@ export class LobbyScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setAngle(-1.5);
+    title.setInteractive({ useHandCursor: false });
+    title.on('pointerdown', () => this.onTitleTap(title));
     this.header.add(title);
 
     this.header.add(this.drawTitleAccent(title.x - title.width / 2 - 24, title.y - 6, -1));
@@ -326,6 +329,29 @@ export class LobbyScene extends Phaser.Scene {
     if (cfg.targetColumns?.length) parts.push(cfg.targetColumns.length > 1 ? `C${cfg.targetColumns.length}` : 'C');
     if (cfg.setUnlockColumn) parts.push(cfg.setUnlockColumn > 1 ? `S${cfg.setUnlockColumn}` : 'S');
     return parts.join(' ');
+  }
+
+
+  /** 5 quick taps on the title toggle cheat mode (works without URL access). */
+  private onTitleTap(title: Phaser.GameObjects.Text): void {
+    const now = Date.now();
+    this.titleTaps = this.titleTaps.filter((t) => now - t < 2500);
+    this.titleTaps.push(now);
+    if (this.titleTaps.length < 5) return;
+    this.titleTaps = [];
+    this.debugMode = !this.debugMode;
+    persistDebugFlag(this.debugMode);
+    const note = this.add
+      .text(title.x, title.y + 58, this.debugMode ? 'чит-режим: on' : 'чит-режим: off', {
+        fontFamily: FONTS.body,
+        fontSize: '14px',
+        color: '#b0512e',
+      })
+      .setOrigin(0.5)
+      .setDepth(50);
+    this.tweens.add({ targets: note, alpha: 0, delay: 900, duration: 400, onComplete: () => note.destroy() });
+    // rebuild the grid in place so the glyphs (dis)appear immediately
+    this.layout(this.scale.width, this.scale.height);
   }
 
   private buildCell(

@@ -58,9 +58,26 @@ export interface AppFlags {
   debug: boolean;
 }
 
+const DEBUG_STORAGE_KEY = 'sortproto.debug';
+
 export function readAppFlags(): AppFlags {
   const params = new URLSearchParams(window.location.search);
-  return { debug: params.get('debug') === 'true' };
+  let persisted = false;
+  try {
+    persisted = window.localStorage.getItem(DEBUG_STORAGE_KEY) === 'true';
+  } catch {
+    /* storage unavailable (private mode etc) */
+  }
+  return { debug: params.get('debug') === 'true' || persisted };
+}
+
+/** Cheat-mode toggle without URL access (5 taps on the lobby title). */
+export function persistDebugFlag(value: boolean): void {
+  try {
+    window.localStorage.setItem(DEBUG_STORAGE_KEY, String(value));
+  } catch {
+    /* ignore */
+  }
 }
 
 export const LEVELS_URL = 'levels/sorting_levels.json';
