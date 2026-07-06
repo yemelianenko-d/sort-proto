@@ -247,6 +247,7 @@ export class LobbyScene extends Phaser.Scene {
           width: 210,
           height: 40,
           label: UI_TEXTS.cheat.reset,
+          danger: true,
           fontSize: 18,
           onClick: () => {
             this.game_.progress.clear();

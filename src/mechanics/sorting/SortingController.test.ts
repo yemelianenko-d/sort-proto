@@ -44,6 +44,10 @@ class StubView implements SortingViewContract {
   animateTapePeel(columnIndex: number): void {
     this.peels.push(columnIndex);
   }
+  rattles: number[] = [];
+  rattleChains(columnIndex: number): void {
+    this.rattles.push(columnIndex);
+  }
   dissolves: { col: number; slot: number; hidden: boolean }[][] = [];
   animateKeyDissolve(entries: { col: number; slot: number; hidden: boolean }[]): void {
     this.dissolves.push(entries);
@@ -170,6 +174,20 @@ describe('SortingController', () => {
     expect(controller.selectedColumn).toBe(-1); // selection cleared, not moved to 1
     view.userTap(1); // the NEXT tap picks the next action
     expect(controller.selectedColumn).toBe(1);
+  });
+
+  it('a drop into the chained column shakes it and rattles the chains', () => {
+    const { model, view } = setup({
+      cap: 2,
+      columns: [[0], [0], [1, 1]],
+      chains: [-1],
+    });
+    const chainCol = model.columns.length - 1;
+    view.userTap(2); // pick the 1-1 pair
+    view.userTap(chainCol); // chained: closed
+    expect(model.moves).toBe(0);
+    expect(view.shakes).toContain(chainCol);
+    expect(view.rattles).toContain(chainCol);
   });
 
   it('emptying a taped column plays the tape peel', () => {

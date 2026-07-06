@@ -84,6 +84,7 @@ export class SortingController {
     this.view.shakeColumn(to);
     if (this.model.isTargetMismatch(from, to)) this.view.flashTargetHint(to);
     if (this.model.isTaped(to)) this.view.wiggleTape(to);
+    if (to === this.model.chainedColumn) this.view.rattleChains(to);
   }
 
   private onTap(index: number): void {
@@ -91,6 +92,7 @@ export class SortingController {
 
     if (index === this.model.lockedColumn || index === this.model.chainedColumn) {
       this.view.shakeColumn(index);
+      if (index === this.model.chainedColumn) this.view.rattleChains(index);
       if (this.selected !== -1) this.select(-1);
       return;
     }

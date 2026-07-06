@@ -14,6 +14,8 @@ export interface ButtonOptions {
   primary?: boolean;
   /** Green hatched confirm button (falls back to a procedural hatch). */
   success?: boolean;
+  /** Red skin for negative/destructive actions (restart, quit, reset). */
+  danger?: boolean;
   /** Light in-game chip (boosters): the pre-dialog clean look. */
   light?: boolean;
   /** Multiplier for the icon size (default 1). */
@@ -95,7 +97,27 @@ export class Button extends Phaser.GameObjects.Container {
   }
 
   private redraw(): void {
-    const { width: w, height: h, primary, success, light } = this.opts;
+    const { width: w, height: h, primary, success, light, danger } = this.opts;
+
+    if (danger) {
+      if (hasTexture(this.scene, 'ui_button_danger')) {
+        const ns = nineSliceConfig(this.scene, 'ui_button_danger');
+        const cl = Math.min(ns.left, Math.floor(w * 0.32));
+        const ct = Math.min(ns.top, Math.floor(h * 0.32));
+        this.addAt(
+          this.scene.add.nineslice(0, 0, 'ui_button_danger', undefined, w, h, cl, cl, ct, ct),
+          0,
+        );
+        this.bg.clear();
+      } else {
+        this.bg.clear();
+        this.bg.fillStyle(0xf6d9d5, 1);
+        this.bg.fillRoundedRect(-w / 2 + 2, -h / 2 + 2, w - 4, h - 4, 10);
+        fillPattern(this.bg, -w / 2 + 4, -h / 2 + 4, w - 8, h - 8, 'stripes', 0xe0a49b);
+        strokeSketchRect(this.bg, -w / 2, -h / 2, w, h, 0xb23317, 2.6, 1.2);
+      }
+      return;
+    }
 
     if (light && hasTexture(this.scene, 'ui_button_light')) {
       const ns = nineSliceConfig(this.scene, 'ui_button_light');

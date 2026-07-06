@@ -10,6 +10,7 @@ export interface PopupAction {
   primary?: boolean;
   /** Green hatched confirm style (the concept "Далі" button). */
   success?: boolean;
+  danger?: boolean;
   onClick: () => void;
 }
 
@@ -179,6 +180,7 @@ export class Popup extends Phaser.GameObjects.Container {
         label: action.label,
         primary: action.primary,
         success: action.success,
+        danger: action.danger,
         onClick: () => {
           this.destroy();
           action.onClick();

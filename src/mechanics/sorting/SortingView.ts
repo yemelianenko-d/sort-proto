@@ -29,6 +29,8 @@ export class SortingView implements SortingViewContract {
   private tapeOverlays = new Map<number, Phaser.GameObjects.GameObject>();
   /** The just-removed chain kept visually hanging until its break plays. */
   private ghostChain: { sprite: Phaser.GameObjects.Image | null; x: number; y: number } | null = null;
+  /** Chain sprites of the chained column (for the reject rattle). */
+  private chainSprites: Phaser.GameObjects.Image[] = [];
   private layout!: ColumnLayout;
   private area = { x: 0, y: 0, width: 0, height: 0 };
 
@@ -125,6 +127,7 @@ export class SortingView implements SortingViewContract {
 
     this.targetGhosts.clear();
     this.tapeOverlays.clear();
+    this.chainSprites = [];
     this.model.columns.forEach((column, ci) => {
       const pos = this.layout.positions[ci];
       const container = this.scene.add.container(this.area.x + pos.x, this.area.y + pos.y);
@@ -642,6 +645,23 @@ export class SortingView implements SortingViewContract {
     }
   }
 
+  /** Rejected action on the chained column: the chains rattle briefly. */
+  rattleChains(ci: number): void {
+    void ci; // one chained column per level; refs are collected at rebuild
+    for (const img of this.chainSprites) {
+      if (!img.active) continue;
+      const base = img.angle;
+      this.scene.tweens.add({
+        targets: img,
+        angle: base + (base <= 0 ? -5 : 5),
+        duration: 55,
+        yoyo: true,
+        repeat: 3,
+        onComplete: () => img.setAngle(base),
+      });
+    }
+  }
+
   /** The completed set snaps the chain: a spark flies from the cleared
    * column, the ghost chain breaks in two halves that fall apart. */
   animateChainBreak(fromColumn: number, onDone: () => void): void {
@@ -818,6 +838,7 @@ export class SortingView implements SortingViewContract {
           .setAngle(k % 2 === 0 ? -3 : 3)
           .setTint(chain.value >= 0 ? BLOCK_STYLES[chain.value].ink : COLORS.pencil);
         container.add(img);
+        this.chainSprites.push(img);
         if (chain.isGhost && pos) {
           this.ghostChain = { sprite: img, x: this.area.x + pos.x + cx, y: this.area.y + pos.y + y };
         }

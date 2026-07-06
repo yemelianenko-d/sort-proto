@@ -441,7 +441,7 @@ export class SortingScene extends Phaser.Scene {
       label: t.back,
       iconKey: 'icon_back',
       iconOnly: true,
-      onClick: () => this.quitToLobby(),
+      onClick: () => this.confirmQuit(),
     });
     this.restartBtn = new Button(this, 0, 0, {
       width: 44,
@@ -557,6 +557,39 @@ export class SortingScene extends Phaser.Scene {
 
   /* ---------------- flow ---------------- */
 
+  /** Leaving mid-level asks for confirmation (progress + boosters burn). */
+  private confirmQuit(): void {
+    if (this.popupOpen) return;
+    if (this.model.moves === 0) {
+      this.quitToLobby();
+      return;
+    }
+    this.popupOpen = true;
+    const t = UI_TEXTS.quitConfirm;
+    new Popup(this, {
+      icon: 'icon_back',
+      emoji: '←',
+      title: t.title,
+      body: t.body,
+      actions: [
+        {
+          label: t.no,
+          onClick: () => {
+            this.popupOpen = false;
+          },
+        },
+        {
+          label: t.yes,
+          danger: true,
+          onClick: () => {
+            this.popupOpen = false;
+            this.quitToLobby();
+          },
+        },
+      ],
+    });
+  }
+
   /** The top-right restart asks for confirmation (progress + boosters burn). */
   private confirmRestart(): void {
     if (this.popupOpen || this.model.moves === 0) return;
@@ -576,7 +609,7 @@ export class SortingScene extends Phaser.Scene {
         },
         {
           label: t.yes,
-          primary: true,
+          danger: true,
           onClick: () => {
             this.popupOpen = false;
             this.restart('button');

@@ -324,6 +324,10 @@
     {
       "key": "deco_chain",
       "url": "assets/images/deco_chain.png"
+    },
+    {
+      "key": "ui_button_danger",
+      "url": "assets/images/ui_button_danger.png"
     }
   ],
   "atlases": [],
@@ -381,6 +385,12 @@
       "right": 18,
       "top": 18,
       "bottom": 18
+    },
+    "ui_button_danger": {
+      "left": 20,
+      "right": 20,
+      "top": 20,
+      "bottom": 20
     }
   },
   "animations": []
