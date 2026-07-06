@@ -28,7 +28,8 @@ export interface MoveResult {
   count: number;
   revealed: number[];
   readyToClear: number | null;
-  /** Columns where a revealed key block was consumed this move. */
+  /** Columns where a key block was removed this move (consumed or dissolved
+   * as dead weight after the last lock opened). */
   keysConsumed: number[];
   /** The formerly locked column, if a key block just opened it. */
   keyUnlocked: number | null;

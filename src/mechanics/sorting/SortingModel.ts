@@ -24,6 +24,8 @@ interface Snapshot {
  *  - a key block, once revealed on top, is consumed and opens the lock;
  *  - a taped column is take-only until emptied once (then the tape breaks);
  *  - a locked column may need several keys (each key removes one lock);
+ *    once every lock is off, key blocks still on the board are dead weight
+ *    and dissolve immediately (booster keys included);
  *  - a set-locked column opens after N completed sets, as part of the
  *    resolve sequence (move -> validate set -> unlock);
  *  - a target column, while empty, accepts only its designated color as the
@@ -246,7 +248,10 @@ export class SortingModel {
     const cap = this.initialLocks - this.boosterKeys;
     if (this.lockedColumn !== null) {
       this.locksRemaining = Math.min(this.locksRemaining, Math.max(0, cap));
-      if (this.locksRemaining <= 0) this.lockedColumn = null;
+      if (this.locksRemaining <= 0) {
+        this.lockedColumn = null;
+        this.purgeKeyBlocks();
+      }
     }
     if (this.revealedByLens.size > 0) {
       for (const col of this.columns) {
@@ -258,6 +263,20 @@ export class SortingModel {
   }
 
   /** Unlocks the locked column (key booster). Permanent: not undo-able. */
+  /** Every lock is off: remaining key blocks are dead weight and dissolve. */
+  private purgeKeyBlocks(): number[] {
+    const purged: number[] = [];
+    this.columns.forEach((col, ci) => {
+      for (let k = col.length - 1; k >= 0; k--) {
+        if (col[k].color === SPECIAL.KEY) {
+          col.splice(k, 1);
+          purged.push(ci);
+        }
+      }
+    });
+    return purged;
+  }
+
   /** Booster key: removes one lock; returns the column and whether it opened. */
   unlockColumn(): { column: number; opened: boolean } | null {
     if (this.lockedColumn === null) return null;
@@ -266,6 +285,8 @@ export class SortingModel {
     if (this.locksRemaining <= 0) {
       const column = this.lockedColumn;
       this.lockedColumn = null;
+      this.purgeKeyBlocks();
+      this.settle(null); // reveal tops uncovered by the purge
       return { column, opened: true };
     }
     return { column: this.lockedColumn, opened: false };
@@ -365,6 +386,7 @@ export class SortingModel {
             if (this.locksRemaining <= 0) {
               keyUnlocked = this.lockedColumn;
               this.lockedColumn = null;
+              keysConsumed.push(...this.purgeKeyBlocks());
             }
           }
           changed = true;

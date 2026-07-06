@@ -88,6 +88,43 @@ describe('SortingModel specials', () => {
     expect(m.canDrop(2, lockCol)).toBe(true);
   });
 
+  it('booster-opened lock dissolves the now-useless key block in the pile', () => {
+    const m = new SortingModel(
+      cfg({ cap: 3, columns: [[SPECIAL.KEY, 0], [0], [0], []], lockedColumn: true }),
+    );
+    expect(m.hasBlockOfColor(SPECIAL.KEY)).toBe(true);
+    const res = m.unlockColumn(); // booster opens the only lock
+    expect(res?.opened).toBe(true);
+    expect(m.hasBlockOfColor(SPECIAL.KEY)).toBe(false); // dead weight is gone
+    expect(m.columns[0].map((b) => b.color)).toEqual([0]); // block above settled down
+  });
+
+  it('opening the last of two locks dissolves the remaining key block', () => {
+    const m = new SortingModel(
+      cfg({
+        cap: 3,
+        columns: [[SPECIAL.KEY, 0], [SPECIAL.KEY, 1], [0, 1], [0, 1], []],
+        lockedColumn: true,
+        lockedColumnLocks: 2,
+      }),
+    );
+    m.unlockColumn(); // booster: 2 -> 1
+    m.move(0, 4); // uncover key A -> consumed -> last lock opens -> key B dissolves
+    expect(m.lockedColumn).toBeNull();
+    expect(m.hasBlockOfColor(SPECIAL.KEY)).toBe(false);
+  });
+
+  it('undo keeps booster-dissolved keys gone (booster effects are permanent)', () => {
+    const m = new SortingModel(
+      cfg({ cap: 3, columns: [[SPECIAL.KEY, 0], [0], [0], []], lockedColumn: true }),
+    );
+    m.move(1, 2); // any move to have history
+    m.unlockColumn(); // opens the lock, dissolves the key
+    m.undo(); // reverts the move...
+    expect(m.lockedColumn).toBeNull(); // ...but the lock stays open
+    expect(m.hasBlockOfColor(SPECIAL.KEY)).toBe(false); // and the key stays gone
+  });
+
   it('undo restores block-key locks but keeps booster keys spent', () => {
     const m = new SortingModel(
       cfg({
