@@ -33,6 +33,8 @@ export class LobbyScene extends Phaser.Scene {
   private scrollY = 0;
   private minScroll = 0;
   private gridTop = 0;
+  /** Внутрішній верхній відступ ґріда (місце під кутові штрихи). */
+  private gridPadTop = 0;
   private gridBottom = 0;
   private dragging = false;
   private dragStartY = 0;
@@ -207,6 +209,8 @@ export class LobbyScene extends Phaser.Scene {
     // --- grid: up to 6 visible rows; arrow and Play sit right under it ---
     this.gridTop = py + 68;
     const cellSize = this.cellSizeFor(w);
+    // headroom під кутові штрихи поточної клітинки (інакше маска їх зріже)
+    this.gridPadTop = Math.round(cellSize * 0.26);
     const rowH = cellSize + CELL_GAP_Y;
     const cheat = this.game_.settings.cheat;
     const reservedBelow = 44 + 58 + 26 + (cheat ? 52 : 0); // стрілка + кнопка (+ чит-скидання)
@@ -271,7 +275,7 @@ export class LobbyScene extends Phaser.Scene {
       // поточний рівень тримаємо у верхній третині видимої зони
       const cell = this.cellSizeFor(w);
       const row = Math.floor(Math.min(nextIndex, this.game_.levels.count - 1) / PER_ROW);
-      const rowWorldY = this.gridTop + cell / 2 + row * (cell + CELL_GAP_Y);
+      const rowWorldY = this.gridPadTop + this.gridTop + cell / 2 + row * (cell + CELL_GAP_Y);
       const desiredY = this.gridTop + (this.gridBottom - this.gridTop) * 0.28;
       this.setScroll(desiredY - rowWorldY);
     }
@@ -293,11 +297,11 @@ export class LobbyScene extends Phaser.Scene {
       const row = Math.floor(i / PER_ROW);
       const col = i % PER_ROW;
       const x = startX + col * (cellSize + CELL_GAP_X);
-      const y = this.gridTop + cellSize / 2 + row * (cellSize + CELL_GAP_Y);
+      const y = this.gridPadTop + this.gridTop + cellSize / 2 + row * (cellSize + CELL_GAP_Y);
       this.gridWrap.add(this.buildCell(i, nextIndex, availableCount, x, y, cellSize));
     }
     const rows = Math.ceil(windowCount / PER_ROW);
-    return rows * (cellSize + CELL_GAP_Y);
+    return this.gridPadTop + rows * (cellSize + CELL_GAP_Y);
   }
 
   private buildCell(
@@ -401,9 +405,9 @@ export class LobbyScene extends Phaser.Scene {
     }
 
     if (isCurrent) {
-      // якорі в межах клітинки: маска скролу не ріже перший ряд
-      this.addSparkle(cell, -cellSize / 2 - 6, -cellSize / 2 + 9, cellSize * 0.28, true, -18);
-      this.addSparkle(cell, cellSize / 2 + 6, -cellSize / 2 + 9, cellSize * 0.28, false, 18);
+      // штрихи "виростають" з верхніх кутів клітинки вгору-назовні
+      this.addSparkle(cell, -cellSize / 2 + 2, -cellSize / 2 + 2, cellSize * 0.28, true);
+      this.addSparkle(cell, cellSize / 2 - 2, -cellSize / 2 + 2, cellSize * 0.28, false);
     }
 
     if (!locked || this.game_.settings.cheat) {
@@ -439,19 +443,21 @@ export class LobbyScene extends Phaser.Scene {
   /** Sparkle decor with true texture aspect (no squishing). */
   private addSparkle(
     parent: Phaser.GameObjects.Container,
-    x: number,
-    y: number,
+    cornerX: number,
+    cornerY: number,
     width: number,
     flip: boolean,
-    angle: number,
   ): void {
     if (!hasTexture(this, 'deco_sparkle')) return;
     const frame = this.textures.getFrame('deco_sparkle');
+    // Точка сходження штрихів у текстурі — низ-ліво (~0.12, 0.90); при flipX
+    // вона дзеркалиться в низ-право. Якоримо саме нею у верхній кут клітинки,
+    // щоб віяло "виростало" з кута вгору-назовні, а не стирчало збоку.
     const img = this.add
-      .image(x, y, 'deco_sparkle')
+      .image(cornerX, cornerY, 'deco_sparkle')
+      .setOrigin(flip ? 0.88 : 0.12, 0.9)
       .setScale(width / frame.width)
-      .setFlipX(flip)
-      .setAngle(angle);
+      .setFlipX(flip);
     parent.add(img);
   }
 
