@@ -3,8 +3,6 @@ export type ColorId = number;
 
 /** Special block ids (negative to stay JSON-friendly in level files). */
 export const SPECIAL = {
-  /** Matches any color; clears as part of any set. */
-  JOKER: -2,
   /** Moves only into an empty column; never clears. */
   STONE: -3,
   /** Consumed when revealed on top; unlocks the locked column. */
@@ -12,7 +10,7 @@ export const SPECIAL = {
 } as const;
 
 export function isSpecialColor(c: ColorId): boolean {
-  return c === SPECIAL.JOKER || c === SPECIAL.STONE || c === SPECIAL.KEY;
+  return c === SPECIAL.STONE || c === SPECIAL.KEY;
 }
 
 export interface BlockState {
@@ -40,13 +38,12 @@ export interface MoveResult {
 
 export interface SortingLevelConfig {
   id: string;
-  /** Default column capacity (used when `caps` is absent). */
+  /** Column capacity, uniform for the whole level; every color has exactly
+   * `cap` copies — the arithmetic contract the player relies on. */
   cap: number;
   par: number;
   difficulty: number;
   columns: ColorId[][];
-  /** Per-column capacities (mixed heights); length === columns.length. */
-  caps?: number[];
   hiddenBelowTop?: boolean;
   lockedColumn?: boolean;
   /** Columns sealed with tape: take-only until emptied once. */

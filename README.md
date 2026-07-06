@@ -16,7 +16,7 @@ npm run preview    # локальний перегляд production build
 npm run lint       # eslint
 npm run test       # vitest: parser, model, controller, progress, event bus, layout
 npm run format     # prettier
-npm run levels:generate  # перегенерувати рівні (solver-verified)
+npx tsx tools/build-levels.ts  # перегенерувати рівні 11-100 (solver-verified)
 ```
 
 Debug mode: додайте `?debug=true` до URL — з'явиться панель:
@@ -185,12 +185,22 @@ fallback, тож часткові поставки безпечні. Повне 
 
 ## Тести
 
-Критична логіка покрита unit-тестами (vitest, 43 tests):
+Критична логіка покрита unit-тестами (vitest, 67 tests):
 валідація конфігів (`SortingLevelParser`), правила ходів / win / undo /
 deadlock (`SortingModel`), input-флоу і події (`SortingController` зі
 stub-view через `SortingViewContract`), `ProgressManager` (persist,
 corrupted data), `EventBus`, layout-математика. Rendering/UI свідомо без
 unit-тестів на цьому етапі (за гайдлайном).
+
+## Дизайн-рішення: арифметика кольорів недоторкана
+
+Кожен колір завжди має рівно `cap` копій, місткість колонок у межах рівня
+єдина. Механіки "різні місткості колонок" і "джокер" були прототиповані та
+викреслені: обидві або приховують кількість копій кольору (гравець мусить
+вгадувати), або дозволяють "осиротити" блок, який вже ніколи не збереться.
+Спецблоки, що лишились (камінь, ключ у завалі, скотч), обмежують простір і
+рух, але не ламають арифметику сетів. Крива: 1-10 навчальна (кураторська),
+11-15 чиста база, камінь з 16, ключ-блок з 21, скотч з 31.
 
 ## Known limitations
 

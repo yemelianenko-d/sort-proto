@@ -13,12 +13,12 @@ interface Snapshot {
  * no events — fully deterministic and unit-testable.
  *
  * Rules:
- *  - tap lifts the top group of matching revealed blocks (jokers glue);
+ *  - tap lifts the top group of equal revealed blocks;
  *  - a group drops onto an empty column or a matching top;
  *  - a stone moves alone and only into an empty column, never clears;
  *  - a key block, once revealed on top, is consumed and opens the lock;
  *  - a taped column is take-only until emptied once (then the tape breaks);
- *  - a full column of one color (jokers count as any color) clears;
+ *  - a full column of one color clears;
  *  - the level is won when only stones remain on the board.
  */
 export class SortingModel {
@@ -30,7 +30,6 @@ export class SortingModel {
   lockedColumn: number | null = null;
   moves = 0;
 
-  private caps: number[];
   private taped = new Set<number>();
   private history: Snapshot[] = [];
   /** Booster effects are permanent: undo reverts moves only. */
@@ -49,11 +48,9 @@ export class SortingModel {
         return { id: nextId++, color, hidden: config.hiddenBelowTop === true && !isTop };
       }),
     );
-    this.caps = config.caps ? [...config.caps] : this.columns.map(() => config.cap);
     (config.tapedColumns ?? []).forEach((i) => this.taped.add(i));
     if (config.lockedColumn) {
       this.columns.push([]);
-      this.caps.push(config.cap);
       this.lockedColumn = this.columns.length - 1;
     }
   }
@@ -61,7 +58,8 @@ export class SortingModel {
   /* ---------------- queries ---------------- */
 
   capacity(i: number): number {
-    return this.caps[i] ?? this.cap;
+    void i; // uniform: every column shares the level cap
+    return this.cap;
   }
 
   isTaped(i: number): boolean {
@@ -72,16 +70,13 @@ export class SortingModel {
   private matches(mover: number, resting: number): boolean {
     if (mover === SPECIAL.STONE || resting === SPECIAL.STONE) return false;
     if (mover === SPECIAL.KEY || resting === SPECIAL.KEY) return false;
-    return mover === resting || mover === SPECIAL.JOKER || resting === SPECIAL.JOKER;
+    return mover === resting;
   }
 
-  /** Effective color of the liftable top group (JOKER when all jokers). */
+  /** Color of the liftable top group. */
   private groupColor(i: number): number {
     const col = this.columns[i];
-    for (let k = col.length - 1, n = this.topGroup(i); n > 0; k--, n--) {
-      if (col[k].color !== SPECIAL.JOKER) return col[k].color;
-    }
-    return SPECIAL.JOKER;
+    return col[col.length - 1].color;
   }
 
   /** Size of the liftable group on top of column `i` (0 if hidden/empty). */
@@ -93,14 +88,9 @@ export class SortingModel {
     if (top.color === SPECIAL.STONE) return 1;
     if (top.color === SPECIAL.KEY) return 0; // keys consume themselves
     let n = 0;
-    let anchor: number = SPECIAL.JOKER; // first non-joker met defines the group color
     for (let k = col.length - 1; k >= 0; k--) {
       const b = col[k];
-      if (b.hidden || b.color === SPECIAL.STONE || b.color === SPECIAL.KEY) break;
-      if (b.color !== SPECIAL.JOKER) {
-        if (anchor !== SPECIAL.JOKER && b.color !== anchor) break;
-        anchor = b.color;
-      }
+      if (b.hidden || b.color !== top.color) break;
       n++;
     }
     return n;
@@ -253,15 +243,9 @@ export class SortingModel {
     const col = this.columns[index];
     if (col.length !== this.capacity(index) || col.length === 0) return false;
     if (col.some((b) => b.hidden)) return false;
-    let color: number = SPECIAL.JOKER;
-    for (const b of col) {
-      if (b.color === SPECIAL.STONE || b.color === SPECIAL.KEY) return false;
-      if (b.color !== SPECIAL.JOKER) {
-        if (color !== SPECIAL.JOKER && b.color !== color) return false;
-        color = b.color;
-      }
-    }
-    return true;
+    const first = col[0].color;
+    if (first === SPECIAL.STONE || first === SPECIAL.KEY) return false;
+    return col.every((b) => b.color === first);
   }
 
   /**

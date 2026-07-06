@@ -54,30 +54,14 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
     throw new Error(`${at} (${id}): "columns" must be an array of 2..12 columns.`);
   }
 
-  // optional per-column capacities
-  let caps: number[] | undefined;
-  if (lvl.caps !== undefined) {
-    if (!Array.isArray(lvl.caps) || lvl.caps.length !== columns.length) {
-      throw new Error(`${at} (${id}): "caps" must match "columns" length.`);
-    }
-    lvl.caps.forEach((c, ci) => {
-      if (!Number.isInteger(c) || (c as number) < 2 || (c as number) > 8) {
-        throw new Error(`${at} (${id}): caps[${ci}] must be an integer in [2..8].`);
-      }
-    });
-    caps = lvl.caps as number[];
-  }
-  const capOf = (ci: number) => caps?.[ci] ?? capN;
-
   const colorCounts = new Map<ColorId, number>();
-  let jokers = 0;
   let keys = 0;
   let emptyCount = 0;
 
   columns.forEach((col, ci) => {
     if (!Array.isArray(col)) throw new Error(`${at} (${id}): column ${ci} must be an array.`);
-    if (col.length > capOf(ci)) {
-      throw new Error(`${at} (${id}): column ${ci} has ${col.length} blocks, cap is ${capOf(ci)}.`);
+    if (col.length > capN) {
+      throw new Error(`${at} (${id}): column ${ci} has ${col.length} blocks, cap is ${capN}.`);
     }
     if (col.length === 0) emptyCount += 1;
     col.forEach((c, bi) => {
@@ -89,13 +73,12 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
         );
       }
       const color = c as number;
-      if (color === SPECIAL.JOKER) jokers += 1;
-      else if (color === SPECIAL.KEY) keys += 1;
+      if (color === SPECIAL.KEY) keys += 1;
       else if (color !== SPECIAL.STONE) colorCounts.set(color, (colorCounts.get(color) ?? 0) + 1);
     });
     // A level must not start with an already-completed column.
     if (
-      col.length === capOf(ci) &&
+      col.length === capN &&
       col.length > 0 &&
       col.every((c) => c === col[0] && !isSpecialColor(c as number))
     ) {
@@ -110,23 +93,12 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
     throw new Error(`${at} (${id}): key blocks require "lockedColumn": true.`);
   }
 
-  const maxCap = caps ? Math.max(...caps) : capN;
-  if (jokers === 0 && !caps) {
-    // classic strict rule for plain levels
-    for (const [color, count] of colorCounts) {
-      if (count !== capN) {
-        throw new Error(
-          `${at} (${id}): color ${color} appears ${count} times, must be exactly cap=${capN}.`,
-        );
-      }
-    }
-  } else {
-    for (const [color, count] of colorCounts) {
-      if (count < 2 || count > maxCap) {
-        throw new Error(
-          `${at} (${id}): color ${color} appears ${count} times (allowed 2..${maxCap} with jokers/mixed caps).`,
-        );
-      }
+  // the arithmetic contract: every color has exactly `cap` copies, always
+  for (const [color, count] of colorCounts) {
+    if (count !== capN) {
+      throw new Error(
+        `${at} (${id}): color ${color} appears ${count} times, must be exactly cap=${capN}.`,
+      );
     }
   }
 
@@ -152,7 +124,6 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
     par: par as number,
     difficulty: difficulty as number,
     columns: columns as ColorId[][],
-    caps,
     hiddenBelowTop: lvl.hiddenBelowTop === true,
     lockedColumn: lvl.lockedColumn === true,
     tapedColumns: taped,

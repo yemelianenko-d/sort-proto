@@ -261,21 +261,6 @@ export class SortingView implements SortingViewContract {
 
   private buildBlock(colorId: number): Phaser.GameObjects.Container {
     const cellSz = this.layout.cell;
-    if (colorId === SPECIAL.JOKER) {
-      const c = this.scene.add.container(0, 0);
-      const g = this.scene.add.graphics();
-      g.fillStyle(0xfffdf6, 1);
-      g.fillRoundedRect(-cellSz / 2 + 1, -cellSz / 2 + 1, cellSz - 2, cellSz - 2, 9);
-      const strokeW = cellSz * 0.11;
-      [0xc4453a, 0x3aa14f, 0x2f5db8].forEach((col, k) => {
-        g.lineStyle(strokeW, col, 0.95);
-        const off = (k - 1) * cellSz * 0.22;
-        g.lineBetween(-cellSz * 0.22 + off, cellSz * 0.24, cellSz * 0.22 + off, -cellSz * 0.24);
-      });
-      strokeSketchRect(g, -cellSz / 2, -cellSz / 2, cellSz, cellSz, 0x4a4f63, 2.4, 1.2);
-      c.add(g);
-      return c;
-    }
     if (colorId === SPECIAL.STONE) {
       const c = this.scene.add.container(0, 0);
       const g = this.scene.add.graphics();

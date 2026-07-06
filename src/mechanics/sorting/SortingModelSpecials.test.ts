@@ -13,15 +13,6 @@ const cfg = (over: Partial<SortingLevelConfig>): SortingLevelConfig => ({
 });
 
 describe('SortingModel specials', () => {
-  it('joker glues to any color and clears inside a set', () => {
-    const m = new SortingModel(cfg({ columns: [[0, 0], [SPECIAL.JOKER], []] }));
-    expect(m.canDrop(1, 0)).toBe(true);
-    const res = m.move(1, 0);
-    expect(res?.readyToClear).toBe(0);
-    m.commitClear(0);
-    expect(m.isWon()).toBe(true);
-  });
-
   it('stone moves only into an empty column and does not block the win', () => {
     const m = new SortingModel(cfg({ columns: [[SPECIAL.STONE], [0, 0], [0], []] }));
     expect(m.canDrop(0, 1)).toBe(false); // stone onto blocks
@@ -57,12 +48,11 @@ describe('SortingModel specials', () => {
     expect(m.canDrop(1, 0)).toBe(true); // tape is gone
   });
 
-  it('mixed capacities are respected per column', () => {
+  it('capacity is uniform across all columns, including the unlocked one', () => {
     const m = new SortingModel(
-      cfg({ columns: [[0, 0], [0], []], caps: [2, 3, 3] }),
+      cfg({ cap: 3, columns: [[0, 0], [0], []], lockedColumn: true }),
     );
-    expect(m.capacity(0)).toBe(2);
-    expect(m.canDrop(1, 0)).toBe(false); // column 0 is already full at cap 2
-    expect(m.canDrop(0, 1)).toBe(true);
+    for (let i = 0; i < m.columns.length; i++) expect(m.capacity(i)).toBe(3);
+    expect(m.canDrop(1, 0)).toBe(true); // room up to the shared cap
   });
 });

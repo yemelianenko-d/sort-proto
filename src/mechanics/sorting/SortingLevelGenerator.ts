@@ -5,9 +5,13 @@ import type { ColorId, SortingLevelConfig } from './SortingTypes';
  * Runtime endless level generator (levels beyond the curated JSON).
  *
  * Deterministic per index: the same level on every device. Every layout is
- * verified by a DFS solver that understands the full rule set — jokers,
- * stones, key blocks, taped columns and mixed capacities — and `par` is
- * calibrated from the found solution.
+ * verified by a DFS solver that understands the full rule set — stones,
+ * key blocks and taped columns — and `par` is calibrated from the found
+ * solution.
+ *
+ * Invariant of the whole game (never violated by generated levels): every
+ * color has exactly `cap` copies and every column has the same capacity, so
+ * a collected set never orphans blocks and the player never has to guess.
  */
 
 function mulberry32(seed: number): () => number {
@@ -32,54 +36,29 @@ function shuffle<T>(arr: T[], rng: () => number): T[] {
 
 interface SolverState {
   cols: ColorId[][];
-  caps: number[];
+  cap: number;
   locked: number; // -1 = none
   taped: Set<number>;
 }
 
-const matches = (a: number, b: number): boolean => {
-  if (a === SPECIAL.STONE || b === SPECIAL.STONE) return false;
-  if (a === SPECIAL.KEY || b === SPECIAL.KEY) return false;
-  return a === b || a === SPECIAL.JOKER || b === SPECIAL.JOKER;
-};
+const isSpecial = (c: number): boolean => c === SPECIAL.STONE || c === SPECIAL.KEY;
 
+/** Size of the liftable top group (equal colors; stone moves alone). */
 function topGroup(col: ColorId[]): number {
   if (col.length === 0) return 0;
   const top = col[col.length - 1];
   if (top === SPECIAL.STONE) return 1;
   if (top === SPECIAL.KEY) return 0;
   let n = 0;
-  let anchor: number = SPECIAL.JOKER;
-  for (let k = col.length - 1; k >= 0; k--) {
-    const c = col[k];
-    if (c === SPECIAL.STONE || c === SPECIAL.KEY) break;
-    if (c !== SPECIAL.JOKER) {
-      if (anchor !== SPECIAL.JOKER && c !== anchor) break;
-      anchor = c;
-    }
-    n++;
-  }
+  for (let k = col.length - 1; k >= 0 && col[k] === top; k--) n++;
   return n;
-}
-
-function groupColor(col: ColorId[]): number {
-  for (let k = col.length - 1, n = topGroup(col); n > 0; k--, n--) {
-    if (col[k] !== SPECIAL.JOKER) return col[k];
-  }
-  return SPECIAL.JOKER;
 }
 
 function isUniformFull(col: ColorId[], cap: number): boolean {
   if (col.length !== cap || cap === 0) return false;
-  let color: number = SPECIAL.JOKER;
-  for (const c of col) {
-    if (c === SPECIAL.STONE || c === SPECIAL.KEY) return false;
-    if (c !== SPECIAL.JOKER) {
-      if (color !== SPECIAL.JOKER && c !== color) return false;
-      color = c;
-    }
-  }
-  return true;
+  const first = col[0];
+  if (isSpecial(first)) return false;
+  return col.every((c) => c === first);
 }
 
 /** Reveal-free settlement: consume keys, break tape, auto-clear full sets. */
@@ -98,7 +77,7 @@ function settle(st: SolverState, emptied: number | null): void {
         st.cols[i] = col.slice(0, -1);
         if (st.locked >= 0) st.locked = -1;
         changed = true;
-      } else if (isUniformFull(col, st.caps[i])) {
+      } else if (isUniformFull(col, st.cap)) {
         st.cols[i] = [];
         if (st.taped.has(i)) {
           st.taped = new Set(st.taped);
@@ -112,10 +91,7 @@ function settle(st: SolverState, emptied: number | null): void {
 
 function stateKey(st: SolverState): string {
   return st.cols
-    .map(
-      (c, i) =>
-        `${st.caps[i]}${st.taped.has(i) ? 't' : ''}${i === st.locked ? 'L' : ''}:${c.join(',')}`,
-    )
+    .map((c, i) => `${st.taped.has(i) ? 't' : ''}${i === st.locked ? 'L' : ''}:${c.join(',')}`)
     .sort()
     .join('|');
 }
@@ -138,24 +114,24 @@ function solve(start: SolverState, nodeLimit = 50000): number {
         const from = st.cols[i];
         const grp = topGroup(from);
         if (grp === 0) continue;
-        const color = groupColor(from);
+        const color = from[from.length - 1];
         for (let j = 0; j < st.cols.length; j++) {
           if (i === j || j === st.locked || st.taped.has(j)) continue;
           const to = st.cols[j];
           if ((to.length === 0) !== wantEmpty) continue;
-          if (to.length >= st.caps[j]) continue;
+          if (to.length >= st.cap) continue;
           if (color === SPECIAL.STONE) {
             if (to.length !== 0) continue;
-          } else if (to.length > 0 && !matches(color, to[to.length - 1])) {
+          } else if (to.length > 0 && to[to.length - 1] !== color) {
             continue;
           }
-          if (to.length === 0 && grp === from.length && color !== SPECIAL.STONE && st.caps[i] >= st.caps[j]) {
-            continue; // pointless full-group shuffle to an equal/smaller empty
+          if (to.length === 0 && grp === from.length && color !== SPECIAL.STONE) {
+            continue; // pointless full-group shuffle to another empty
           }
-          const n = Math.min(grp, st.caps[j] - to.length);
+          const n = Math.min(grp, st.cap - to.length);
           const next: SolverState = {
             cols: st.cols.map((c) => c.slice()),
-            caps: st.caps,
+            cap: st.cap,
             locked: st.locked,
             taped: st.taped,
           };
@@ -169,7 +145,7 @@ function solve(start: SolverState, nodeLimit = 50000): number {
     return -1;
   }
   return dfs(
-    { cols: start.cols.map((c) => c.slice()), caps: start.caps, locked: start.locked, taped: new Set(start.taped) },
+    { cols: start.cols.map((c) => c.slice()), cap: start.cap, locked: start.locked, taped: new Set(start.taped) },
     0,
   );
 }
@@ -178,8 +154,7 @@ function solve(start: SolverState, nodeLimit = 50000): number {
 
 interface LevelSpec {
   colors: number;
-  mixedCaps: boolean;
-  jokers: number;
+  cap: number;
   stones: number;
   keyInPile: boolean;
   locked: boolean;
@@ -187,13 +162,15 @@ interface LevelSpec {
   hidden: boolean;
 }
 
-/** Phased introduction of mechanics, then rotating combinations that ramp. */
+/**
+ * Phased introduction of mechanics, then rotating combinations that ramp.
+ * 11-15 pure base curve, stone from 16, key block from 21, tape from 31.
+ */
 function specFor(index: number, rng: () => number): LevelSpec {
-  const pick = (arr: number[]) => arr[(rng() * arr.length) | 0];
+  const pick = <T>(arr: T[]): T => arr[(rng() * arr.length) | 0];
   const spec: LevelSpec = {
     colors: 6,
-    mixedCaps: true,
-    jokers: 0,
+    cap: 4,
     stones: 0,
     keyInPile: false,
     locked: false,
@@ -201,29 +178,35 @@ function specFor(index: number, rng: () => number): LevelSpec {
     hidden: true,
   };
   if (index < 15) {
-    // 11-15: mixed capacities intro
-    spec.colors = pick([5, 6]);
+    // 11-15: pure base ramp — more colors, denser boards, no new mechanics
+    spec.colors = index < 12 ? 6 : 7;
+    spec.cap = pick([3, 4]);
+    spec.locked = rng() < 0.4; // lock is already known from levels 7-10
   } else if (index < 20) {
-    // 16-20: joker intro
-    spec.jokers = 1;
-  } else if (index < 25) {
-    // 21-25: stone intro
+    // 16-20: stone intro
+    spec.colors = pick([6, 7]);
     spec.stones = 1;
-    spec.jokers = pick([0, 1]);
-  } else if (index < 30) {
-    // 26-30: key block + lock intro
+  } else if (index < 25) {
+    // 21-25: key block + lock intro
+    spec.colors = pick([6, 7]);
     spec.locked = true;
     spec.keyInPile = true;
-    spec.jokers = pick([0, 1]);
+  } else if (index < 30) {
+    // 26-30: stone + key combinations ramping
+    spec.colors = 7;
+    spec.stones = pick([1, 2]);
+    spec.locked = rng() < 0.6;
+    spec.keyInPile = spec.locked;
   } else if (index < 35) {
     // 31-35: taped column intro
+    spec.colors = pick([6, 7]);
     spec.taped = 1;
-    spec.jokers = pick([0, 1]);
+    spec.stones = pick([0, 1]);
   } else {
     // 36-100: rotating combinations, ramping up
     const hard = index >= 60;
     spec.colors = hard ? 7 : pick([6, 7]);
-    spec.jokers = pick(hard ? [0, 1] : [0, 1, 2]);
+    spec.cap = hard ? 4 : pick([3, 4]);
     spec.stones = pick(hard ? [0, 1, 2] : [0, 1]);
     spec.locked = rng() < 0.45;
     spec.keyInPile = spec.locked && rng() < 0.7;
@@ -235,8 +218,10 @@ function specFor(index: number, rng: () => number): LevelSpec {
       spec.taped = 0;
     }
   }
-  // board width guard: colors + empties(2+stones) + locked column <= 10
-  while (spec.colors + 2 + spec.stones + (spec.locked ? 1 : 0) > 10) spec.colors -= 1;
+  // board width guard: colors + slack + empties(2+stones) + lock <= 11
+  const width = () =>
+    spec.colors + (spec.stones + (spec.keyInPile ? 1 : 0) > 0 ? 1 : 0) + 2 + spec.stones + (spec.locked ? 1 : 0);
+  while (width() > 11) spec.colors -= 1;
   return spec;
 }
 
@@ -261,42 +246,30 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
     const rng = mulberry32(index * 7919 + attempt * 104729 + 13);
     const spec = specFor(index, rng);
 
-    // per-color home capacities
-    const homeCaps: number[] = [];
-    for (let c = 0; c < spec.colors; c++) {
-      homeCaps.push(spec.mixedCaps ? (rng() < 0.5 ? 3 : 4) : 4);
-    }
-    // jokers substitute individual color blocks
-    const counts = homeCaps.slice();
-    for (let j = 0; j < spec.jokers; j++) {
-      const c = (rng() * spec.colors) | 0;
-      if (counts[c] > 2) counts[c] -= 1;
-    }
+    // every color has exactly `cap` copies — the core arithmetic invariant
     const pool: ColorId[] = [];
-    counts.forEach((n, c) => {
-      for (let k = 0; k < n; k++) pool.push(c);
-    });
-    for (let j = 0; j < spec.jokers; j++) pool.push(SPECIAL.JOKER);
+    for (let c = 0; c < spec.colors; c++) {
+      for (let k = 0; k < spec.cap; k++) pool.push(c);
+    }
     for (let s = 0; s < spec.stones; s++) pool.push(SPECIAL.STONE);
     if (spec.locked && spec.keyInPile) pool.push(SPECIAL.KEY);
     shuffle(pool, rng);
 
-    // start layout: color columns (+ one slack column when specials overflow)
-    const caps = homeCaps.slice();
-    const overflow = pool.length - caps.reduce((a, b) => a + b, 0);
-    if (overflow > 0) caps.push(Math.max(3, Math.min(4, overflow + 1)));
-    const filled = caps.length;
-    for (let e = 0; e < 2 + spec.stones; e++) caps.push(3);
-
-    const cols: ColorId[][] = caps.map(() => []);
+    // start layout: `colors` full columns + slack column for specials
+    const specials = spec.stones + (spec.locked && spec.keyInPile ? 1 : 0);
+    const filled = spec.colors + (specials > 0 ? 1 : 0);
+    const cols: ColorId[][] = [];
     let p = 0;
-    for (let i = 0; i < filled && p < pool.length; i++) {
-      while (cols[i].length < caps[i] && p < pool.length) cols[i].push(pool[p++]);
+    for (let i = 0; i < filled; i++) {
+      const take = Math.min(spec.cap, pool.length - p);
+      cols.push(pool.slice(p, p + take));
+      p += take;
     }
     if (p < pool.length) continue; // did not fit; reshuffle
+    for (let e = 0; e < 2 + spec.stones; e++) cols.push([]);
 
     // no column may start completed
-    if (cols.some((c, i) => isUniformFull(c, caps[i]))) continue;
+    if (cols.some((c) => isUniformFull(c, spec.cap))) continue;
     // a key must not start on top of a pile (it would fire instantly)
     if (spec.keyInPile && cols.some((c) => c[c.length - 1] === SPECIAL.KEY)) continue;
 
@@ -306,22 +279,21 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
       if (cols[ti].length > 1) taped.push(ti);
     }
 
-    const solveCaps = spec.locked ? caps.concat([4]) : caps;
-    const solveCols = spec.locked ? cols.map((c) => c.slice()).concat([[]]) : cols.map((c) => c.slice());
+    const solveCols = cols.map((c) => c.slice());
+    if (spec.locked) solveCols.push([]);
     const solution = solve({
       cols: solveCols,
-      caps: solveCaps,
-      locked: spec.locked ? solveCaps.length - 1 : -1,
+      cap: spec.cap,
+      locked: spec.locked ? solveCols.length - 1 : -1,
       taped: new Set(taped),
     });
     if (solution > 0) {
       return {
         id,
-        cap: 4,
+        cap: spec.cap,
         par: Math.max(spec.colors + 1, Math.round(solution * 1.15)),
         difficulty: index + 1,
         columns: cols,
-        caps,
         hiddenBelowTop: spec.hidden,
         lockedColumn: spec.locked,
         tapedColumns: taped.length ? taped : undefined,

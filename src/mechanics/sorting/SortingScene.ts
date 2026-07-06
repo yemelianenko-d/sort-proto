@@ -25,7 +25,7 @@ const wallet = {
   lenses: GAME_SETTINGS.boosters.initialLenses,
 };
 
-type TutorialId = 'howto' | 'hidden' | 'locked' | 'joker' | 'stone' | 'keyblock' | 'taped';
+type TutorialId = 'howto' | 'hidden' | 'locked' | 'stone' | 'keyblock' | 'taped';
 
 export class SortingScene extends Phaser.Scene {
   private game_!: GameController;
@@ -123,7 +123,6 @@ export class SortingScene extends Phaser.Scene {
     if (!seen('howto')) id = 'howto';
     else if (m.hasHiddenBlocks() && !seen('hidden')) id = 'hidden';
     else if (m.lockedColumn !== null && !m.hasBlockOfColor(SPECIAL.KEY) && !seen('locked')) id = 'locked';
-    else if (m.hasBlockOfColor(SPECIAL.JOKER) && !seen('joker')) id = 'joker';
     else if (m.hasBlockOfColor(SPECIAL.STONE) && !seen('stone')) id = 'stone';
     else if (m.hasBlockOfColor(SPECIAL.KEY) && !seen('keyblock')) id = 'keyblock';
     else if (m.hasTapedColumns() && !seen('taped')) id = 'taped';
@@ -159,25 +158,13 @@ export class SortingScene extends Phaser.Scene {
     const g = this.add.graphics();
 
     // спецмеханіки: власні міні-сцени
-    if (id === 'joker' || id === 'stone') {
+    if (id === 'stone') {
       const cellSz = 34;
       const gg = this.add.graphics();
-      if (id === 'joker') {
-        gg.fillStyle(0xfffdf6, 1);
-        gg.fillRoundedRect(-cellSz / 2, -cellSz / 2, cellSz, cellSz, 7);
-        [0xc4453a, 0x3aa14f, 0x2f5db8].forEach((col, k) => {
-          gg.lineStyle(4, col, 0.95);
-          const off = (k - 1) * 8;
-          gg.lineBetween(-8 + off, 8, 8 + off, -8);
-        });
-        gg.lineStyle(2.2, 0x4a4f63, 1);
-        gg.strokeRoundedRect(-cellSz / 2, -cellSz / 2, cellSz, cellSz, 7);
-      } else {
-        gg.fillStyle(0xd3d6dd, 1);
-        gg.fillRoundedRect(-cellSz / 2, -cellSz / 2, cellSz, cellSz, 11);
-        gg.lineStyle(2.2, 0x5d6270, 1);
-        gg.strokeRoundedRect(-cellSz / 2, -cellSz / 2, cellSz, cellSz, 11);
-      }
+      gg.fillStyle(0xd3d6dd, 1);
+      gg.fillRoundedRect(-cellSz / 2, -cellSz / 2, cellSz, cellSz, 11);
+      gg.lineStyle(2.2, 0x5d6270, 1);
+      gg.strokeRoundedRect(-cellSz / 2, -cellSz / 2, cellSz, cellSz, 11);
       gg.setPosition(-58, 6);
       node.add(gg);
       // пунктирна дуга до колонки (та сама, що в howto)
