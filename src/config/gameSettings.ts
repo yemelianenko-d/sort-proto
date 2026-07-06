@@ -36,7 +36,7 @@ export const GAME_SETTINGS = {
   },
   lobby: {
     /** Grid shows this many cells in total (scrollable). */
-    totalCells: 100,
+    totalCells: 150,
   },
   layoutSizes: {
     hudHeight: 64,

@@ -210,6 +210,103 @@ export class SortingScene extends Phaser.Scene {
       if (hasTexture(this, 'icon_lock')) node.add(this.add.image(56, 4, 'icon_lock').setDisplaySize(18, 18));
       return { node, height: 84 };
     }
+    // dashed arc arrow, reused by the mini-scenes below
+    const arrow = (x0: number, x1: number, y = 2, lift = 22) => {
+      g.lineStyle(2.6, COLORS.ink, 0.9);
+      const pts = 9;
+      for (let i = 0; i < pts; i += 2) {
+        const t0 = i / pts;
+        const t1 = (i + 1) / pts;
+        const px = (tt: number) => x0 + tt * (x1 - x0);
+        const pyf = (tt: number) => y - Math.sin(tt * Math.PI) * lift;
+        g.lineBetween(px(t0), pyf(t0), px(t1), pyf(t1));
+      }
+      g.lineBetween(x1, y, x1 - 7, y - 8);
+      g.lineBetween(x1, y, x1 - 9, y + 1);
+    };
+
+    if (id === 'hidden') {
+      // сорочка -> та сама плитка лицем: суть механіки без зайвих стрілок
+      if (hasTexture(this, 'block_hidden')) {
+        node.add(this.add.image(-52, 6, 'block_hidden').setDisplaySize(36, 36));
+      }
+      arrow(-30, 32, 6, 20);
+      node.add(g);
+      if (hasTexture(this, 'block_1')) {
+        node.add(this.add.image(54, 6, 'block_1').setDisplaySize(36, 36));
+      }
+      if (hasTexture(this, 'icon_lens')) {
+        node.add(this.add.image(-52, 34, 'icon_lens').setDisplaySize(16, 16));
+      }
+      return { node, height: 84 };
+    }
+
+    if (id === 'target') {
+      // колонка з крейдяним прев'ю кольору + блок цього кольору летить у неї
+      if (hasTexture(this, 'block_1')) {
+        node.add(this.add.image(-56, 6, 'block_1').setDisplaySize(34, 34));
+      }
+      arrow(-36, 34, 4, 22);
+      node.add(g);
+      if (hasTexture(this, 'col_frame')) {
+        node.add(this.add.image(58, 4, 'col_frame').setDisplaySize(32, 78));
+      }
+      if (hasTexture(this, 'block_1')) {
+        for (let k = 0; k < 3; k++) {
+          node.add(
+            this.add
+              .image(58, 28 - k * 24, 'block_1')
+              .setDisplaySize(22, 22)
+              .setAlpha(0.22),
+          );
+        }
+      }
+      return { node, height: 92 };
+    }
+
+    if (id === 'chains') {
+      // зібраний набір -> іскра -> ланцюг на колонці
+      if (hasTexture(this, 'block_0')) {
+        for (let k = 0; k < 3; k++) {
+          node.add(this.add.image(-56, 26 - k * 21, 'block_0').setDisplaySize(19, 19));
+        }
+      }
+      arrow(-38, 30, 0, 24);
+      node.add(g);
+      if (hasTexture(this, 'col_frame')) {
+        node.add(this.add.image(58, 6, 'col_frame').setDisplaySize(32, 78));
+      }
+      if (hasTexture(this, 'deco_chain')) {
+        const frame = this.textures.getFrame('deco_chain');
+        node.add(
+          this.add
+            .image(58, -18, 'deco_chain')
+            .setScale(44 / frame.width)
+            .setAngle(-3)
+            .setTint(COLORS.pencil),
+        );
+      }
+      return { node, height: 96 };
+    }
+
+    if (id === 'multilock') {
+      // два ключі -> колонка з двома замками
+      if (hasTexture(this, 'icon_key')) {
+        node.add(this.add.image(-54, -10, 'icon_key').setDisplaySize(26, 26));
+        node.add(this.add.image(-54, 22, 'icon_key').setDisplaySize(26, 26));
+      }
+      arrow(-34, 32, 6, 22);
+      node.add(g);
+      if (hasTexture(this, 'col_frame')) {
+        node.add(this.add.image(58, 4, 'col_frame').setDisplaySize(32, 78));
+      }
+      if (hasTexture(this, 'icon_lock')) {
+        node.add(this.add.image(58, -12, 'icon_lock').setDisplaySize(18, 18));
+        node.add(this.add.image(58, 20, 'icon_lock').setDisplaySize(18, 18));
+      }
+      return { node, height: 92 };
+    }
+
     if (id === 'taped') {
       if (hasTexture(this, 'col_frame')) node.add(this.add.image(0, 6, 'col_frame').setDisplaySize(34, 80));
       if (hasTexture(this, 'deco_tape')) {
@@ -221,9 +318,9 @@ export class SortingScene extends Phaser.Scene {
       return { node, height: 92 };
     }
 
-    const blockKey = id === 'hidden' ? 'block_hidden' : 'block_0';
-    const block = hasTexture(this, blockKey)
-      ? this.add.image(-58, 6, blockKey).setDisplaySize(36, 36)
+    // generic scene for 'howto' and 'locked': a block flies into a column
+    const block = hasTexture(this, 'block_0')
+      ? this.add.image(-58, 6, 'block_0').setDisplaySize(36, 36)
       : this.add.text(-58, 6, '■', { fontSize: '30px' }).setOrigin(0.5);
     node.add(block);
 
@@ -248,9 +345,6 @@ export class SortingScene extends Phaser.Scene {
       const lockKey = hasTexture(this, 'icon_lock') ? 'icon_lock' : null;
       if (lockKey) node.add(this.add.image(58, 4, lockKey).setDisplaySize(18, 18));
       if (hasTexture(this, 'icon_key')) node.add(this.add.image(58, 44, 'icon_key').setDisplaySize(16, 16));
-    }
-    if (id === 'hidden' && hasTexture(this, 'icon_lens')) {
-      node.add(this.add.image(-58, 44, 'icon_lens').setDisplaySize(17, 17));
     }
     return { node, height: 84 };
   }
@@ -305,11 +399,13 @@ export class SortingScene extends Phaser.Scene {
       h - top - hudHeight - boosterBarHeight - safe.bottom - 8,
     );
 
-    // дудли лише на бічних полях (на телефоні їх немає — і не треба)
-    const boardH = h - top - hudHeight - boosterBarHeight - safe.bottom - 8;
+    // дудли лише на бічних полях: зона виключення — реальні межі колонок
+    // (з запасом), а не фіксована смуга, щоб широкі рівні не накривали дудли
+    const board = this.view.contentBounds;
+    const pad = 28;
     scatterDoodles(this, this.doodles, w, h, [
       { x: 0, y: 0, w, h: top + hudHeight },
-      { x: w / 2 - 260, y: top + hudHeight - 10, w: 520, h: boardH + 20 },
+      { x: board.x - pad, y: board.y - pad, w: board.w + pad * 2, h: board.h + pad * 2 },
       { x: 0, y: h - safe.bottom - boosterBarHeight - 10, w, h: boosterBarHeight + safe.bottom + 10 },
     ], this.doodleSeed, 6, SORTING_DOODLE_KEYS);
     // re-apply selection highlight after a resize rebuild

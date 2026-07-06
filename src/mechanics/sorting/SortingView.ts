@@ -78,6 +78,20 @@ export class SortingView implements SortingViewContract {
     return this.layout?.cell ?? 48;
   }
 
+  /** World-space bounds of the actual columns (for doodle exclusion). */
+  get contentBounds(): { x: number; y: number; w: number; h: number } {
+    const l = this.layout;
+    if (!l || l.positions.length === 0) {
+      return { x: this.area.x, y: this.area.y, w: this.area.width, h: this.area.height };
+    }
+    const xs = l.positions.map((p) => p.x);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs) + l.colWidth;
+    const maxH = Math.max(...l.colHeights);
+    const minY = Math.min(...l.positions.map((p) => p.y));
+    return { x: this.area.x + minX, y: this.area.y + minY, w: maxX - minX, h: maxH };
+  }
+
   /* ---------------- building ---------------- */
 
   rebuild(
@@ -188,14 +202,11 @@ export class SortingView implements SortingViewContract {
     isSelected: boolean,
     isTarget: boolean,
   ): Phaser.GameObjects.GameObject {
-    const chained = this.model.chainedColumn === columnIndex;
-    const key = chained
-      ? 'col_frame_chained'
-      : isSelected
-        ? ASSET_KEYS.columnFrameSelected
-        : isTarget
-          ? ASSET_KEYS.columnFrameTarget
-          : ASSET_KEYS.columnFrame;
+    const key = isSelected
+      ? ASSET_KEYS.columnFrameSelected
+      : isTarget
+        ? ASSET_KEYS.columnFrameTarget
+        : ASSET_KEYS.columnFrame;
     const fallbackKey = ASSET_KEYS.columnFrame;
     const exact = hasTexture(this.scene, key);
     const useKey = exact ? key : hasTexture(this.scene, fallbackKey) ? fallbackKey : null;
