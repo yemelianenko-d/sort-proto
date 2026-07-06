@@ -264,32 +264,37 @@ export class SortingModel {
 
   /** Unlocks the locked column (key booster). Permanent: not undo-able. */
   /** Every lock is off: remaining key blocks are dead weight and dissolve. */
-  private purgeKeyBlocks(): number[] {
-    const purged: number[] = [];
+  private purgeKeyBlocks(): { col: number; slot: number; hidden: boolean }[] {
+    const purged: { col: number; slot: number; hidden: boolean }[] = [];
     this.columns.forEach((col, ci) => {
       for (let k = col.length - 1; k >= 0; k--) {
         if (col[k].color === SPECIAL.KEY) {
+          purged.push({ col: ci, slot: k, hidden: col[k].hidden });
           col.splice(k, 1);
-          purged.push(ci);
         }
       }
     });
     return purged;
   }
 
-  /** Booster key: removes one lock; returns the column and whether it opened. */
-  unlockColumn(): { column: number; opened: boolean } | null {
+  /** Booster key: removes one lock; returns the column, whether it opened,
+   * and any key blocks dissolved as dead weight (for the view animation). */
+  unlockColumn(): {
+    column: number;
+    opened: boolean;
+    dissolved: { col: number; slot: number; hidden: boolean }[];
+  } | null {
     if (this.lockedColumn === null) return null;
     this.boosterKeys += 1;
     this.locksRemaining -= 1;
     if (this.locksRemaining <= 0) {
       const column = this.lockedColumn;
       this.lockedColumn = null;
-      this.purgeKeyBlocks();
+      const dissolved = this.purgeKeyBlocks();
       this.settle(null); // reveal tops uncovered by the purge
-      return { column, opened: true };
+      return { column, opened: true, dissolved };
     }
-    return { column: this.lockedColumn, opened: false };
+    return { column: this.lockedColumn, opened: false, dissolved: [] };
   }
 
   hasHiddenBlocks(): boolean {
@@ -353,11 +358,13 @@ export class SortingModel {
   private settle(emptiedFrom: number | null): {
     revealed: number[];
     keysConsumed: number[];
+    keysDissolved: { col: number; slot: number; hidden: boolean }[];
     keyUnlocked: number | null;
     tapeBroken: number | null;
   } {
     const revealed: number[] = [];
     const keysConsumed: number[] = [];
+    const keysDissolved: { col: number; slot: number; hidden: boolean }[] = [];
     let keyUnlocked: number | null = null;
     let tapeBroken: number | null = null;
 
@@ -386,14 +393,16 @@ export class SortingModel {
             if (this.locksRemaining <= 0) {
               keyUnlocked = this.lockedColumn;
               this.lockedColumn = null;
-              keysConsumed.push(...this.purgeKeyBlocks());
+              const purged = this.purgeKeyBlocks();
+              keysDissolved.push(...purged);
+              keysConsumed.push(...purged.map((p) => p.col));
             }
           }
           changed = true;
         }
       });
     }
-    return { revealed, keysConsumed, keyUnlocked, tapeBroken };
+    return { revealed, keysConsumed, keysDissolved, keyUnlocked, tapeBroken };
   }
 
   private pushSnapshot(): void {

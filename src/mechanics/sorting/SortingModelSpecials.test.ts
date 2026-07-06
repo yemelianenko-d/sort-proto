@@ -81,7 +81,7 @@ describe('SortingModel specials', () => {
     const lockCol = m.columns.length - 1;
     expect(m.locksLeft).toBe(2);
     const booster = m.unlockColumn(); // booster removes one lock
-    expect(booster).toEqual({ column: lockCol, opened: false });
+    expect(booster).toEqual({ column: lockCol, opened: false, dissolved: [] });
     expect(m.locksLeft).toBe(1);
     m.move(0, 1); // uncovers the key block -> consumed -> second lock opens
     expect(m.lockedColumn).toBeNull();
@@ -112,6 +112,21 @@ describe('SortingModel specials', () => {
     m.move(0, 4); // uncover key A -> consumed -> last lock opens -> key B dissolves
     expect(m.lockedColumn).toBeNull();
     expect(m.hasBlockOfColor(SPECIAL.KEY)).toBe(false);
+  });
+
+  it('a hidden dissolved key is reported as hidden (flips face-up before fading)', () => {
+    const m = new SortingModel(
+      cfg({
+        cap: 3,
+        columns: [[SPECIAL.KEY, 0], [0], [0], []],
+        lockedColumn: true,
+        hiddenBelowTop: true,
+      }),
+    );
+    expect(m.columns[0][0].hidden).toBe(true); // the buried key starts hidden
+    const res = m.unlockColumn();
+    expect(res?.opened).toBe(true);
+    expect(res?.dissolved).toEqual([{ col: 0, slot: 0, hidden: true }]);
   });
 
   it('undo keeps booster-dissolved keys gone (booster effects are permanent)', () => {

@@ -393,6 +393,60 @@ export class SortingView implements SortingViewContract {
     });
   }
 
+  /** Dead-weight keys after the last lock opened: a hidden one first flips
+   * face-up, then the key fades away; a visible one just fades. */
+  animateKeyDissolve(entries: { col: number; slot: number; hidden: boolean }[]): void {
+    for (const e of entries) {
+      const pos = this.layout.positions[e.col];
+      if (!pos) continue;
+      const { x, y } = this.blockLocalPos(e.slot, e.col);
+      const wx = this.area.x + pos.x + x;
+      const wy = this.area.y + pos.y + y;
+
+      const dissolve = (sprite: Phaser.GameObjects.Container, delay: number) => {
+        this.scene.tweens.add({
+          targets: sprite,
+          alpha: 0,
+          scale: 0.55,
+          y: wy - 14,
+          delay,
+          duration: 320,
+          ease: 'Sine.easeIn',
+          onComplete: () => sprite.destroy(),
+        });
+      };
+
+      if (e.hidden) {
+        // flip: hidden skin closes, the key opens, holds a beat, then fades
+        const back = this.buildBlock(-1).setPosition(wx, wy).setDepth(30);
+        this.root.add(back);
+        this.scene.tweens.add({
+          targets: back,
+          scaleX: 0,
+          duration: 140,
+          ease: 'Sine.easeIn',
+          onComplete: () => {
+            back.destroy();
+            const key = this.buildBlock(SPECIAL.KEY).setPosition(wx, wy).setDepth(30);
+            key.scaleX = 0;
+            this.root.add(key);
+            this.scene.tweens.add({
+              targets: key,
+              scaleX: 1,
+              duration: 160,
+              ease: 'Back.easeOut',
+            });
+            dissolve(key, 420);
+          },
+        });
+      } else {
+        const key = this.buildBlock(SPECIAL.KEY).setPosition(wx, wy).setDepth(30);
+        this.root.add(key);
+        dissolve(key, 120);
+      }
+    }
+  }
+
   /** Star badge on the set-locked column: complete N sets to open it. */
   private addSetLockDecor(container: Phaser.GameObjects.Container, ci: number): void {
     const colH = this.layout.colHeights[ci];
@@ -413,43 +467,34 @@ export class SortingView implements SortingViewContract {
     const colH = this.layout.colHeights[ci];
     const cx = this.layout.colWidth / 2;
 
-    // Key-block levels use the artist badge on the top edge (the "dig out the
-    // key" combo look); a plain locked column keeps the classic centered lock.
-    const hasKeyBlock = this.model.hasBlockOfColor(SPECIAL.KEY);
-    if (hasKeyBlock && hasTexture(this.scene, 'icon_lock_col')) {
-      // one badge per remaining lock, side by side on the top edge
-      const frame = this.scene.textures.getFrame('icon_lock_col');
-      const n = Math.max(1, this.model.locksLeft);
-      const w = this.layout.colWidth * (n > 1 ? 0.32 : 0.4);
-      const spacing = this.layout.colWidth * 0.36;
-      for (let k = 0; k < n; k++) {
+    // The one and only locked look: N centered locks stacked vertically
+    // (one per remaining lock). A small key silhouette beside a lock means
+    // "a key for this lock is somewhere in the pile" — so the player can
+    // decide whether the booster is worth spending.
+    const n = Math.max(1, this.model.locksLeft);
+    const keysInPile = this.model.columns.reduce(
+      (acc, col) => acc + col.filter((b) => b.color === SPECIAL.KEY).length,
+      0,
+    );
+    const hints = Math.min(keysInPile, n);
+    const gap = 40;
+    for (let k = 0; k < n; k++) {
+      const ly = colH / 2 + (k - (n - 1) / 2) * gap;
+      if (hasTexture(this.scene, ASSET_KEYS.iconLock)) {
+        container.add(this.scene.add.image(cx, ly, ASSET_KEYS.iconLock).setDisplaySize(30, 30));
+      } else {
         container.add(
-          this.scene.add
-            .image(cx + (k - (n - 1) / 2) * spacing, 6, 'icon_lock_col')
-            .setOrigin(0.5, 0.62)
-            .setDisplaySize(w, (w * frame.height) / frame.width),
+          this.scene.add.text(cx, ly, '🔒', { fontSize: '24px' }).setOrigin(0.5),
         );
       }
-    } else if (hasTexture(this.scene, ASSET_KEYS.iconLock)) {
-      container.add(
-        this.scene.add.image(cx, colH / 2, ASSET_KEYS.iconLock).setDisplaySize(30, 30),
-      );
-    } else {
-      container.add(
-        this.scene.add.text(cx, colH / 2, '🔒', { fontSize: '24px' }).setOrigin(0.5),
-      );
-    }
-    const badges = hasKeyBlock && hasTexture(this.scene, 'icon_lock_col');
-    if (!badges && this.model.locksLeft > 1) {
-      container.add(
-        this.scene.add
-          .text(cx + 16, colH / 2 + 12, `×${this.model.locksLeft}`, {
-            fontFamily: FONTS.body,
-            fontSize: '14px',
-            color: COLORS.inkCss,
-          })
-          .setOrigin(0.5),
-      );
+      if (k < hints && hasTexture(this.scene, 'icon_key')) {
+        container.add(
+          this.scene.add
+            .image(cx + 20, ly + 10, 'icon_key')
+            .setDisplaySize(15, 15)
+            .setAlpha(0.9),
+        );
+      }
     }
 
     // sticky tag under the column: the same key icon as the booster button

@@ -31,6 +31,9 @@ export interface MoveResult {
   /** Columns where a key block was removed this move (consumed or dissolved
    * as dead weight after the last lock opened). */
   keysConsumed: number[];
+  /** Key blocks dissolved as dead weight this move, with their original slot
+   * and visibility (hidden ones flip face-up before dissolving). */
+  keysDissolved: { col: number; slot: number; hidden: boolean }[];
   /** The formerly locked column, if a key block just opened it. */
   keyUnlocked: number | null;
   /** The set-locked column, if the set completed this move opened it. */
@@ -88,6 +91,8 @@ export interface SortingViewContract {
   flashTargetHint(columnIndex: number): void;
   /** Brief tape wiggle when a drop into a taped column is rejected. */
   wiggleTape(columnIndex: number): void;
+  /** Dead-weight keys dissolve: hidden ones flip face-up first, then fade. */
+  animateKeyDissolve(entries: { col: number; slot: number; hidden: boolean }[]): void;
   pulseColumn(columnIndex: number): void;
   clearPulse(): void;
 }

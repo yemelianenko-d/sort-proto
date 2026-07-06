@@ -144,6 +144,7 @@ export class SortingController {
     });
 
     this.view.rebuild({ landedColumn: to, landedCount: result.count, revealed: result.revealed });
+    if (result.keysDissolved.length > 0) this.view.animateKeyDissolve(result.keysDissolved);
     this.callbacks.onStateChanged();
 
     if (result.readyToClear !== null) {
@@ -229,6 +230,7 @@ export class SortingController {
       actions_count: this.model.moves,
     });
     this.view.rebuild({ landedColumn: res.column, landedCount: 0 });
+    if (res.dissolved.length > 0) this.view.animateKeyDissolve(res.dissolved);
     this.callbacks.onStateChanged();
     return true;
   }

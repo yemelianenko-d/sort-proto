@@ -39,6 +39,10 @@ class StubView implements SortingViewContract {
   wiggleTape(columnIndex: number): void {
     this.wiggles.push(columnIndex);
   }
+  dissolves: { col: number; slot: number; hidden: boolean }[][] = [];
+  animateKeyDissolve(entries: { col: number; slot: number; hidden: boolean }[]): void {
+    this.dissolves.push(entries);
+  }
   pulses: number[] = [];
   pulseColumn(columnIndex: number): void {
     this.pulses.push(columnIndex);
