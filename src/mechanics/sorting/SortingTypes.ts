@@ -115,6 +115,8 @@ export interface SortingViewContract {
   /** A spark flies from the cleared set to the chained column and the ghost
    * chain snaps in two; call after a rebuild that rendered the ghost. */
   animateChainBreak(fromColumn: number, onDone: () => void): void;
+  /** The emptied taped column: the tape peels off and flutters away. */
+  animateTapePeel(columnIndex: number): void;
   pulseColumn(columnIndex: number): void;
   clearPulse(): void;
 }

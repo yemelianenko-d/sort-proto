@@ -386,6 +386,49 @@ export class SortingView implements SortingViewContract {
     }
   }
 
+  /** The taped column just emptied: the tape peels from one end, curls and
+   * flutters away. Plays as an overlay right after the rebuild removed it. */
+  animateTapePeel(ci: number): void {
+    if (!hasTexture(this.scene, 'deco_tape')) return;
+    const pos = this.layout.positions[ci];
+    if (!pos) return;
+    const frame = this.scene.textures.getFrame('deco_tape');
+    const scale = (this.layout.colWidth * 1.35) / frame.width;
+    // anchored near the left end so the peel rotates around it
+    const cx = this.area.x + pos.x + this.layout.colWidth / 2;
+    const cy = this.area.y + pos.y + 4;
+    const tape = this.scene.add
+      .image(cx - frame.width * scale * 0.42, cy, 'deco_tape')
+      .setOrigin(0.08, 0.5)
+      .setScale(scale)
+      .setAngle(-5)
+      .setDepth(40);
+    this.root.add(tape);
+
+    // 1) peel up around the anchored end
+    this.scene.tweens.add({
+      targets: tape,
+      angle: -46,
+      y: cy - 6,
+      scaleY: scale * 0.82, // slight curl
+      duration: 240,
+      ease: 'Cubic.easeIn',
+      onComplete: () => {
+        // 2) let go: flutters up-right and fades
+        this.scene.tweens.add({
+          targets: tape,
+          x: tape.x + 30,
+          y: tape.y - 44,
+          angle: -85,
+          alpha: 0,
+          duration: 300,
+          ease: 'Sine.easeOut',
+          onComplete: () => tape.destroy(),
+        });
+      },
+    });
+  }
+
   /** Rejected drop into a taped column: the tape wiggles briefly. */
   wiggleTape(ci: number): void {
     const tape = this.tapeOverlays.get(ci) as Phaser.GameObjects.Image | undefined;
