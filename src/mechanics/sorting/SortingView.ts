@@ -390,9 +390,9 @@ export class SortingView implements SortingViewContract {
     const dark = (((t >> 16) & 255) * 0.8 << 16) | ((((t >> 8) & 255) * 0.8) << 8) | (((t & 255) * 0.8) | 0);
     const ar = this.scene.add.graphics();
     ar.lineStyle(3, dark, 0.95);
-    ar.lineBetween(cx, -16, cx, 2);
-    ar.lineBetween(cx, 2, cx - 6, -6);
-    ar.lineBetween(cx, 2, cx + 6, -6);
+    ar.lineBetween(cx, -28, cx, -10);
+    ar.lineBetween(cx, -10, cx - 6, -18);
+    ar.lineBetween(cx, -10, cx + 6, -18);
     container.add(ar);
   }
 
