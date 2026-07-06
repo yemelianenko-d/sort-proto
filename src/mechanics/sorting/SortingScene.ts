@@ -322,14 +322,34 @@ export class SortingScene extends Phaser.Scene {
     }
 
     if (id === 'taped') {
-      if (hasTexture(this, 'col_frame')) node.add(this.add.image(0, 6, 'col_frame').setDisplaySize(34, 80));
+      // блок із перекресленою стрілкою: класти в заклеєну колонку не можна
+      if (hasTexture(this, 'block_0')) {
+        node.add(this.add.image(-56, 10, 'block_0').setDisplaySize(32, 32));
+      }
+      g.lineStyle(2.6, COLORS.ink, 0.9);
+      const pts = 9;
+      for (let i = 0; i < pts; i += 2) {
+        const t0 = i / pts;
+        const t1 = (i + 1) / pts;
+        const px = (tt: number) => -36 + tt * 70;
+        const pyf = (tt: number) => 8 - Math.sin(tt * Math.PI) * 20;
+        g.lineBetween(px(t0), pyf(t0), px(t1), pyf(t1));
+      }
+      g.lineBetween(34, 8, 27, 0);
+      g.lineBetween(34, 8, 25, 9);
+      // перекреслено червоним
+      g.lineStyle(3.2, 0xb23317, 0.95);
+      g.lineBetween(-8, -22, 8, -2);
+      g.lineBetween(8, -22, -8, -2);
+      node.add(g);
+      if (hasTexture(this, 'col_frame')) node.add(this.add.image(58, 6, 'col_frame').setDisplaySize(34, 80));
       if (hasTexture(this, 'deco_tape')) {
-        const tape = this.add.image(0, -26, 'deco_tape').setAngle(-20);
+        const tape = this.add.image(58, -28, 'deco_tape').setAngle(-6);
         const frame = this.textures.getFrame('deco_tape');
         tape.setScale(48 / frame.width);
         node.add(tape);
       }
-      return { node, height: 92 };
+      return { node, height: 96 };
     }
 
     // generic scene for 'howto' and 'locked': a block flies into a column
