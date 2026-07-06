@@ -350,7 +350,7 @@ export class SortingScene extends Phaser.Scene {
       label: t.restart,
       iconKey: 'icon_restart',
       iconOnly: true,
-      onClick: () => this.restart('button'),
+      onClick: () => this.confirmRestart(),
     });
 
     this.undoBtn = new Button(this, 0, 0, {
@@ -443,6 +443,7 @@ export class SortingScene extends Phaser.Scene {
   private refreshHud(): void {
     const t = UI_TEXTS.hud;
     this.hudMoves.setText(t.moves(this.model.moves));
+    this.restartBtn.setEnabled(this.model.moves > 0 && !this.controller.isBusy);
     this.undoBtn
       .setLabel(hasTexture(this, 'icon_undo') ? t.countOnly(wallet.undos) : t.undo)
       .setEnabled(wallet.undos > 0 && this.model.canUndo && !this.controller.isBusy);
@@ -456,6 +457,35 @@ export class SortingScene extends Phaser.Scene {
   }
 
   /* ---------------- flow ---------------- */
+
+  /** The top-right restart asks for confirmation (progress + boosters burn). */
+  private confirmRestart(): void {
+    if (this.popupOpen || this.model.moves === 0) return;
+    this.popupOpen = true;
+    const t = UI_TEXTS.restartConfirm;
+    new Popup(this, {
+      icon: 'icon_restart',
+      emoji: '↺',
+      title: t.title,
+      body: t.body,
+      actions: [
+        {
+          label: t.no,
+          onClick: () => {
+            this.popupOpen = false;
+          },
+        },
+        {
+          label: t.yes,
+          primary: true,
+          onClick: () => {
+            this.popupOpen = false;
+            this.restart('button');
+          },
+        },
+      ],
+    });
+  }
 
   restart(source: 'button' | 'deadlock' | 'debug'): void {
     eventBus.emit('level_restarted', {
