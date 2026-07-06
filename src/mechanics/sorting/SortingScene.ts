@@ -6,6 +6,12 @@ import { eventBus } from '../../core/events/EventBus';
 import type { GameController } from '../../core/game/GameController';
 import { PaperBackground } from '../../ui/sketch';
 import { scatterDoodles } from '../../ui/doodles';
+
+/** Sorting one-liner doodles: scoped to this mechanic only (see doodles.ts). */
+const SORTING_DOODLE_KEYS = Array.from(
+  { length: 10 },
+  (_, i) => `deco_sort_${String(i + 1).padStart(2, '0')}`,
+);
 import { Button } from '../../ui/Button';
 import { Popup, type PopupAction } from '../../ui/Popup';
 import { ResponsiveContainer } from '../../ui/ResponsiveContainer';
@@ -296,7 +302,7 @@ export class SortingScene extends Phaser.Scene {
       { x: 0, y: 0, w, h: top + hudHeight },
       { x: w / 2 - 260, y: top + hudHeight - 10, w: 520, h: boardH + 20 },
       { x: 0, y: h - safe.bottom - boosterBarHeight - 10, w, h: boosterBarHeight + safe.bottom + 10 },
-    ], this.doodleSeed, 4);
+    ], this.doodleSeed, 6, SORTING_DOODLE_KEYS);
     // re-apply selection highlight after a resize rebuild
     if (this.controller.selectedColumn >= 0) {
       this.view.rebuild({ selected: this.controller.selectedColumn });

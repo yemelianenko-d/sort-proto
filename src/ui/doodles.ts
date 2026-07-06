@@ -8,7 +8,8 @@ export interface DoodleRect {
   h: number;
 }
 
-const DOODLE_KEYS = Array.from({ length: 20 }, (_, i) => `deco_doodle_${String(i + 1).padStart(2, '0')}`);
+/** Universal doodles: usable on any scene of any mechanic. */
+const DOODLE_KEYS = Array.from({ length: 30 }, (_, i) => `deco_doodle_${String(i + 1).padStart(2, '0')}`);
 
 function mulberry32(seed: number): () => number {
   let s = seed | 0;
@@ -30,6 +31,9 @@ function overlaps(r: DoodleRect, list: DoodleRect[], pad: number): boolean {
  * Scatters faint hand-drawn doodles over the paper, avoiding the given
  * exclusion zones (UI and play areas). Deterministic per seed: the set is
  * stable within one scene visit, and fresh on the next one.
+ *
+ * `extraKeys` are mechanic-scoped doodles (e.g. sorting one-liners): pass
+ * them only from that mechanic's scenes so they never leak elsewhere.
  */
 export function scatterDoodles(
   scene: Phaser.Scene,
@@ -38,10 +42,11 @@ export function scatterDoodles(
   h: number,
   exclude: DoodleRect[],
   seed: number,
-  count = 6,
+  count = 8,
+  extraKeys: string[] = [],
 ): void {
   container.removeAll(true);
-  const keys = DOODLE_KEYS.filter((k) => hasTexture(scene, k));
+  const keys = [...DOODLE_KEYS, ...extraKeys].filter((k) => hasTexture(scene, k));
   if (keys.length === 0) return;
   const rng = mulberry32(seed);
   const placed: DoodleRect[] = [];

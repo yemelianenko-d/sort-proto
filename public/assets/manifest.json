@@ -244,6 +244,86 @@
     {
       "key": "icon_lock_col",
       "url": "assets/images/icon_lock_col.png"
+    },
+    {
+      "key": "deco_sort_01",
+      "url": "assets/images/deco_sort_01.png"
+    },
+    {
+      "key": "deco_sort_02",
+      "url": "assets/images/deco_sort_02.png"
+    },
+    {
+      "key": "deco_sort_03",
+      "url": "assets/images/deco_sort_03.png"
+    },
+    {
+      "key": "deco_sort_04",
+      "url": "assets/images/deco_sort_04.png"
+    },
+    {
+      "key": "deco_sort_05",
+      "url": "assets/images/deco_sort_05.png"
+    },
+    {
+      "key": "deco_sort_06",
+      "url": "assets/images/deco_sort_06.png"
+    },
+    {
+      "key": "deco_sort_07",
+      "url": "assets/images/deco_sort_07.png"
+    },
+    {
+      "key": "deco_sort_08",
+      "url": "assets/images/deco_sort_08.png"
+    },
+    {
+      "key": "deco_sort_09",
+      "url": "assets/images/deco_sort_09.png"
+    },
+    {
+      "key": "deco_sort_10",
+      "url": "assets/images/deco_sort_10.png"
+    },
+    {
+      "key": "deco_doodle_21",
+      "url": "assets/images/deco_doodle_21.png"
+    },
+    {
+      "key": "deco_doodle_22",
+      "url": "assets/images/deco_doodle_22.png"
+    },
+    {
+      "key": "deco_doodle_23",
+      "url": "assets/images/deco_doodle_23.png"
+    },
+    {
+      "key": "deco_doodle_24",
+      "url": "assets/images/deco_doodle_24.png"
+    },
+    {
+      "key": "deco_doodle_25",
+      "url": "assets/images/deco_doodle_25.png"
+    },
+    {
+      "key": "deco_doodle_26",
+      "url": "assets/images/deco_doodle_26.png"
+    },
+    {
+      "key": "deco_doodle_27",
+      "url": "assets/images/deco_doodle_27.png"
+    },
+    {
+      "key": "deco_doodle_28",
+      "url": "assets/images/deco_doodle_28.png"
+    },
+    {
+      "key": "deco_doodle_29",
+      "url": "assets/images/deco_doodle_29.png"
+    },
+    {
+      "key": "deco_doodle_30",
+      "url": "assets/images/deco_doodle_30.png"
     }
   ],
   "atlases": [],
