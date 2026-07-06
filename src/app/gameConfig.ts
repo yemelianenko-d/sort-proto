@@ -42,6 +42,15 @@ export const BLOCK_STYLES: BlockStyle[] = [
   { ink: 0x4a4a4a, pattern: 'solid', glyph: '◻' },
 ];
 
+/** Perceived block colors sampled from the art textures (block_N.png) —
+ * the art palette differs from BLOCK_STYLES.ink (stroke constants), and the
+ * player's eye compares against the art. Use these wherever UI must match a
+ * block color (chains, target arrows). Regenerate after art changes:
+ * `node tools/art/sample-block-tints.mjs`. */
+export const BLOCK_TINTS: number[] = [
+  0xf07f7b, 0x5685f9, 0x3bb04e, 0xf8b575, 0x9b62cb, 0x9a6e4c, 0x3cb6ba, 0xee6396,
+];
+
 export const FONTS = {
   display: 'Caveat, cursive',
   body: 'Neucha, cursive',

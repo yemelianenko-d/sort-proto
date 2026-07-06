@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { BLOCK_STYLES, COLORS, FONTS } from '../../app/gameConfig';
+import { BLOCK_STYLES, BLOCK_TINTS, COLORS, FONTS } from '../../app/gameConfig';
 import { computeColumnLayout, type ColumnLayout, BLOCK_GAP } from '../../core/utils/layout';
 import { strokeSketchRect, fillPattern } from '../../ui/sketch';
 import { setContainerTapArea } from '../../ui/containerTapArea';
@@ -385,9 +385,11 @@ export class SortingView implements SortingViewContract {
 
     // маленька стрілка кольору колонки над верхнім краєм: "цей колір — сюди"
     const cx = this.layout.colWidth / 2;
-    const ink = BLOCK_STYLES[color].ink;
+    // трохи темніший за сприйнятий колір арту, щоб штрих читався на папері
+    const t = BLOCK_TINTS[color];
+    const dark = (((t >> 16) & 255) * 0.8 << 16) | ((((t >> 8) & 255) * 0.8) << 8) | (((t & 255) * 0.8) | 0);
     const ar = this.scene.add.graphics();
-    ar.lineStyle(3, ink, 0.95);
+    ar.lineStyle(3, dark, 0.95);
     ar.lineBetween(cx, -16, cx, 2);
     ar.lineBetween(cx, 2, cx - 6, -6);
     ar.lineBetween(cx, 2, cx + 6, -6);
@@ -846,7 +848,7 @@ export class SortingView implements SortingViewContract {
           .image(cx, y, 'deco_chain')
           .setScale((this.layout.colWidth * 1.18) / frame.width)
           .setAngle(k % 2 === 0 ? -3 : 3)
-          .setTint(chain.value >= 0 ? BLOCK_STYLES[chain.value].ink : COLORS.pencil);
+          .setTint(chain.value >= 0 ? BLOCK_TINTS[chain.value] : COLORS.pencil);
         container.add(img);
         this.chainSprites.push(img);
         if (chain.isGhost && pos) {
@@ -858,7 +860,7 @@ export class SortingView implements SortingViewContract {
     // fallback: hand-drawn bars in the chain colors
     const g = this.scene.add.graphics();
     chains.forEach((chain, k) => {
-      const color = chain.value >= 0 ? BLOCK_STYLES[chain.value].ink : COLORS.pencil;
+      const color = chain.value >= 0 ? BLOCK_TINTS[chain.value] : COLORS.pencil;
       g.fillStyle(color, 0.85);
       g.fillRoundedRect(-4, 24 + k * 26, this.layout.colWidth + 8, 10, 5);
       if (chain.isGhost && pos) {
