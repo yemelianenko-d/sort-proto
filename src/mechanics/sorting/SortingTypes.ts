@@ -59,17 +59,10 @@ export interface SortingLevelConfig {
   hiddenBelowTop?: boolean;
   /** Keys needed to open the locked column (default 1). */
   lockedColumnLocks?: number;
-  /** Color blocks trapped inside the locked column (visible, untouchable
-   * until unlocked). Only for key-in-pile locks: forcing a booster spend
-   * would be pay-to-win, so booster-only locks stay an empty bonus. */
-  lockedColumnBlocks?: number[];
   /** Extra column wrapped in chains. Each entry is one chain: -1 is neutral
    * (any completed set removes it), a color id means only that color's set
    * removes it. The column opens when no chains remain. */
   chains?: number[];
-  /** Color blocks trapped inside the chained column (visible, untouchable
-   * until every chain falls) — they make opening it genuinely necessary. */
-  chainedColumnBlocks?: number[];
   /** Empty columns that accept only the given color as their FIRST block. */
   targetColumns?: { col: number; color: number }[];
   lockedColumn?: boolean;

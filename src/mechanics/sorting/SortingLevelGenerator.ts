@@ -314,12 +314,6 @@ function specFor(index: number, rng: () => number): LevelSpec {
 
 /* ---------------- generation ---------------- */
 
-/** Lock with keys in the pile or chains: the player can open it in play
- * (booster-only locks are excluded — forcing a booster would be pay-to-win). */
-function hasOpenableExtra(spec: LevelSpec): boolean {
-  return (spec.locked && spec.keyInPile) || spec.chains.length > 0;
-}
-
 function emptyCountFor(spec: LevelSpec): number {
   return 2 + (spec.targets >= 2 ? 1 : 0);
 }
@@ -354,17 +348,6 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
       for (let k = 0; k < spec.locks; k++) pool.push(SPECIAL.KEY);
     }
     shuffle(pool, rng);
-
-    // trapped blocks for the openable extra column: 2-3 colors the player
-    // can see but not touch until it opens — this makes the lock/chains
-    // genuinely load-bearing (win needs every block cleared)
-    const vault: ColorId[] = [];
-    if (hasOpenableExtra(spec)) {
-      const take = Math.min(2 + ((rng() * 2) | 0), spec.cap - 1);
-      for (let i = pool.length - 1; i >= 0 && vault.length < take; i--) {
-        if (pool[i] >= 0) vault.push(pool.splice(i, 1)[0]); // colors only, never keys
-      }
-    }
 
     // ink column: dead bottom slots + a couple of color blocks parked on top
     const inkCol: ColorId[] = [];
@@ -415,11 +398,11 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
     let lockedIdx = -1;
     let chainIdx = -1;
     if (spec.locked) {
-      solveCols.push(spec.keyInPile ? vault.slice() : []);
+      solveCols.push([]);
       lockedIdx = solveCols.length - 1;
     }
     if (spec.chains.length > 0) {
-      solveCols.push(vault.slice());
+      solveCols.push([]);
       chainIdx = solveCols.length - 1;
     }
     const targetsMap = new Map(targetCols.map((t) => [t.col, t.color]));
@@ -443,10 +426,7 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
         hiddenBelowTop: spec.hidden,
         lockedColumn: spec.locked,
         lockedColumnLocks: spec.locked && spec.locks > 1 ? spec.locks : undefined,
-        lockedColumnBlocks:
-          spec.locked && spec.keyInPile && vault.length > 0 ? vault : undefined,
         chains: spec.chains.length > 0 ? spec.chains : undefined,
-        chainedColumnBlocks: spec.chains.length > 0 && vault.length > 0 ? vault : undefined,
         targetColumns: targetCols.length ? targetCols : undefined,
         tapedColumns: taped.length ? taped : undefined,
       };

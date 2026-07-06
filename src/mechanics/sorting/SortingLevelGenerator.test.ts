@@ -47,7 +47,6 @@ describe('generateSortingLevel', () => {
 
     const chained = generateSortingLevel(42); // chained column from 41
     expect(chained.chains).toEqual([-1]); // neutral chain first
-    expect(chained.chainedColumnBlocks?.length).toBeGreaterThan(0); // trapped blocks
 
     const doubleLock = generateSortingLevel(47); // double lock from 46
     expect(doubleLock.lockedColumn).toBe(true);
@@ -59,12 +58,7 @@ describe('generateSortingLevel', () => {
     for (const index of [12, 16, 22, 31, 45, 70]) {
       const cfg = generateSortingLevel(index);
       const counts = new Map<number, number>();
-      const all = [
-        ...cfg.columns.flat(),
-        ...(cfg.lockedColumnBlocks ?? []),
-        ...(cfg.chainedColumnBlocks ?? []),
-      ];
-      for (const c of all) {
+      for (const c of cfg.columns.flat()) {
         if (c >= 0) counts.set(c, (counts.get(c) ?? 0) + 1);
       }
       for (const [, count] of counts) expect(count).toBe(cfg.cap);
