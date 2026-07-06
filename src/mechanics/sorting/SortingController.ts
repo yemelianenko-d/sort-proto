@@ -143,7 +143,13 @@ export class SortingController {
       actions_count: this.model.moves,
     });
 
-    this.view.rebuild({ landedColumn: to, landedCount: result.count, revealed: result.revealed });
+    const ghostChain = result.chainRemoved ?? undefined;
+    this.view.rebuild({
+      landedColumn: to,
+      landedCount: result.count,
+      revealed: result.revealed,
+      ghostChain,
+    });
     if (result.keysDissolved.length > 0) this.view.animateKeyDissolve(result.keysDissolved);
     if (result.keysApplied.length > 0) {
       const lockCol = result.keyUnlocked ?? this.model.lockedColumn;
@@ -159,7 +165,11 @@ export class SortingController {
       this.view.animateClear(column, () => {
         const revealed = this.model.commitClear(column);
         this.busy = false;
-        this.view.rebuild({ revealed });
+        this.view.rebuild({ revealed, ghostChain });
+        if (ghostChain) {
+          // the completed set snaps the chain: spark flight + the chain breaks
+          this.view.animateChainBreak(column, () => this.view.rebuild());
+        }
         this.callbacks.onStateChanged();
         this.afterChange();
       });

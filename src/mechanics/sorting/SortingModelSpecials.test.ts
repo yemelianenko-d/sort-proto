@@ -63,7 +63,7 @@ describe('SortingModel specials', () => {
     expect(m.canDrop(0, chainCol)).toBe(false); // closed while chained
     const res = m.move(0, 1); // completes the 0-0 set
     expect(res?.readyToClear).toBe(1);
-    expect(res?.chainRemoved).toBe(-1);
+    expect(res?.chainRemoved).toEqual({ value: -1, index: 0 });
     expect(res?.unchained).toBe(chainCol); // unlock happens at validation
     expect(m.chainedColumn).toBeNull();
     m.commitClear(1);
@@ -76,11 +76,11 @@ describe('SortingModel specials', () => {
     );
     const chainCol = m.columns.length - 1;
     let res = m.move(0, 1); // set of color 0: the colored chain 1 stays
-    expect(res?.chainRemoved).toBe(-1); // ...the neutral one falls instead
+    expect(res?.chainRemoved).toEqual({ value: -1, index: 1 }); // ...the neutral one falls instead
     expect(m.chainsLeft()).toEqual([1]);
     m.commitClear(1);
     res = m.move(2, 3); // set of color 1 takes its chain down
-    expect(res?.chainRemoved).toBe(1);
+    expect(res?.chainRemoved).toEqual({ value: 1, index: 0 });
     expect(res?.unchained).toBe(chainCol);
     expect(m.chainedColumn).toBeNull();
   });

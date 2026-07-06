@@ -39,8 +39,9 @@ export interface MoveResult {
   keysApplied: number[];
   /** The formerly locked column, if a key block just opened it. */
   keyUnlocked: number | null;
-  /** The chain removed by the set completed this move (-1 neutral, >=0 color), or null. */
-  chainRemoved: number | null;
+  /** The chain removed by the set completed this move (value: -1 neutral,
+   * >=0 color; index: its position in the chain stack), or null. */
+  chainRemoved: { value: number; index: number } | null;
   /** The chained column, if the last chain removed this move opened it. */
   unchained: number | null;
   /** Column whose tape broke after being emptied this move. */
@@ -91,6 +92,8 @@ export interface SortingViewContract {
     revealed?: number[];
     /** Render the top group of this column invisible (it is being dragged). */
     hideTopGroup?: number;
+    /** Keep the just-removed chain visually hanging until its break plays. */
+    ghostChain?: { value: number; index: number };
   }): void;
   animateClear(columnIndex: number, onDone: () => void): void;
   shakeColumn(columnIndex: number): void;
@@ -109,6 +112,9 @@ export interface SortingViewContract {
     lockColumn: number,
     onDone: () => void,
   ): void;
+  /** A spark flies from the cleared set to the chained column and the ghost
+   * chain snaps in two; call after a rebuild that rendered the ghost. */
+  animateChainBreak(fromColumn: number, onDone: () => void): void;
   pulseColumn(columnIndex: number): void;
   clearPulse(): void;
 }

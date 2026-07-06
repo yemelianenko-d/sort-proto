@@ -48,6 +48,11 @@ class StubView implements SortingViewContract {
   animateKeyToLock(fromColumn: number, lockColumn: number): void {
     this.keyFlights.push({ from: fromColumn, lock: lockColumn });
   }
+  chainBreaks: number[] = [];
+  animateChainBreak(fromColumn: number, onDone: () => void): void {
+    this.chainBreaks.push(fromColumn);
+    onDone();
+  }
   breaks: { col: number; slot: number; hidden: boolean }[][] = [];
   animateKeyBreak(
     entries: { col: number; slot: number; hidden: boolean }[],
@@ -109,6 +114,18 @@ function captureEvents(names: GameEventName[]): { name: GameEventName }[] {
 describe('SortingController', () => {
   beforeEach(() => {
     // EventBus is a module singleton; tests only add fresh listeners.
+  });
+
+  it('completing a set on a chained level triggers the chain-break animation', () => {
+    const { model, view } = setup({
+      cap: 2,
+      columns: [[0], [0], [1, 1]],
+      chains: [-1],
+    });
+    view.userTap(0);
+    view.userTap(1); // completes the 0-0 set -> the neutral chain snaps
+    expect(model.chainedColumn).toBeNull();
+    expect(view.chainBreaks).toEqual([1]); // spark flies from the cleared column
   });
 
   it('booster with a buried key runs the staged break sequence', () => {

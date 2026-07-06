@@ -211,14 +211,14 @@ export class SortingModel {
 
     const settled = this.settle(from);
     const readyToClear = this.isUniformFull(to) ? to : null;
-    let chainRemoved: number | null = null;
+    let chainRemoved: { value: number; index: number } | null = null;
     let unchained: number | null = null;
     if (readyToClear !== null && this.chainedColumn !== null) {
       const setColor = this.columns[readyToClear][0].color;
       let idx = this.chains.indexOf(setColor); // colored chain matches first
       if (idx === -1) idx = this.chains.indexOf(-1); // else a neutral one falls
       if (idx !== -1) {
-        chainRemoved = this.chains[idx];
+        chainRemoved = { value: this.chains[idx], index: idx };
         this.chains.splice(idx, 1);
         if (this.chains.length === 0) {
           unchained = this.chainedColumn;

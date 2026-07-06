@@ -27,6 +27,8 @@ export class SortingView implements SortingViewContract {
   private targetGhosts = new Map<number, Phaser.GameObjects.Container[]>();
   /** Tape overlays per taped column index (for the reject wiggle). */
   private tapeOverlays = new Map<number, Phaser.GameObjects.GameObject>();
+  /** The just-removed chain kept visually hanging until its break plays. */
+  private ghostChain: { sprite: Phaser.GameObjects.Image | null; x: number; y: number } | null = null;
   private layout!: ColumnLayout;
   private area = { x: 0, y: 0, width: 0, height: 0 };
 
@@ -85,6 +87,7 @@ export class SortingView implements SortingViewContract {
       landedCount?: number;
       revealed?: number[];
       hideTopGroup?: number;
+      ghostChain?: { value: number; index: number };
     } = {},
   ): void {
     this.clearPulse();
@@ -153,7 +156,9 @@ export class SortingView implements SortingViewContract {
       });
 
       if (this.model.lockedColumn === ci) this.addLockDecor(container, ci);
-      if (this.model.chainedColumn === ci) this.addChainDecor(container);
+      if (this.model.chainedColumn === ci || (opts.ghostChain && this.ghostChainColumn() === ci)) {
+        this.addChainDecor(container, ci, opts.ghostChain);
+      }
       if (this.model.isTaped(ci)) {
         const tape = this.buildTapeOverlay();
         container.add(tape);
@@ -583,6 +588,83 @@ export class SortingView implements SortingViewContract {
     }
   }
 
+  /** The completed set snaps the chain: a spark flies from the cleared
+   * column, the ghost chain breaks in two halves that fall apart. */
+  animateChainBreak(fromColumn: number, onDone: () => void): void {
+    const ghost = this.ghostChain;
+    const fromPos = this.layout.positions[fromColumn];
+    if (!ghost || !fromPos) {
+      onDone();
+      return;
+    }
+    this.ghostChain = null;
+    const sx = this.area.x + fromPos.x + this.layout.colWidth / 2;
+    const sy = this.area.y + fromPos.y + this.layout.colHeights[fromColumn] / 2;
+
+    const tint = ghost.sprite?.tintTopLeft ?? COLORS.pencil;
+    const spark = this.scene.add.graphics().setDepth(40);
+    spark.fillStyle(ghost.sprite && ghost.sprite.isTinted ? tint : COLORS.pencil, 1);
+    spark.fillCircle(0, 0, 5);
+    spark.setPosition(sx, sy);
+    this.root.add(spark);
+
+    this.scene.tweens.add({
+      targets: spark,
+      x: ghost.x,
+      y: ghost.y,
+      duration: 230,
+      ease: 'Sine.easeInOut',
+      onComplete: () => {
+        spark.destroy();
+        const src = ghost.sprite;
+        if (!src) {
+          onDone();
+          return;
+        }
+        // split the chain sprite into two cropped halves that snap apart
+        const frame = this.scene.textures.getFrame('deco_chain');
+        const mk = (left: boolean) => {
+          const img = this.scene.add
+            .image(ghost.x, ghost.y, 'deco_chain')
+            .setScale(src.scaleX, src.scaleY)
+            .setAngle(src.angle)
+            .setDepth(41);
+          img.setCrop(left ? 0 : frame.width / 2, 0, frame.width / 2, frame.height);
+          if (src.isTinted) img.setTint(src.tintTopLeft);
+          this.root.add(img);
+          return img;
+        };
+        const leftHalf = mk(true);
+        const rightHalf = mk(false);
+        src.setVisible(false);
+        const dur = 340;
+        this.scene.tweens.add({
+          targets: leftHalf,
+          x: ghost.x - 16,
+          y: ghost.y + 30,
+          angle: src.angle - 24,
+          alpha: 0,
+          duration: dur,
+          ease: 'Cubic.easeIn',
+          onComplete: () => leftHalf.destroy(),
+        });
+        this.scene.tweens.add({
+          targets: rightHalf,
+          x: ghost.x + 16,
+          y: ghost.y + 30,
+          angle: src.angle + 24,
+          alpha: 0,
+          duration: dur,
+          ease: 'Cubic.easeIn',
+          onComplete: () => {
+            rightHalf.destroy();
+            onDone();
+          },
+        });
+      },
+    });
+  }
+
   /** A dug-out key flies in an arc to the locked column; a lock pops off. */
   animateKeyToLock(fromColumn: number, lockColumn: number): void {
     const fromPos = this.layout.positions[fromColumn];
@@ -648,29 +730,53 @@ export class SortingView implements SortingViewContract {
     });
   }
 
+  /** The column that would carry the ghost chain (the chained column, or the
+   * last column when the removed chain was the final one and it just opened). */
+  private ghostChainColumn(): number | null {
+    return this.model.chainedColumn ?? this.model.columns.length - 1;
+  }
+
   /** Chains across the chained column: neutral gray, colored ones tinted.
-   * One completed set removes one chain (its color first, else a neutral). */
-  private addChainDecor(container: Phaser.GameObjects.Container): void {
-    const chains = this.model.chainsLeft();
+   * One completed set removes one chain (its color first, else a neutral).
+   * A ghost entry (the just-removed chain) renders at its original index and
+   * is remembered for the break animation. */
+  private addChainDecor(
+    container: Phaser.GameObjects.Container,
+    ci: number,
+    ghost?: { value: number; index: number },
+  ): void {
+    this.ghostChain = null;
+    const chains: { value: number; isGhost: boolean }[] = this.model
+      .chainsLeft()
+      .map((value) => ({ value, isGhost: false }));
+    if (ghost) chains.splice(Math.min(ghost.index, chains.length), 0, { value: ghost.value, isGhost: true });
     const cx = this.layout.colWidth / 2;
+    const pos = this.layout.positions[ci];
     if (hasTexture(this.scene, 'deco_chain')) {
       const frame = this.scene.textures.getFrame('deco_chain');
       chains.forEach((chain, k) => {
+        const y = 30 + k * 26;
         const img = this.scene.add
-          .image(cx, 30 + k * 26, 'deco_chain')
+          .image(cx, y, 'deco_chain')
           .setScale((this.layout.colWidth * 1.18) / frame.width)
           .setAngle(k % 2 === 0 ? -3 : 3);
-        if (chain >= 0) img.setTint(BLOCK_STYLES[chain].ink);
+        if (chain.value >= 0) img.setTint(BLOCK_STYLES[chain.value].ink);
         container.add(img);
+        if (chain.isGhost && pos) {
+          this.ghostChain = { sprite: img, x: this.area.x + pos.x + cx, y: this.area.y + pos.y + y };
+        }
       });
       return;
     }
     // fallback: hand-drawn bars in the chain colors
     const g = this.scene.add.graphics();
     chains.forEach((chain, k) => {
-      const color = chain >= 0 ? BLOCK_STYLES[chain].ink : COLORS.pencil;
+      const color = chain.value >= 0 ? BLOCK_STYLES[chain.value].ink : COLORS.pencil;
       g.fillStyle(color, 0.85);
       g.fillRoundedRect(-4, 24 + k * 26, this.layout.colWidth + 8, 10, 5);
+      if (chain.isGhost && pos) {
+        this.ghostChain = { sprite: null, x: this.area.x + pos.x + cx, y: this.area.y + pos.y + 29 + k * 26 };
+      }
     });
     container.add(g);
   }
