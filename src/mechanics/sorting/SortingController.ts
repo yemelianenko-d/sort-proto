@@ -1,0 +1,227 @@
+import { eventBus } from '../../core/events/EventBus';
+import type { SortingModel } from './SortingModel';
+import type { SortingViewContract } from './SortingTypes';
+
+export interface SortingCallbacks {
+  onStateChanged: () => void; // HUD refresh (moves, undo availability)
+  onWin: () => void;
+  onDeadlock: (canOfferKey: boolean) => void;
+  /** Any tap on the board (used by the scene to cancel the idle hint). */
+  onPlayerInteracted?: () => void;
+}
+
+/**
+ * Controller of the sorting mechanic: turns column taps into model commands,
+ * drives view feedback and emits gameplay events to the EventBus.
+ * It knows nothing about scenes, analytics or storage, and depends on the
+ * view only through SortingViewContract (unit-testable with a stub).
+ */
+export class SortingController {
+  private selected = -1;
+  private busy = false;
+
+  private movedOnPress = false;
+
+  constructor(
+    private model: SortingModel,
+    private view: SortingViewContract,
+    private callbacks: SortingCallbacks,
+    private keysAvailable: () => number,
+  ) {
+    view.onColumnPress = (i) => this.onPress(i);
+    view.onColumnTap = (i) => this.onTap(i);
+    view.onDragStart = (i) => this.onDragStart(i);
+    view.onDrop = (i, target) => this.onDrop(i, target);
+  }
+
+  get selectedColumn(): number {
+    return this.selected;
+  }
+
+  get isBusy(): boolean {
+    return this.busy;
+  }
+
+  /* ---------------- input ---------------- */
+
+  /** Fast path: pressing a valid target moves immediately (snappy taps). */
+  private onPress(index: number): void {
+    this.callbacks.onPlayerInteracted?.();
+    this.movedOnPress = false;
+    if (this.busy) return;
+    if (
+      this.selected >= 0 &&
+      this.selected !== index &&
+      this.model.canDrop(this.selected, index)
+    ) {
+      this.performMove(this.selected, index, 'tap');
+      this.movedOnPress = true;
+    }
+  }
+
+  private onDragStart(index: number): boolean {
+    if (this.busy || index === this.model.lockedColumn) return false;
+    if (this.model.topGroup(index) === 0) return false;
+    this.selected = index;
+    this.view.rebuild({ selected: index, hideTopGroup: index });
+    return true;
+  }
+
+  private onDrop(index: number, target: number | null): void {
+    if (this.busy) return;
+    if (target !== null && this.model.canDrop(index, target)) {
+      this.performMove(index, target, 'drag');
+      return;
+    }
+    this.selected = -1;
+    this.view.rebuild();
+    if (target !== null && target !== index) this.view.shakeColumn(target);
+  }
+
+  private onTap(index: number): void {
+    if (this.busy || this.movedOnPress) return;
+
+    if (index === this.model.lockedColumn) {
+      this.view.shakeColumn(index);
+      return;
+    }
+
+    const canPick = this.model.topGroup(index) > 0;
+
+    if (this.selected === -1) {
+      if (canPick) this.select(index);
+      else if (this.model.columns[index].length > 0) this.view.shakeColumn(index);
+      return;
+    }
+
+    if (this.selected === index) {
+      this.select(-1);
+      return;
+    }
+
+    if (this.model.canDrop(this.selected, index)) {
+      this.performMove(this.selected, index, 'tap');
+    } else if (canPick) {
+      this.select(index); // reselect another source
+    } else {
+      this.view.shakeColumn(index);
+      this.select(-1);
+    }
+  }
+
+  private select(index: number): void {
+    this.selected = index;
+    this.view.rebuild({ selected: index });
+  }
+
+  /* ---------------- commands ---------------- */
+
+  private performMove(from: number, to: number, inputMethod: 'tap' | 'drag'): void {
+    const result = this.model.move(from, to);
+    if (!result) return;
+    this.selected = -1;
+
+    eventBus.emit('move_made', {
+      level_id: this.model.levelId,
+      from,
+      to,
+      blocks_moved: result.count,
+      moves_count: this.model.moves,
+      input_method: inputMethod,
+    });
+    eventBus.emit('player_action_made', {
+      level_id: this.model.levelId,
+      action_type: 'move',
+      actions_count: this.model.moves,
+    });
+
+    this.view.rebuild({ landedColumn: to, landedCount: result.count, revealed: result.revealed });
+    this.callbacks.onStateChanged();
+
+    if (result.readyToClear !== null) {
+      const column = result.readyToClear;
+      this.busy = true;
+      this.view.animateClear(column, () => {
+        const revealed = this.model.commitClear(column);
+        this.busy = false;
+        this.view.rebuild({ revealed });
+        this.callbacks.onStateChanged();
+        this.afterChange();
+      });
+    } else {
+      this.afterChange();
+    }
+  }
+
+  private afterChange(): void {
+    if (this.model.isWon()) {
+      this.callbacks.onWin();
+      return;
+    }
+    if (!this.model.hasAnyMove()) {
+      const canOfferKey = this.model.lockedColumn !== null && this.keysAvailable() > 0;
+      eventBus.emit('level_failed', {
+        level_id: this.model.levelId,
+        reason: 'deadlock',
+        moves_count: this.model.moves,
+      });
+      this.callbacks.onDeadlock(canOfferKey);
+    }
+  }
+
+  undo(): boolean {
+    if (this.busy) return false;
+    const ok = this.model.undo();
+    if (ok) {
+      this.selected = -1;
+      eventBus.emit('undo_used', { level_id: this.model.levelId });
+      eventBus.emit('player_action_made', {
+        level_id: this.model.levelId,
+        action_type: 'undo',
+        actions_count: this.model.moves,
+      });
+      this.view.rebuild();
+      this.callbacks.onStateChanged();
+    }
+    return ok;
+  }
+
+  /** Lens booster: reveal one hidden block. */
+  useLens(): boolean {
+    if (this.busy) return false;
+    const column = this.model.useLens();
+    if (column === null) return false;
+    this.selected = -1;
+    eventBus.emit('booster_used', { level_id: this.model.levelId, booster: 'lens' });
+    eventBus.emit('hint_used', { level_id: this.model.levelId, hint: 'lens' });
+    eventBus.emit('player_action_made', {
+      level_id: this.model.levelId,
+      action_type: 'booster_lens',
+      actions_count: this.model.moves,
+    });
+    this.view.rebuild({ revealed: [column] });
+    this.callbacks.onStateChanged();
+    return true;
+  }
+
+  /** First valid move, for the beginner idle hint. */
+  findAnyMove(): { from: number; to: number } | null {
+    return this.model.findAnyMove();
+  }
+
+  useKey(): boolean {
+    if (this.busy) return false;
+    const index = this.model.unlockColumn();
+    if (index === null) return false;
+    this.selected = -1;
+    eventBus.emit('booster_used', { level_id: this.model.levelId, booster: 'key' });
+    eventBus.emit('player_action_made', {
+      level_id: this.model.levelId,
+      action_type: 'booster_key',
+      actions_count: this.model.moves,
+    });
+    this.view.rebuild({ landedColumn: index, landedCount: 0 });
+    this.callbacks.onStateChanged();
+    return true;
+  }
+}

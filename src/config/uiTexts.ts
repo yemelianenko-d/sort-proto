@@ -1,0 +1,100 @@
+/**
+ * All user-facing texts (config-driven, п.9 гайдлайну).
+ * Centralized so copy can be tuned or localized without touching scenes.
+ */
+export const UI_TEXTS = {
+  app: {
+    title: 'Сортуй!',
+    loading: 'Завантаження…',
+  },
+  lobby: {
+    play: 'Грати',
+    playAgain: 'Грати ще',
+    progressDone: (done: number) => `Пройдено: ${done}`,
+    progress: (done: number, total: number, stars: number) =>
+      `Пройдено: ${done}/${total} · ★ ${stars}`,
+  },
+  hud: {
+    level: (n: number, par: number) => `Рівень ${n} · ціль ≤ ${par}`,
+    moves: (n: number) => `Ходи: ${n}`,
+    undo: '↶ назад',
+    lens: (n: number) => `🔍 ${n}`,
+    key: (n: number) => `🔑 ${n}`,
+    /** Counter-only labels used when texture icons are present. */
+    countOnly: (n: number) => `${n}`,
+    back: '←',
+    restart: '↺',
+  },
+  tutorials: {
+    ok: 'Зрозуміло!',
+    howto: {
+      emoji: '✏️',
+      title: 'Як грати',
+      body: 'Збирай колонки з однакових фігур: клади блок лише на такий самий або в порожню колонку. Повна колонка одного виду стирається з листка!',
+    },
+    hidden: {
+      emoji: '❓',
+      title: 'Приховані блоки',
+      body: 'Заштриховані блоки відкриваються, коли стають верхніми в колонці. Лупа відкриє один одразу.',
+    },
+    locked: {
+      emoji: '🔒',
+      title: 'Замкнена колонка',
+      body: 'Додатковий простір під замком. Відкривається ключем, але рівень можна пройти й без нього.',
+    },
+    joker: {
+      title: 'Джокер',
+      body: 'Різнобарвний блок лягає на будь-який колір і зараховується в будь-який набір.',
+    },
+    stone: {
+      title: 'Камінь',
+      body: 'Камінь не збирається. Його можна лише відкласти в порожню колонку, щоб не заважав.',
+    },
+    keyblock: {
+      title: 'Ключ у завалі',
+      body: 'Серед блоків захований ключ. Відкопай його — і він сам відімкне замкнену колонку.',
+    },
+    taped: {
+      title: 'Заклеєна колонка',
+      body: 'Зі скотчем можна лише брати блоки. Спорожни колонку — і скотч порветься.',
+    },
+  },
+  decorNotes: ['д/з: зібрати всі ★', '3 однакових = ✓', 'не здавайся!', 'сортуй → збирай ↺', 'майже вийшло!', '?!'],
+  win: {
+    title: 'Рівень пройдено!',
+    moves: (moves: number) => `Ходів: ${moves}`,
+    hintBefore: 'До 3',
+    hintAfter: (par: number) => `— ${par} ходів`,
+    next: 'Далі →',
+    toLobby: 'У лоббі',
+    replay: 'Ще раз',
+  },
+  deadlock: {
+    title: 'Немає ходів',
+    body: 'Схоже, все заповнилось. Можна відкотитись або почати заново.',
+    undo: '↶ Скасувати хід',
+    useKey: '🔑 Відкрити колонку',
+    restart: '↺ Заново',
+  },
+  locked: {
+    tag: '🔑 відкрити',
+    tagText: 'відкрити',
+  },
+  settings: {
+    button: '⚙',
+    title: 'Налаштування',
+    body: "Тут скоро з'являться налаштування гри.",
+    ok: 'Добре',
+    cheat: 'Чит-режим',
+  },
+  cheat: {
+    reset: 'Скинути прогрес',
+    win: 'WIN',
+  },
+  error: {
+    title: 'Не вдалося запустити гру',
+    retry: 'Спробувати ще раз',
+    unknown: 'Невідома помилка завантаження.',
+    levelNotFound: (index: number) => `Рівень з індексом ${index} не знайдено в конфігу.`,
+  },
+} as const;
