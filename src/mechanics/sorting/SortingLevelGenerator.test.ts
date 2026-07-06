@@ -25,8 +25,14 @@ describe('generateSortingLevel', () => {
     expect(base.columns.flat().every((c) => c >= 0)).toBe(true);
     expect(base.tapedColumns).toBeUndefined();
 
-    const stone = generateSortingLevel(16); // stone from 16
-    expect(stone.columns.flat()).toContain(SPECIAL.STONE);
+    const inkLevel = generateSortingLevel(16); // ink from 16
+    expect(inkLevel.columns.flat()).toContain(SPECIAL.INK);
+    // ink occupies contiguous bottom slots of its column
+    for (const col of inkLevel.columns) {
+      const n = col.filter((c) => c === SPECIAL.INK).length;
+      for (let i = 0; i < n; i++) expect(col[i]).toBe(SPECIAL.INK);
+      expect(n).toBeLessThan(inkLevel.cap);
+    }
 
     const keyLevel = generateSortingLevel(22); // key block from 21
     expect(keyLevel.lockedColumn).toBe(true);

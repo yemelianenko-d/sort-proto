@@ -3,14 +3,14 @@ export type ColorId = number;
 
 /** Special block ids (negative to stay JSON-friendly in level files). */
 export const SPECIAL = {
-  /** Moves only into an empty column; never clears. */
-  STONE: -3,
+  /** Ink blot: dead bottom slot. Immovable, never clears, ignored by win. */
+  INK: -3,
   /** Consumed when revealed on top; unlocks the locked column. */
   KEY: -4,
 } as const;
 
 export function isSpecialColor(c: ColorId): boolean {
-  return c === SPECIAL.STONE || c === SPECIAL.KEY;
+  return c === SPECIAL.INK || c === SPECIAL.KEY;
 }
 
 export interface BlockState {

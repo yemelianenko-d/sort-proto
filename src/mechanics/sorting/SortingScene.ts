@@ -31,7 +31,7 @@ const wallet = {
   lenses: GAME_SETTINGS.boosters.initialLenses,
 };
 
-type TutorialId = 'howto' | 'hidden' | 'locked' | 'stone' | 'keyblock' | 'taped';
+type TutorialId = 'howto' | 'hidden' | 'locked' | 'ink' | 'keyblock' | 'taped';
 
 export class SortingScene extends Phaser.Scene {
   private game_!: GameController;
@@ -129,7 +129,7 @@ export class SortingScene extends Phaser.Scene {
     if (!seen('howto')) id = 'howto';
     else if (m.hasHiddenBlocks() && !seen('hidden')) id = 'hidden';
     else if (m.lockedColumn !== null && !m.hasBlockOfColor(SPECIAL.KEY) && !seen('locked')) id = 'locked';
-    else if (m.hasBlockOfColor(SPECIAL.STONE) && !seen('stone')) id = 'stone';
+    else if (m.hasBlockOfColor(SPECIAL.INK) && !seen('ink')) id = 'ink';
     else if (m.hasBlockOfColor(SPECIAL.KEY) && !seen('keyblock')) id = 'keyblock';
     else if (m.hasTapedColumns() && !seen('taped')) id = 'taped';
     if (!id) return;
@@ -164,12 +164,12 @@ export class SortingScene extends Phaser.Scene {
     const g = this.add.graphics();
 
     // спецмеханіки: власні міні-сцени
-    if (id === 'stone') {
+    if (id === 'ink') {
       const cellSz = 34;
       const gg = this.add.graphics();
-      gg.fillStyle(0xd3d6dd, 1);
+      gg.fillStyle(0x3b3e49, 1);
       gg.fillRoundedRect(-cellSz / 2, -cellSz / 2, cellSz, cellSz, 11);
-      gg.lineStyle(2.2, 0x5d6270, 1);
+      gg.lineStyle(2.2, 0x23252d, 1);
       gg.strokeRoundedRect(-cellSz / 2, -cellSz / 2, cellSz, cellSz, 11);
       gg.setPosition(-58, 6);
       node.add(gg);

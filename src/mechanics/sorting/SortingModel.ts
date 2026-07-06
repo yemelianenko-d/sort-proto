@@ -15,11 +15,13 @@ interface Snapshot {
  * Rules:
  *  - tap lifts the top group of equal revealed blocks;
  *  - a group drops onto an empty column or a matching top;
- *  - a stone moves alone and only into an empty column, never clears;
+ *  - an ink blot is dead space at the bottom of a column: it cannot be
+ *    lifted or moved, never clears, and any color may be dropped onto it
+ *    (the column just has fewer playable slots);
  *  - a key block, once revealed on top, is consumed and opens the lock;
  *  - a taped column is take-only until emptied once (then the tape breaks);
  *  - a full column of one color clears;
- *  - the level is won when only stones remain on the board.
+ *  - the level is won when only ink remains on the board.
  */
 export class SortingModel {
   readonly cap: number;
@@ -45,7 +47,9 @@ export class SortingModel {
     this.columns = config.columns.map((col) =>
       col.map((color, i): BlockState => {
         const isTop = i === col.length - 1;
-        return { id: nextId++, color, hidden: config.hiddenBelowTop === true && !isTop };
+        // ink is a visible property of the column, never a hidden block
+        const hidden = config.hiddenBelowTop === true && !isTop && color !== SPECIAL.INK;
+        return { id: nextId++, color, hidden };
       }),
     );
     (config.tapedColumns ?? []).forEach((i) => this.taped.add(i));
@@ -68,8 +72,8 @@ export class SortingModel {
 
   /** True when `mover` may land on top of `resting`. */
   private matches(mover: number, resting: number): boolean {
-    if (mover === SPECIAL.STONE || resting === SPECIAL.STONE) return false;
     if (mover === SPECIAL.KEY || resting === SPECIAL.KEY) return false;
+    if (resting === SPECIAL.INK) return true; // ink top is an open surface
     return mover === resting;
   }
 
@@ -85,7 +89,7 @@ export class SortingModel {
     if (!col || col.length === 0) return 0;
     const top = col[col.length - 1];
     if (top.hidden) return 0;
-    if (top.color === SPECIAL.STONE) return 1;
+    if (top.color === SPECIAL.INK) return 0; // ink is immovable
     if (top.color === SPECIAL.KEY) return 0; // keys consume themselves
     let n = 0;
     for (let k = col.length - 1; k >= 0; k--) {
@@ -105,7 +109,6 @@ export class SortingModel {
     const group = this.topGroup(from);
     if (group === 0 || dst.length >= this.capacity(to)) return false;
     const color = this.groupColor(from);
-    if (color === SPECIAL.STONE) return dst.length === 0;
     if (dst.length === 0) return true;
     return this.matches(color, dst[dst.length - 1].color);
   }
@@ -118,9 +121,9 @@ export class SortingModel {
     return out;
   }
 
-  /** Won when nothing but stones remains. */
+  /** Won when nothing but ink remains. */
   isWon(): boolean {
-    return this.columns.every((c) => c.every((b) => b.color === SPECIAL.STONE));
+    return this.columns.every((c) => c.every((b) => b.color === SPECIAL.INK));
   }
 
   /** True when no move exists (key not counted; caller may offer the key). */
@@ -244,7 +247,7 @@ export class SortingModel {
     if (col.length !== this.capacity(index) || col.length === 0) return false;
     if (col.some((b) => b.hidden)) return false;
     const first = col[0].color;
-    if (first === SPECIAL.STONE || first === SPECIAL.KEY) return false;
+    if (first === SPECIAL.INK || first === SPECIAL.KEY) return false;
     return col.every((b) => b.color === first);
   }
 

@@ -258,17 +258,16 @@ export class SortingView implements SortingViewContract {
 
   private buildBlock(colorId: number): Phaser.GameObjects.Container {
     const cellSz = this.layout.cell;
-    if (colorId === SPECIAL.STONE) {
+    if (colorId === SPECIAL.INK) {
       const c = this.scene.add.container(0, 0);
-      if (hasTexture(this.scene, 'block_stone')) {
-        c.add(this.scene.add.image(0, 0, 'block_stone').setDisplaySize(cellSz, cellSz));
+      if (hasTexture(this.scene, 'block_ink')) {
+        c.add(this.scene.add.image(0, 0, 'block_ink').setDisplaySize(cellSz, cellSz));
         return c;
       }
       const g = this.scene.add.graphics();
-      g.fillStyle(0xd3d6dd, 1);
+      g.fillStyle(0x3b3e49, 1);
       g.fillRoundedRect(-cellSz / 2 + 1, -cellSz / 2 + 1, cellSz - 2, cellSz - 2, cellSz / 3);
-      fillPattern(g, -cellSz / 2 + 3, -cellSz / 2 + 3, cellSz - 6, cellSz - 6, 'stripes', 0x8a8fa3);
-      strokeSketchRect(g, -cellSz / 2, -cellSz / 2, cellSz, cellSz, 0x5d6270, 2.4, 1.4);
+      strokeSketchRect(g, -cellSz / 2, -cellSz / 2, cellSz, cellSz, 0x23252d, 2.4, 1.6);
       c.add(g);
       return c;
     }
@@ -336,42 +335,14 @@ export class SortingView implements SortingViewContract {
     return c;
   }
 
-  /** Hand-drawn dashed rounded-ish rect (slot placeholder). */
-  private strokeDashedRect(g: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number): void {
-    const dash = 6;
-    const gap = 5;
-    const edge = (x1: number, y1: number, x2: number, y2: number) => {
-      const len = Math.hypot(x2 - x1, y2 - y1);
-      const steps = Math.max(1, Math.floor(len / (dash + gap)));
-      for (let k = 0; k < steps; k++) {
-        const t0 = (k * (dash + gap)) / len;
-        const t1 = Math.min(1, (k * (dash + gap) + dash) / len);
-        g.lineBetween(x1 + (x2 - x1) * t0, y1 + (y2 - y1) * t0, x1 + (x2 - x1) * t1, y1 + (y2 - y1) * t1);
-      }
-    };
-    const r = 4; // corner inset so dashes don't collide at corners
-    edge(x + r, y, x + w - r, y);
-    edge(x + w, y + r, x + w, y + h - r);
-    edge(x + w - r, y + h, x + r, y + h);
-    edge(x, y + h - r, x, y + r);
-  }
-
   private addLockDecor(container: Phaser.GameObjects.Container, ci: number): void {
     const colH = this.layout.colHeights[ci];
     const cx = this.layout.colWidth / 2;
-    const cell = this.layout.cell;
 
-    // dashed slot placeholders inside the locked column (per the mockup)
-    const slots = this.scene.add.graphics();
-    slots.lineStyle(2, COLORS.pencil, 0.75);
-    for (let i = 0; i < this.model.capacity(ci); i++) {
-      const cy = colH - PAD - cell / 2 - i * (cell + BLOCK_GAP);
-      this.strokeDashedRect(slots, cx - cell / 2 + 3, cy - cell / 2 + 3, cell - 6, cell - 6);
-    }
-    container.add(slots);
-
-    // lock badge sitting on the top edge of the frame
-    if (hasTexture(this.scene, 'icon_lock_col')) {
+    // Key-block levels use the artist badge on the top edge (the "dig out the
+    // key" combo look); a plain locked column keeps the classic centered lock.
+    const hasKeyBlock = this.model.hasBlockOfColor(SPECIAL.KEY);
+    if (hasKeyBlock && hasTexture(this.scene, 'icon_lock_col')) {
       const frame = this.scene.textures.getFrame('icon_lock_col');
       const w = this.layout.colWidth * 0.4;
       container.add(
@@ -381,10 +352,12 @@ export class SortingView implements SortingViewContract {
           .setDisplaySize(w, (w * frame.height) / frame.width),
       );
     } else if (hasTexture(this.scene, ASSET_KEYS.iconLock)) {
-      container.add(this.scene.add.image(cx, 4, ASSET_KEYS.iconLock).setDisplaySize(26, 26));
+      container.add(
+        this.scene.add.image(cx, colH / 2, ASSET_KEYS.iconLock).setDisplaySize(30, 30),
+      );
     } else {
       container.add(
-        this.scene.add.text(cx, 4, '🔒', { fontSize: '22px' }).setOrigin(0.5),
+        this.scene.add.text(cx, colH / 2, '🔒', { fontSize: '24px' }).setOrigin(0.5),
       );
     }
 

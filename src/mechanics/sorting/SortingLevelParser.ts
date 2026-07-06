@@ -74,8 +74,22 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
       }
       const color = c as number;
       if (color === SPECIAL.KEY) keys += 1;
-      else if (color !== SPECIAL.STONE) colorCounts.set(color, (colorCounts.get(color) ?? 0) + 1);
+      else if (color !== SPECIAL.INK) colorCounts.set(color, (colorCounts.get(color) ?? 0) + 1);
     });
+    // Ink is a dead BOTTOM slot: contiguous from index 0, never a full column.
+    const inkCount = col.filter((c) => c === SPECIAL.INK).length;
+    if (inkCount > 0) {
+      for (let bi = 0; bi < inkCount; bi++) {
+        if (col[bi] !== SPECIAL.INK) {
+          throw new Error(
+            `${at} (${id}): column ${ci}: ink blots must occupy contiguous bottom slots.`,
+          );
+        }
+      }
+      if (inkCount >= capN) {
+        throw new Error(`${at} (${id}): column ${ci}: ink must leave at least one playable slot.`);
+      }
+    }
     // A level must not start with an already-completed column.
     if (
       col.length === capN &&
@@ -114,6 +128,11 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
       }
       if (seen.has(ti as number)) throw new Error(`${at} (${id}): duplicated taped column ${ti}.`);
       seen.add(ti as number);
+      if ((columns[ti as number] as number[]).includes(SPECIAL.INK)) {
+        throw new Error(
+          `${at} (${id}): taped column ${ti} contains ink and could never un-tape.`,
+        );
+      }
     });
     taped = lvl.tapedColumns as number[];
   }
