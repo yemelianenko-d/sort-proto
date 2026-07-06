@@ -152,8 +152,21 @@ export class LobbyScene extends Phaser.Scene {
       );
     }
 
+    // Вертикальне центрування: на високих екранах (fullscreen, десктоп)
+    // контент не липне до верху — рахуємо очікувану висоту блоку і зсуваємо
+    // все вниз на половину надлишку (кутові кнопки лишаються в кутах).
+    const cellSize0 = this.cellSizeFor(w);
+    const rowH0 = cellSize0 + CELL_GAP_Y;
+    const cheat0 = this.game_.settings.cheat;
+    const gridTop0 = safe.top + 64 + 62 + 68;
+    const fit0 = Math.floor((h - safe.bottom - gridTop0 - (44 + 58 + 26 + (cheat0 ? 52 : 0))) / rowH0);
+    const rows0 = Phaser.Math.Clamp(fit0, 2, 6);
+    const playBottom0 = gridTop0 + rows0 * rowH0 - CELL_GAP_Y / 2 + 12 + 31 + 14 + 29 + 29;
+    const contentBottom0 = playBottom0 + (cheat0 ? 45 : 0);
+    const topShift = Math.max(0, Math.floor((h - safe.bottom - contentBottom0) / 2));
+
     const title = this.add
-      .text(cx, safe.top + 64, UI_TEXTS.app.title, {
+      .text(cx, safe.top + 64 + topShift, UI_TEXTS.app.title, {
         fontFamily: FONTS.display,
         fontSize: '52px',
         color: COLORS.inkCss,
