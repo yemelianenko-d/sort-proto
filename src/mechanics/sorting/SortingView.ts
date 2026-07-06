@@ -797,18 +797,15 @@ export class SortingView implements SortingViewContract {
     const cx = this.layout.colWidth / 2;
     const pos = this.layout.positions[ci];
     if (hasTexture(this.scene, 'deco_chain')) {
+      // the texture is white line art: tint IS the chain color
+      const frame = this.scene.textures.getFrame('deco_chain');
       chains.forEach((chain, k) => {
-        const colored = `deco_chain_c${chain.value}`;
-        const key =
-          chain.value >= 0 && hasTexture(this.scene, colored) ? colored : 'deco_chain';
-        const frame = this.scene.textures.getFrame(key);
         const y = 30 + k * 26;
         const img = this.scene.add
-          .image(cx, y, key)
+          .image(cx, y, 'deco_chain')
           .setScale((this.layout.colWidth * 1.18) / frame.width)
-          .setAngle(k % 2 === 0 ? -3 : 3);
-        // tint only when the baked colored texture is missing
-        if (chain.value >= 0 && key === 'deco_chain') img.setTint(BLOCK_STYLES[chain.value].ink);
+          .setAngle(k % 2 === 0 ? -3 : 3)
+          .setTint(chain.value >= 0 ? BLOCK_STYLES[chain.value].ink : COLORS.pencil);
         container.add(img);
         if (chain.isGhost && pos) {
           this.ghostChain = { sprite: img, x: this.area.x + pos.x + cx, y: this.area.y + pos.y + y };

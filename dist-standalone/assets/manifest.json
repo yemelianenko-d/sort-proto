@@ -328,38 +328,6 @@
     {
       "key": "deco_chain",
       "url": "assets/images/deco_chain.png"
-    },
-    {
-      "key": "deco_chain_c0",
-      "url": "assets/images/deco_chain_c0.png"
-    },
-    {
-      "key": "deco_chain_c1",
-      "url": "assets/images/deco_chain_c1.png"
-    },
-    {
-      "key": "deco_chain_c2",
-      "url": "assets/images/deco_chain_c2.png"
-    },
-    {
-      "key": "deco_chain_c3",
-      "url": "assets/images/deco_chain_c3.png"
-    },
-    {
-      "key": "deco_chain_c4",
-      "url": "assets/images/deco_chain_c4.png"
-    },
-    {
-      "key": "deco_chain_c5",
-      "url": "assets/images/deco_chain_c5.png"
-    },
-    {
-      "key": "deco_chain_c6",
-      "url": "assets/images/deco_chain_c6.png"
-    },
-    {
-      "key": "deco_chain_c7",
-      "url": "assets/images/deco_chain_c7.png"
     }
   ],
   "atlases": [],
