@@ -210,7 +210,11 @@ export class SortingScene extends Phaser.Scene {
       return { node, height: 92 };
     }
     if (id === 'keyblock') {
-      if (hasTexture(this, 'icon_key')) node.add(this.add.image(-50, 6, 'icon_key').setDisplaySize(30, 30));
+      if (hasTexture(this, 'block_key')) {
+        node.add(this.add.image(-50, 6, 'block_key').setDisplaySize(34, 34));
+      } else if (hasTexture(this, 'icon_key')) {
+        node.add(this.add.image(-50, 6, 'icon_key').setDisplaySize(30, 30));
+      }
       g.lineStyle(2.6, COLORS.ink, 0.9);
       for (let x = -28; x < 26; x += 12) g.lineBetween(x, 6, x + 6, 6);
       g.lineBetween(30, 6, 22, 0);
