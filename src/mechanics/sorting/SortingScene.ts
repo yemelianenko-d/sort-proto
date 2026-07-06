@@ -128,15 +128,18 @@ export class SortingScene extends Phaser.Scene {
     const seen = (k: string) => this.game_.progress.isTutorialSeen(k);
     const m = this.model;
     let id: TutorialId | null = null;
+    // priority mirrors the curve order (one new mechanic per intro phase):
+    // hidden 4 -> lock 7 -> ink 16 -> key 21 -> tape 31 -> target 36 ->
+    // chains 41 -> double lock 46
     if (!seen('howto')) id = 'howto';
     else if (m.hasHiddenBlocks() && !seen('hidden')) id = 'hidden';
     else if (m.lockedColumn !== null && !m.hasBlockOfColor(SPECIAL.KEY) && !seen('locked')) id = 'locked';
-    else if (m.hasTargetColumns() && !seen('target')) id = 'target';
-    else if (m.chainsLeft().length > 0 && !seen('chains')) id = 'chains';
-    else if (m.locksLeft > 1 && !seen('multilock')) id = 'multilock';
     else if (m.hasBlockOfColor(SPECIAL.INK) && !seen('ink')) id = 'ink';
     else if (m.hasBlockOfColor(SPECIAL.KEY) && !seen('keyblock')) id = 'keyblock';
     else if (m.hasTapedColumns() && !seen('taped')) id = 'taped';
+    else if (m.hasTargetColumns() && !seen('target')) id = 'target';
+    else if (m.chainsLeft().length > 0 && !seen('chains')) id = 'chains';
+    else if (m.locksLeft > 1 && !seen('multilock')) id = 'multilock';
     if (!id) return;
 
     const card = t[id];

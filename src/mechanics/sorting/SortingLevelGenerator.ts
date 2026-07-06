@@ -1,17 +1,19 @@
 import { SPECIAL } from './SortingTypes';
 import type { ColorId, SortingLevelConfig } from './SortingTypes';
+import { solveBest } from './SortingSolver';
 
 /**
- * Runtime endless level generator (levels beyond the curated JSON).
+ * Level generator: deterministic per index, every layout is verified by the
+ * solver (see SortingSolver.ts), `par` is calibrated from a refined solution.
  *
- * Deterministic per index: the same level on every device. Every layout is
- * verified by a DFS solver that understands the full rule set — ink blots,
- * key blocks and taped columns — and `par` is calibrated from the found
- * solution.
+ * The difficulty curve is the declarative CURVE table below: each phase is a
+ * contiguous range of levels with a note explaining its intent. Ranges are
+ * written in 1-based level numbers to match the design docs; lookups convert
+ * from the 0-based index.
  *
  * Invariant of the whole game (never violated by generated levels): every
- * color has exactly `cap` copies and every column has the same capacity, so
- * a collected set never orphans blocks and the player never has to guess.
+ * color has exactly `cap` copies and every column shares one capacity, so a
+ * collected set never orphans blocks and the player never has to guess.
  */
 
 function mulberry32(seed: number): () => number {
@@ -32,259 +34,273 @@ function shuffle<T>(arr: T[], rng: () => number): T[] {
   return arr;
 }
 
-/* ---------------- solver ---------------- */
-
-interface SolverState {
-  cols: ColorId[][];
-  cap: number;
-  locked: number; // -1 = none
-  locks: number; // keys still needed for `locked`
-  chainCol: number; // -1 = none
-  chains: number[]; // remaining chains: -1 neutral, >=0 color-bound
-  taped: Set<number>;
-  targets: Map<number, number>; // empty column -> required first color
-}
-
-const isSpecial = (c: number): boolean => c === SPECIAL.INK || c === SPECIAL.KEY;
-
-/** Size of the liftable top group (equal colors; ink and keys never lift). */
-function topGroup(col: ColorId[]): number {
-  if (col.length === 0) return 0;
-  const top = col[col.length - 1];
-  if (top === SPECIAL.INK) return 0;
-  if (top === SPECIAL.KEY) return 0;
-  let n = 0;
-  for (let k = col.length - 1; k >= 0 && col[k] === top; k--) n++;
-  return n;
-}
-
-function isUniformFull(col: ColorId[], cap: number): boolean {
-  if (col.length !== cap || cap === 0) return false;
-  const first = col[0];
-  if (isSpecial(first)) return false;
-  return col.every((c) => c === first);
-}
-
-/** Reveal-free settlement: consume keys, break tape, auto-clear full sets. */
-function settle(st: SolverState, emptied: number | null): void {
-  if (emptied !== null && st.taped.has(emptied) && st.cols[emptied].length === 0) {
-    st.taped = new Set(st.taped);
-    st.taped.delete(emptied);
-  }
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (let i = 0; i < st.cols.length; i++) {
-      const col = st.cols[i];
-      const top = col[col.length - 1];
-      if (top === SPECIAL.KEY) {
-        st.cols[i] = col.slice(0, -1);
-        if (st.locked >= 0 && --st.locks <= 0) st.locked = -1;
-        changed = true;
-      } else if (isUniformFull(col, st.cap)) {
-        const setColor = col[0];
-        st.cols[i] = [];
-        if (st.taped.has(i)) {
-          st.taped = new Set(st.taped);
-          st.taped.delete(i);
-        }
-        if (st.chainCol >= 0) {
-          let ci = st.chains.indexOf(setColor);
-          if (ci === -1) ci = st.chains.indexOf(-1);
-          if (ci !== -1) {
-            st.chains = st.chains.slice();
-            st.chains.splice(ci, 1);
-            if (st.chains.length === 0) st.chainCol = -1;
-          }
-        }
-        changed = true;
-      }
-    }
-  }
-}
-
-function stateKey(st: SolverState): string {
-  return (
-    st.cols
-      .map((c, i) => `${st.taped.has(i) ? 't' : ''}${i === st.locked ? 'L' : ''}${i === st.chainCol ? 'S' : ''}:${c.join(',')}`)
-      .sort()
-      .join('|') + `#${st.locks}/${st.chains.join(',')}`
-  );
-}
-
-function solve(start: SolverState, nodeLimit = 50000): number {
-  const seen = new Set<string>();
-  let nodes = 0;
-
-  function dfs(st: SolverState, depth: number): number {
-    if (++nodes > nodeLimit) return -1;
-    settle(st, null);
-    if (st.cols.every((c) => c.every((b) => b === SPECIAL.INK))) return depth;
-    const key = stateKey(st);
-    if (seen.has(key)) return -1;
-    seen.add(key);
-
-    // matching non-empty targets first, empty-column dumps last
-    for (const wantEmpty of [false, true]) {
-      for (let i = 0; i < st.cols.length; i++) {
-        const from = st.cols[i];
-        const grp = topGroup(from);
-        if (grp === 0) continue;
-        const color = from[from.length - 1];
-        for (let j = 0; j < st.cols.length; j++) {
-          if (i === j || j === st.locked || j === st.chainCol || st.taped.has(j)) continue;
-          const to = st.cols[j];
-          if ((to.length === 0) !== wantEmpty) continue;
-          if (to.length >= st.cap) continue;
-          const toTop = to.length > 0 ? to[to.length - 1] : null;
-          if (toTop !== null && toTop !== SPECIAL.INK && toTop !== color) continue;
-          const want = to.length === 0 ? st.targets.get(j) : undefined;
-          if (want !== undefined && want !== color) continue;
-          if (to.length === 0 && grp === from.length) {
-            continue; // pointless full-group shuffle to another empty
-          }
-          const n = Math.min(grp, st.cap - to.length);
-          const next: SolverState = {
-            cols: st.cols.map((c) => c.slice()),
-            cap: st.cap,
-            locked: st.locked,
-            locks: st.locks,
-            chainCol: st.chainCol,
-            chains: st.chains,
-            taped: st.taped,
-            targets: st.targets,
-          };
-          next.cols[j] = next.cols[j].concat(next.cols[i].splice(next.cols[i].length - n, n));
-          settle(next, i);
-          const res = dfs(next, depth + 1);
-          if (res >= 0) return res;
-        }
-      }
-    }
-    return -1;
-  }
-  return dfs(
-    {
-      cols: start.cols.map((c) => c.slice()),
-      cap: start.cap,
-      locked: start.locked,
-      locks: start.locks,
-      chainCol: start.chainCol,
-      chains: start.chains.slice(),
-      taped: new Set(start.taped),
-      targets: start.targets,
-    },
-    0,
-  );
-}
-
-/* ---------------- difficulty curve ---------------- */
+/* ---------------- level spec ---------------- */
 
 interface LevelSpec {
   colors: number;
   cap: number;
   /** Ink blots: dead bottom slots in one dedicated column (0 = none). */
   ink: number;
-  keyInPile: boolean;
+  /** Locked column present. */
   locked: boolean;
-  /** Keys needed to open the locked column (1..2). */
+  /** Keys needed to open it (1..2); with keyInPile they come from the pile. */
   locks: number;
+  /** Key blocks buried in the pile (otherwise the lock is booster-only). */
+  keyInPile: boolean;
   /** Empty columns that require a designated first color (0..2). */
   targets: number;
   /** Chains on the extra chained column: -1 neutral, >=0 color-bound. */
   chains: number[];
+  /** Taped (take-only) columns. */
   taped: number;
   hidden: boolean;
 }
 
-/**
- * Phased introduction of mechanics, then rotating combinations that ramp.
- * 11-15 pure base curve, ink from 16, key block from 21, tape from 31.
- */
-function specFor(index: number, rng: () => number): LevelSpec {
-  const pick = <T>(arr: T[]): T => arr[(rng() * arr.length) | 0];
-  const spec: LevelSpec = {
+function baseSpec(): LevelSpec {
+  return {
     colors: 6,
     cap: 4,
     ink: 0,
-    keyInPile: false,
     locked: false,
     locks: 1,
+    keyInPile: false,
     targets: 0,
     chains: [],
     taped: 0,
     hidden: true,
   };
-  if (index < 15) {
-    // 11-15: pure base ramp — more colors, denser boards, no new mechanics
-    spec.colors = index < 12 ? 6 : 7;
-    spec.cap = pick([3, 4]);
-    spec.locked = rng() < 0.4; // lock is already known from levels 7-10
-  } else if (index < 20) {
-    // 16-20: ink intro — one dead slot shrinks the working space
-    spec.colors = pick([6, 7]);
-    spec.ink = 1;
-  } else if (index < 25) {
-    // 21-25: key block + lock intro
-    spec.colors = pick([6, 7]);
-    spec.locked = true;
-    spec.keyInPile = true;
-  } else if (index < 30) {
-    // 26-30: ink + key combinations ramping
-    spec.colors = 7;
-    spec.ink = pick([1, 2]);
-    spec.locked = rng() < 0.6;
-    spec.keyInPile = spec.locked;
-  } else if (index < 35) {
-    // 31-35: taped column intro
-    spec.colors = pick([6, 7]);
-    spec.taped = 1;
-    spec.ink = pick([0, 1]);
-  } else if (index < 40) {
-    // 36-40: target column intro — one empty accepts only its color
-    spec.colors = pick([6, 7]);
-    spec.targets = 1;
-  } else if (index < 45) {
-    // 41-45: chained column intro — one neutral chain (any set removes it),
-    // by 44-45 a colored chain shows up
-    spec.colors = pick([6, 7]);
-    spec.chains = index < 43 ? [-1] : [(rng() * spec.colors) | 0];
-  } else if (index < 50) {
-    // 46-50: double lock — the locked column needs two keys from the pile
-    spec.colors = pick([6, 7]);
-    spec.locked = true;
-    spec.keyInPile = true;
-    spec.locks = 2;
-  } else {
-    // 51-100: rotating combinations, ramping up
-    const hard = index >= 60;
-    spec.colors = hard ? 7 : pick([6, 7]);
-    spec.cap = hard ? 4 : pick([3, 4]);
-    spec.ink = pick(hard ? [0, 1, 2] : [0, 1]);
-    spec.locked = rng() < 0.45;
-    spec.keyInPile = spec.locked && rng() < 0.7;
-    spec.locks = spec.locked && spec.keyInPile && hard && rng() < 0.35 ? 2 : 1;
-    spec.targets = rng() < (hard ? 0.35 : 0.25) ? (hard && rng() < 0.3 ? 2 : 1) : 0;
-    if (spec.targets === 0 && rng() < 0.3) {
-      const colored = () => (rng() * spec.colors) | 0;
-      spec.chains = hard && rng() < 0.4 ? (rng() < 0.5 ? [colored(), -1] : [-1, -1]) : rng() < 0.4 ? [colored()] : [-1];
-    }
-    spec.taped = rng() < (hard ? 0.35 : 0.2) ? 1 : 0;
-    if (index % 10 === 9) {
-      // breathers before each new decade
-      spec.colors = Math.max(5, spec.colors - 1);
-      spec.ink = 0;
-      spec.taped = 0;
-      spec.targets = 0;
-      spec.chains = [];
-      spec.locks = 1;
+}
+
+/* ---------------- difficulty curve ---------------- */
+
+type Pick = <T>(arr: T[]) => T;
+
+interface Phase {
+  /** 1-based inclusive level range. */
+  from: number;
+  to: number;
+  /** Design intent, kept next to the numbers it explains. */
+  note: string;
+  build: (spec: LevelSpec, level: number, rng: () => number, pick: Pick) => void;
+}
+
+/**
+ * Levels 1-10 are curated (JSON): basics, hidden blocks from 4, the
+ * booster-only lock from 7. Everything from 11 is generated per this table.
+ *
+ * Shape of the curve: one new mechanic per intro phase (so its tutorial
+ * fires on a clean level), then rotation in three pressure tiers with a
+ * breather before every new decade (level % 10 === 0).
+ */
+const CURVE: Phase[] = [
+  {
+    from: 11,
+    to: 15,
+    note: 'base ramp: more colors, denser boards, no new mechanics',
+    build: (s, _level, rng, pick) => {
+      s.colors = rng() < 0.4 ? 6 : 7;
+      s.cap = pick([3, 4]);
+      s.locked = rng() < 0.4; // the booster lock is known from 7-10
+    },
+  },
+  {
+    from: 16,
+    to: 20,
+    note: 'INK intro: one dead slot shrinks the working space',
+    build: (s, _level, _rng, pick) => {
+      s.colors = pick([6, 7]);
+      s.ink = 1;
+    },
+  },
+  {
+    from: 21,
+    to: 25,
+    note: 'KEY BLOCK intro: dig the key out to open the lock',
+    build: (s, _level, _rng, pick) => {
+      s.colors = pick([6, 7]);
+      s.locked = true;
+      s.keyInPile = true;
+    },
+  },
+  {
+    from: 26,
+    to: 30,
+    note: 'ink + key combos ramping',
+    build: (s, _level, rng, pick) => {
+      s.colors = 7;
+      s.ink = pick([1, 2]);
+      s.locked = rng() < 0.6;
+      s.keyInPile = s.locked;
+    },
+  },
+  {
+    from: 31,
+    to: 35,
+    note: 'TAPE intro: a take-only column until it empties',
+    build: (s, _level, _rng, pick) => {
+      s.colors = pick([6, 7]);
+      s.taped = 1;
+      s.ink = pick([0, 1]);
+    },
+  },
+  {
+    from: 36,
+    to: 40,
+    note: 'TARGET COLUMN intro: one empty accepts only its chalk color',
+    build: (s, _level, _rng, pick) => {
+      s.colors = pick([6, 7]);
+      s.targets = 1;
+    },
+  },
+  {
+    from: 41,
+    to: 45,
+    note: 'CHAINS intro: neutral chain first, a colored one from 44',
+    build: (s, level, rng, pick) => {
+      s.colors = pick([6, 7]);
+      s.chains = level <= 43 ? [-1] : [(rng() * s.colors) | 0];
+    },
+  },
+  {
+    from: 46,
+    to: 50,
+    note: 'DOUBLE LOCK intro: two keys buried in the pile',
+    build: (s, _level, _rng, pick) => {
+      s.colors = pick([6, 7]);
+      s.locked = true;
+      s.keyInPile = true;
+      s.locks = 2;
+    },
+  },
+  {
+    from: 51,
+    to: 80,
+    note: 'tier 1 rotation: one anchor mechanic per level, light seasoning',
+    build: (s, level, rng, pick) => {
+      s.colors = pick([6, 6, 7]);
+      s.cap = pick([3, 4, 4]);
+      applyAnchor(s, anchorFor(level), rng, pick, false);
+      // light seasoning: sometimes one extra soft constraint
+      if (rng() < 0.3) seasonLight(s, rng, pick);
+    },
+  },
+  {
+    from: 81,
+    to: 110,
+    note: 'tier 2 rotation: pairs of mechanics, 7 colors dominant',
+    build: (s, level, rng, pick) => {
+      s.colors = pick([6, 7, 7]);
+      s.cap = pick([3, 4, 4]);
+      applyAnchor(s, anchorFor(level), rng, pick, false);
+      if (rng() < 0.5) seasonLight(s, rng, pick);
+    },
+  },
+  {
+    from: 111,
+    to: 150,
+    note: 'tier 3 rotation: dense combos — 2 targets / 2 chains / double locks',
+    build: (s, level, rng, pick) => {
+      s.colors = 7;
+      s.cap = 4;
+      applyAnchor(s, anchorFor(level), rng, pick, true);
+      if (rng() < 0.8) seasonLight(s, rng, pick);
+    },
+  },
+];
+
+const ANCHORS = ['ink', 'key', 'tape', 'target', 'chains', 'lock2'] as const;
+type Anchor = (typeof ANCHORS)[number];
+
+/**
+ * Balanced anchor per level: every decade gets its own seeded permutation of
+ * the six anchors, walked by position — so each mechanic is guaranteed to
+ * appear in every rotation decade (no random droughts or floods).
+ */
+function anchorFor(level: number): Anchor {
+  const decade = Math.floor((level - 1) / 10);
+  const rng = mulberry32(decade * 65537 + 7);
+  const order = shuffle([...ANCHORS], rng);
+  return order[(level - 1) % 10 % ANCHORS.length];
+}
+
+/** The anchor mechanic of a rotation level; `heavy` unlocks the x2 variants. */
+function applyAnchor(
+  s: LevelSpec,
+  anchor: 'ink' | 'key' | 'tape' | 'target' | 'chains' | 'lock2',
+  rng: () => number,
+  pick: Pick,
+  heavy: boolean,
+): void {
+  switch (anchor) {
+    case 'ink':
+      s.ink = heavy ? pick([1, 2]) : 1;
+      break;
+    case 'key':
+      s.locked = true;
+      s.keyInPile = true;
+      break;
+    case 'lock2':
+      s.locked = true;
+      s.keyInPile = true;
+      s.locks = 2;
+      break;
+    case 'tape':
+      s.taped = 1;
+      break;
+    case 'target':
+      s.targets = heavy && rng() < 0.4 ? 2 : 1;
+      break;
+    case 'chains': {
+      const colored = (): number => (rng() * s.colors) | 0;
+      s.chains = heavy
+        ? rng() < 0.5
+          ? [colored(), -1]
+          : [colored()]
+        : rng() < 0.4
+          ? [colored()]
+          : [-1];
+      break;
     }
   }
-  // ink must leave at least one playable slot in its column
+}
+
+/** A soft extra constraint on top of the anchor (never a second heavy one).
+ * Weighted: ink and tape are the usual spice; the booster-only lock is rare
+ * so it never over-taxes the limited key wallet. */
+function seasonLight(s: LevelSpec, rng: () => number, pick: Pick): void {
+  const options: (() => void)[] = [];
+  if (s.ink === 0) options.push(() => (s.ink = 1));
+  if (s.taped === 0) options.push(() => (s.taped = 1));
+  if (!s.locked && rng() < 0.25) options.push(() => (s.locked = true)); // booster-only lock, rare
+  if (options.length > 0) pick(options)();
+}
+
+function specFor(index: number, rng: () => number): LevelSpec {
+  const pick: Pick = (arr) => arr[(rng() * arr.length) | 0];
+  const level = index + 1; // 1-based, as in the CURVE table
+  const spec = baseSpec();
+
+  const phase = CURVE.find((p) => level >= p.from && level <= p.to) ?? CURVE[CURVE.length - 1];
+  phase.build(spec, level, rng, pick);
+
+  // breather before every new decade: strip the extras, shrink the board
+  if (level % 10 === 0 && level > 15) {
+    spec.colors = Math.max(5, spec.colors - 1);
+    spec.ink = 0;
+    spec.taped = 0;
+    spec.targets = 0;
+    spec.chains = [];
+    spec.locks = 1;
+  }
+
+  // consistency guards
   spec.ink = Math.min(spec.ink, spec.cap - 1);
-  if (!spec.locked) spec.locks = 1;
-  // board width guard: colors + key slack + ink column + empties (2, or 3
-  // when two of them are targets) + lock + set column <= 11
+  if (!spec.locked) {
+    spec.locks = 1;
+    spec.keyInPile = false;
+  }
+  // board width: colors + key slack + ink col + empties (2, +1 with two
+  // targets) + locked col + chained col <= 11
   const width = () =>
     spec.colors +
     (spec.keyInPile ? 1 : 0) +
@@ -336,7 +352,7 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
       for (let s = 0; s < park; s++) inkCol.push(pool.pop() as ColorId);
     }
 
-    // start layout: `colors` full columns (+ slack column when a key is pooled)
+    // start layout: `colors` full columns (+ slack column when keys are pooled)
     const filled = spec.colors + (spec.locked && spec.keyInPile ? 1 : 0);
     const cols: ColorId[][] = [];
     let p = 0;
@@ -347,6 +363,7 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
     }
     if (p < pool.length) continue; // did not fit; reshuffle
     if (spec.ink > 0) cols.push(inkCol);
+
     // empties: two universal, one of which may become a target column;
     // with two targets a third universal empty is added
     const emptyCount = 2 + (spec.targets >= 2 ? 1 : 0);
@@ -357,13 +374,12 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
         targetCols.push({ col: cols.length - 1, color: (rng() * spec.colors) | 0 });
       }
     }
-    // two targets must want different colors
     if (targetCols.length === 2 && targetCols[0].color === targetCols[1].color) {
       targetCols[1].color = (targetCols[1].color + 1) % spec.colors;
     }
 
     // no column may start completed
-    if (cols.some((c) => isUniformFull(c, spec.cap))) continue;
+    if (cols.some((c) => isStartCompleted(c, spec.cap))) continue;
     // a key must not start on top of a pile (it would fire instantly)
     if (spec.keyInPile && cols.some((c) => c[c.length - 1] === SPECIAL.KEY)) continue;
 
@@ -384,7 +400,7 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
       solveCols.push([]);
       chainIdx = solveCols.length - 1;
     }
-    const solution = solve({
+    const solution = solveBest({
       cols: solveCols,
       cap: spec.cap,
       locked: lockedIdx,
@@ -420,4 +436,12 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
     hiddenBelowTop: false,
     lockedColumn: false,
   };
+}
+
+/** A column that would clear on the very first frame is a broken start. */
+function isStartCompleted(col: ColorId[], cap: number): boolean {
+  if (col.length !== cap || cap === 0) return false;
+  const first = col[0];
+  if (first === SPECIAL.INK || first === SPECIAL.KEY) return false;
+  return col.every((c) => c === first);
 }
