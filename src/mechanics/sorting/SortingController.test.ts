@@ -48,6 +48,16 @@ class StubView implements SortingViewContract {
   animateKeyToLock(fromColumn: number, lockColumn: number): void {
     this.keyFlights.push({ from: fromColumn, lock: lockColumn });
   }
+  breaks: { col: number; slot: number; hidden: boolean }[][] = [];
+  animateKeyBreak(
+    entries: { col: number; slot: number; hidden: boolean }[],
+    lockColumn: number,
+    onDone: () => void,
+  ): void {
+    void lockColumn;
+    this.breaks.push(entries);
+    onDone(); // synchronous for tests
+  }
   pulses: number[] = [];
   pulseColumn(columnIndex: number): void {
     this.pulses.push(columnIndex);
@@ -99,6 +109,19 @@ function captureEvents(names: GameEventName[]): { name: GameEventName }[] {
 describe('SortingController', () => {
   beforeEach(() => {
     // EventBus is a module singleton; tests only add fresh listeners.
+  });
+
+  it('booster with a buried key runs the staged break sequence', () => {
+    const { model, view, controller } = setup({
+      cap: 3,
+      columns: [[SPECIAL.KEY, 0], [0], [0], []],
+      lockedColumn: true,
+      hiddenBelowTop: true,
+    });
+    expect(controller.useKey()).toBe(true);
+    expect(model.lockedColumn).toBeNull();
+    expect(view.breaks).toEqual([[{ col: 0, slot: 0, hidden: true }]]); // flip first
+    expect(model.hasBlockOfColor(SPECIAL.KEY)).toBe(false);
   });
 
   it('a dug-out key triggers the flight-to-lock animation', () => {

@@ -102,6 +102,13 @@ export interface SortingViewContract {
   animateKeyDissolve(entries: { col: number; slot: number; hidden: boolean }[]): void;
   /** A dug-out key flies to the locked column; the lock pops off. */
   animateKeyToLock(fromColumn: number, lockColumn: number): void;
+  /** Booster sequence on stale view state: lock pops, the key block flips
+   * face-up, breaks apart, and the blocks above fall down; then onDone. */
+  animateKeyBreak(
+    entries: { col: number; slot: number; hidden: boolean }[],
+    lockColumn: number,
+    onDone: () => void,
+  ): void;
   pulseColumn(columnIndex: number): void;
   clearPulse(): void;
 }

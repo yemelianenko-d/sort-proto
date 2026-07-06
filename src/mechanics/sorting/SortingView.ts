@@ -450,6 +450,139 @@ export class SortingView implements SortingViewContract {
     }
   }
 
+  /** Booster on a level with a key block: the sequence plays on the STALE
+   * view (rebuild is deferred by the caller): the lock pops off, the key
+   * block flips face-up, breaks apart, and the blocks above fall down. */
+  animateKeyBreak(
+    entries: { col: number; slot: number; hidden: boolean }[],
+    lockColumn: number,
+    onDone: () => void,
+  ): void {
+    // the lock jumps off right away
+    const lockPos = this.layout.positions[lockColumn];
+    if (lockPos) {
+      this.popLock(
+        this.area.x + lockPos.x + this.layout.colWidth / 2,
+        this.area.y + lockPos.y + this.layout.colHeights[lockColumn] / 2,
+      );
+    }
+
+    let pending = entries.length;
+    const finish = () => {
+      pending -= 1;
+      if (pending <= 0) onDone();
+    };
+    if (pending === 0) {
+      onDone();
+      return;
+    }
+
+    for (const e of entries) {
+      const sprite = this.blockContainers[e.col]?.[e.slot];
+      const pos = this.layout.positions[e.col];
+      if (!sprite || !pos) {
+        finish();
+        continue;
+      }
+      const wx = this.area.x + pos.x + this.blockLocalPos(e.slot, e.col).x;
+      const wy = this.area.y + pos.y + this.blockLocalPos(e.slot, e.col).y;
+
+      const breakThenFall = (keySprite: Phaser.GameObjects.Container) => {
+        // 2) quick break: a pop, shards fly out, the block vanishes
+        this.scene.tweens.add({
+          targets: keySprite,
+          scale: 1.18,
+          angle: -8,
+          duration: 90,
+          yoyo: false,
+          onComplete: () => {
+            this.spawnShards(wx, wy);
+            this.scene.tweens.add({
+              targets: keySprite,
+              alpha: 0,
+              scale: 0.35,
+              angle: 18,
+              duration: 130,
+              ease: 'Sine.easeIn',
+              onComplete: () => {
+                keySprite.destroy();
+                // 3) quick fall of everything above the broken key
+                const step = this.layout.cell + BLOCK_GAP;
+                const above = (this.blockContainers[e.col] ?? []).slice(e.slot + 1);
+                if (above.length === 0) {
+                  finish();
+                  return;
+                }
+                let falling = above.length;
+                above.forEach((b) => {
+                  this.scene.tweens.add({
+                    targets: b,
+                    y: b.y + step,
+                    duration: 140,
+                    ease: 'Cubic.easeIn',
+                    onComplete: () => {
+                      falling -= 1;
+                      if (falling <= 0) finish();
+                    },
+                  });
+                });
+              },
+            });
+          },
+        });
+      };
+
+      if (e.hidden) {
+        // 1) the key becomes visible: the face-down block flips into the key
+        this.scene.tweens.add({
+          targets: sprite,
+          scaleX: 0,
+          duration: 110,
+          ease: 'Sine.easeIn',
+          onComplete: () => {
+            sprite.setVisible(false);
+            const key = this.buildBlock(SPECIAL.KEY).setPosition(wx, wy).setDepth(30);
+            key.scaleX = 0;
+            this.root.add(key);
+            this.scene.tweens.add({
+              targets: key,
+              scaleX: 1,
+              duration: 130,
+              ease: 'Back.easeOut',
+              onComplete: () => breakThenFall(key),
+            });
+          },
+        });
+      } else {
+        breakThenFall(sprite as Phaser.GameObjects.Container);
+      }
+    }
+  }
+
+  /** A few hand-drawn shards flying out of a broken block. */
+  private spawnShards(x: number, y: number): void {
+    for (let i = 0; i < 5; i++) {
+      const g = this.scene.add.graphics().setDepth(35);
+      g.fillStyle(0xd9a521, 0.95);
+      const size = 4 + Math.random() * 4;
+      g.fillRoundedRect(-size / 2, -size / 2, size, size, 2);
+      g.setPosition(x, y);
+      this.root.add(g);
+      const ang = Math.random() * Math.PI * 2;
+      const dist = 22 + Math.random() * 20;
+      this.scene.tweens.add({
+        targets: g,
+        x: x + Math.cos(ang) * dist,
+        y: y + Math.sin(ang) * dist + 10,
+        alpha: 0,
+        angle: (Math.random() - 0.5) * 90,
+        duration: 260 + Math.random() * 120,
+        ease: 'Cubic.easeOut',
+        onComplete: () => g.destroy(),
+      });
+    }
+  }
+
   /** A dug-out key flies in an arc to the locked column; a lock pops off. */
   animateKeyToLock(fromColumn: number, lockColumn: number): void {
     const fromPos = this.layout.positions[fromColumn];

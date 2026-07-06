@@ -235,9 +235,18 @@ export class SortingController {
       action_type: 'booster_key',
       actions_count: this.model.moves,
     });
-    this.view.rebuild({ landedColumn: res.column, landedCount: 0 });
-    if (res.dissolved.length > 0) this.view.animateKeyDissolve(res.dissolved);
-    this.callbacks.onStateChanged();
+    if (res.dissolved.length > 0) {
+      // staged: lock pops -> key flips face-up -> breaks -> blocks fall
+      this.busy = true;
+      this.view.animateKeyBreak(res.dissolved, res.column, () => {
+        this.busy = false;
+        this.view.rebuild();
+        this.callbacks.onStateChanged();
+      });
+    } else {
+      this.view.rebuild({ landedColumn: res.column, landedCount: 0 });
+      this.callbacks.onStateChanged();
+    }
     return true;
   }
 }
