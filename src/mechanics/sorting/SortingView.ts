@@ -450,6 +450,71 @@ export class SortingView implements SortingViewContract {
     }
   }
 
+  /** A dug-out key flies in an arc to the locked column; a lock pops off. */
+  animateKeyToLock(fromColumn: number, lockColumn: number): void {
+    const fromPos = this.layout.positions[fromColumn];
+    const lockPos = this.layout.positions[lockColumn];
+    if (!fromPos || !lockPos) return;
+    const start = this.blockLocalPos(this.model.columns[fromColumn].length, fromColumn);
+    const sx = this.area.x + fromPos.x + start.x;
+    const sy = this.area.y + fromPos.y + start.y;
+    const tx = this.area.x + lockPos.x + this.layout.colWidth / 2;
+    const ty = this.area.y + lockPos.y + this.layout.colHeights[lockColumn] / 2;
+
+    const key = hasTexture(this.scene, 'icon_key')
+      ? (this.scene.add.image(sx, sy, 'icon_key').setDisplaySize(26, 26) as Phaser.GameObjects.Image)
+      : (this.scene.add.text(sx, sy, '🔑', { fontSize: '20px' }).setOrigin(0.5) as unknown as Phaser.GameObjects.Image);
+    key.setDepth(40);
+    this.root.add(key);
+
+    // little hop up, then an arced flight to the lock
+    this.scene.tweens.add({
+      targets: key,
+      y: sy - 22,
+      scale: key.scale * 1.15,
+      duration: 120,
+      ease: 'Sine.easeOut',
+      onComplete: () => {
+        this.scene.tweens.add({
+          targets: key,
+          x: tx,
+          duration: 300,
+          ease: 'Sine.easeInOut',
+        });
+        this.scene.tweens.add({
+          targets: key,
+          y: ty,
+          angle: 30,
+          duration: 300,
+          ease: 'Cubic.easeIn',
+          onComplete: () => {
+            key.destroy();
+            this.popLock(tx, ty);
+          },
+        });
+      },
+    });
+  }
+
+  /** The lock jumps off the column and fades — the key just opened it. */
+  private popLock(x: number, y: number): void {
+    const lock = hasTexture(this.scene, ASSET_KEYS.iconLock)
+      ? (this.scene.add.image(x, y, ASSET_KEYS.iconLock).setDisplaySize(30, 30) as Phaser.GameObjects.Image)
+      : (this.scene.add.text(x, y, '🔒', { fontSize: '24px' }).setOrigin(0.5) as unknown as Phaser.GameObjects.Image);
+    lock.setDepth(41);
+    this.root.add(lock);
+    this.scene.tweens.add({
+      targets: lock,
+      y: y - 26,
+      angle: -28,
+      alpha: 0,
+      scale: lock.scale * 1.25,
+      duration: 380,
+      ease: 'Sine.easeOut',
+      onComplete: () => lock.destroy(),
+    });
+  }
+
   /** Chains across the chained column: neutral gray, colored ones tinted.
    * One completed set removes one chain (its color first, else a neutral). */
   private addChainDecor(container: Phaser.GameObjects.Container): void {

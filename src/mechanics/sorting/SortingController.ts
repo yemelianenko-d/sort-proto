@@ -145,6 +145,12 @@ export class SortingController {
 
     this.view.rebuild({ landedColumn: to, landedCount: result.count, revealed: result.revealed });
     if (result.keysDissolved.length > 0) this.view.animateKeyDissolve(result.keysDissolved);
+    if (result.keysApplied.length > 0) {
+      const lockCol = result.keyUnlocked ?? this.model.lockedColumn;
+      if (lockCol !== null) {
+        result.keysApplied.forEach((c) => this.view.animateKeyToLock(c, lockCol));
+      }
+    }
     this.callbacks.onStateChanged();
 
     if (result.readyToClear !== null) {

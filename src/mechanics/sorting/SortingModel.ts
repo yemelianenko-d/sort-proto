@@ -368,12 +368,14 @@ export class SortingModel {
     revealed: number[];
     keysConsumed: number[];
     keysDissolved: { col: number; slot: number; hidden: boolean }[];
+    keysApplied: number[];
     keyUnlocked: number | null;
     tapeBroken: number | null;
   } {
     const revealed: number[] = [];
     const keysConsumed: number[] = [];
     const keysDissolved: { col: number; slot: number; hidden: boolean }[] = [];
+    const keysApplied: number[] = [];
     let keyUnlocked: number | null = null;
     let tapeBroken: number | null = null;
 
@@ -398,6 +400,7 @@ export class SortingModel {
           col.pop();
           keysConsumed.push(ci);
           if (this.lockedColumn !== null) {
+            keysApplied.push(ci);
             this.locksRemaining -= 1;
             if (this.locksRemaining <= 0) {
               keyUnlocked = this.lockedColumn;
@@ -411,7 +414,7 @@ export class SortingModel {
         }
       });
     }
-    return { revealed, keysConsumed, keysDissolved, keyUnlocked, tapeBroken };
+    return { revealed, keysConsumed, keysDissolved, keysApplied, keyUnlocked, tapeBroken };
   }
 
   private pushSnapshot(): void {

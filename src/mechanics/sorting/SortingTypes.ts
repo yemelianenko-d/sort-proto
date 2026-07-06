@@ -34,6 +34,9 @@ export interface MoveResult {
   /** Key blocks dissolved as dead weight this move, with their original slot
    * and visibility (hidden ones flip face-up before dissolving). */
   keysDissolved: { col: number; slot: number; hidden: boolean }[];
+  /** Columns whose consumed key actually removed a lock this move
+   * (drives the key-flies-to-the-lock animation). */
+  keysApplied: number[];
   /** The formerly locked column, if a key block just opened it. */
   keyUnlocked: number | null;
   /** The chain removed by the set completed this move (-1 neutral, >=0 color), or null. */
@@ -97,6 +100,8 @@ export interface SortingViewContract {
   wiggleTape(columnIndex: number): void;
   /** Dead-weight keys dissolve: hidden ones flip face-up first, then fade. */
   animateKeyDissolve(entries: { col: number; slot: number; hidden: boolean }[]): void;
+  /** A dug-out key flies to the locked column; the lock pops off. */
+  animateKeyToLock(fromColumn: number, lockColumn: number): void;
   pulseColumn(columnIndex: number): void;
   clearPulse(): void;
 }

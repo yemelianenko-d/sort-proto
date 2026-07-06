@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { SortingController, type SortingCallbacks } from './SortingController';
 import { SortingModel } from './SortingModel';
 import type { SortingLevelConfig, SortingViewContract } from './SortingTypes';
+import { SPECIAL } from './SortingTypes';
 import { eventBus, type GameEventName } from '../../core/events/EventBus';
 
 class StubView implements SortingViewContract {
@@ -42,6 +43,10 @@ class StubView implements SortingViewContract {
   dissolves: { col: number; slot: number; hidden: boolean }[][] = [];
   animateKeyDissolve(entries: { col: number; slot: number; hidden: boolean }[]): void {
     this.dissolves.push(entries);
+  }
+  keyFlights: { from: number; lock: number }[] = [];
+  animateKeyToLock(fromColumn: number, lockColumn: number): void {
+    this.keyFlights.push({ from: fromColumn, lock: lockColumn });
   }
   pulses: number[] = [];
   pulseColumn(columnIndex: number): void {
@@ -94,6 +99,19 @@ function captureEvents(names: GameEventName[]): { name: GameEventName }[] {
 describe('SortingController', () => {
   beforeEach(() => {
     // EventBus is a module singleton; tests only add fresh listeners.
+  });
+
+  it('a dug-out key triggers the flight-to-lock animation', () => {
+    const { model, view } = setup({
+      cap: 3,
+      columns: [[SPECIAL.KEY, 0], [0], [0], []],
+      lockedColumn: true,
+    });
+    const lockCol = model.columns.length - 1;
+    view.userTap(0);
+    view.userTap(3); // uncovers the key -> consumed -> lock opens
+    expect(model.lockedColumn).toBeNull();
+    expect(view.keyFlights).toEqual([{ from: 0, lock: lockCol }]);
   });
 
   it('a failed drop reacts and clears the selection instead of reselecting', () => {
