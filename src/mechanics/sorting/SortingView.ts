@@ -382,6 +382,16 @@ export class SortingView implements SortingViewContract {
       ghosts.push(g);
     }
     this.targetGhosts.set(ci, ghosts);
+
+    // маленька стрілка кольору колонки над верхнім краєм: "цей колір — сюди"
+    const cx = this.layout.colWidth / 2;
+    const ink = BLOCK_STYLES[color].ink;
+    const ar = this.scene.add.graphics();
+    ar.lineStyle(3, ink, 0.95);
+    ar.lineBetween(cx, -16, cx, 2);
+    ar.lineBetween(cx, 2, cx - 6, -6);
+    ar.lineBetween(cx, 2, cx + 6, -6);
+    container.add(ar);
   }
 
   /** Wrong color tapped into a target column: the pattern briefly brightens. */
