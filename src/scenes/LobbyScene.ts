@@ -8,6 +8,8 @@ import { Popup } from '../ui/Popup';
 import { setContainerTapArea } from '../ui/containerTapArea';
 import { hasTexture } from '../core/assets/AssetLoader';
 import { scatterDoodles } from '../ui/doodles';
+import { readAppFlags } from '../app/gameConfig';
+import { SPECIAL } from '../mechanics/sorting/SortingTypes';
 import { GAME_SETTINGS } from '../config/gameSettings';
 
 const PER_ROW = 5;
@@ -25,6 +27,8 @@ export class LobbyScene extends Phaser.Scene {
   private paper!: PaperBackground;
   private doodles!: Phaser.GameObjects.Container;
   private doodleSeed = 0;
+  /** ?debug=true: show per-level mechanic glyphs on the cells. */
+  private debugMode = readAppFlags().debug;
   private header!: Phaser.GameObjects.Container;
   private gridWrap!: Phaser.GameObjects.Container;
   private bottom!: Phaser.GameObjects.Container;
@@ -304,6 +308,26 @@ export class LobbyScene extends Phaser.Scene {
     return this.gridPadTop + rows * (cellSize + CELL_GAP_Y);
   }
 
+
+  /** Compact mechanic glyphs for the cheat mode: I=ink K=keys L=lock T=tape C=color-target S=set-unlock. */
+  private mechanicGlyphs(index: number): string {
+    if (index >= this.game_.levels.count) return ''; // avoid generating endless levels here
+    const cfg = this.game_.levels.byIndex(index);
+    if (!cfg) return '';
+    const flat = cfg.columns.flat();
+    const keys = flat.filter((c) => c === SPECIAL.KEY).length;
+    const parts: string[] = [];
+    if (flat.includes(SPECIAL.INK)) parts.push('I');
+    if (cfg.lockedColumn) {
+      const locks = cfg.lockedColumnLocks ?? 1;
+      parts.push(keys > 0 ? (locks > 1 ? `K${locks}` : 'K') : 'L');
+    }
+    if (cfg.tapedColumns?.length) parts.push('T');
+    if (cfg.targetColumns?.length) parts.push(cfg.targetColumns.length > 1 ? `C${cfg.targetColumns.length}` : 'C');
+    if (cfg.setUnlockColumn) parts.push(cfg.setUnlockColumn > 1 ? `S${cfg.setUnlockColumn}` : 'S');
+    return parts.join(' ');
+  }
+
   private buildCell(
     i: number,
     nextIndex: number,
@@ -360,6 +384,22 @@ export class LobbyScene extends Phaser.Scene {
         })
         .setOrigin(0.5),
     );
+
+    // cheat mode: which mechanics live on this level
+    if (this.debugMode) {
+      const glyphs = this.mechanicGlyphs(i);
+      if (glyphs) {
+        cell.add(
+          this.add
+            .text(0, -cellSize * 0.38, glyphs, {
+              fontFamily: FONTS.body,
+              fontSize: `${Math.max(9, Math.round(cellSize * 0.14))}px`,
+              color: '#b0512e',
+            })
+            .setOrigin(0.5),
+        );
+      }
+    }
 
     if (completed) {
       const stars = this.game_.progress.starsFor(id);

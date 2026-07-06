@@ -37,6 +37,74 @@ describe('SortingModel specials', () => {
     expect(m.isWon()).toBe(true);
   });
 
+  it('a target column accepts only its color as the first block', () => {
+    const m = new SortingModel(
+      cfg({ columns: [[0, 0], [1, 1], [], []], targetColumns: [{ col: 2, color: 1 }] }),
+    );
+    expect(m.canDrop(0, 2)).toBe(false); // wrong color into the target
+    expect(m.isTargetMismatch(0, 2)).toBe(true);
+    expect(m.canDrop(1, 2)).toBe(true); // designated color is fine
+    expect(m.canDrop(0, 3)).toBe(true); // plain empty takes anything
+    m.move(1, 2);
+    // occupied target behaves like a normal column: matching color lands
+    expect(m.canDrop(0, 2)).toBe(false); // color 0 on color 1 top
+    m.move(2, 3); // move the pair back off the target
+    expect(m.canDrop(0, 2)).toBe(false); // emptied target: the chalk rule is back
+    expect(m.isTargetMismatch(0, 2)).toBe(true);
+    expect(m.canDrop(3, 2)).toBe(true); // the designated color may return
+  });
+
+  it('the set-locked column opens as part of the resolve sequence', () => {
+    const m = new SortingModel(
+      cfg({ cap: 2, columns: [[0], [0], [1, 1]], setUnlockColumn: 1 }),
+    );
+    const setCol = m.columns.length - 1;
+    expect(m.setLockedColumn).toBe(setCol);
+    expect(m.canDrop(0, setCol)).toBe(false); // closed until a set completes
+    const res = m.move(0, 1); // completes the 0-0 set
+    expect(res?.readyToClear).toBe(1);
+    expect(res?.setUnlocked).toBe(setCol); // unlock happens at validation
+    expect(m.setLockedColumn).toBeNull();
+    m.commitClear(1);
+    expect(m.canDrop(2, setCol)).toBe(true); // and the column is usable
+  });
+
+  it('a double lock needs two keys; booster and key blocks both count', () => {
+    const m = new SortingModel(
+      cfg({
+        cap: 3,
+        columns: [[SPECIAL.KEY, 0], [0], [0], []],
+        lockedColumn: true,
+        lockedColumnLocks: 2,
+      }),
+    );
+    const lockCol = m.columns.length - 1;
+    expect(m.locksLeft).toBe(2);
+    const booster = m.unlockColumn(); // booster removes one lock
+    expect(booster).toEqual({ column: lockCol, opened: false });
+    expect(m.locksLeft).toBe(1);
+    m.move(0, 1); // uncovers the key block -> consumed -> second lock opens
+    expect(m.lockedColumn).toBeNull();
+    expect(m.canDrop(2, lockCol)).toBe(true);
+  });
+
+  it('undo restores block-key locks but keeps booster keys spent', () => {
+    const m = new SortingModel(
+      cfg({
+        cap: 3,
+        columns: [[SPECIAL.KEY, 0], [0], [0], []],
+        lockedColumn: true,
+        lockedColumnLocks: 2,
+      }),
+    );
+    m.unlockColumn(); // booster: 2 -> 1
+    m.move(0, 1); // key block: 1 -> 0, opened
+    expect(m.lockedColumn).toBeNull();
+    m.undo(); // move undone: the key block is back, its lock restored
+    expect(m.locksLeft).toBe(1); // but the booster stays spent
+    expect(m.lockedColumn).not.toBeNull();
+  });
+
   it('ink stays visible even when hiddenBelowTop is on', () => {
     const m = new SortingModel(
       cfg({ columns: [[SPECIAL.INK, 0, 1], [1], []], hiddenBelowTop: true }),

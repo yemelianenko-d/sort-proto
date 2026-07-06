@@ -74,14 +74,18 @@ export class SortingController {
       return;
     }
     this.selected = -1;
+    const mismatch = target !== null && this.model.isTargetMismatch(index, target);
     this.view.rebuild();
-    if (target !== null && target !== index) this.view.shakeColumn(target);
+    if (target !== null && target !== index) {
+      this.view.shakeColumn(target);
+      if (mismatch) this.view.flashTargetHint(target);
+    }
   }
 
   private onTap(index: number): void {
     if (this.busy || this.movedOnPress) return;
 
-    if (index === this.model.lockedColumn) {
+    if (index === this.model.lockedColumn || index === this.model.setLockedColumn) {
       this.view.shakeColumn(index);
       return;
     }
@@ -101,6 +105,10 @@ export class SortingController {
 
     if (this.model.canDrop(this.selected, index)) {
       this.performMove(this.selected, index, 'tap');
+    } else if (this.model.isTargetMismatch(this.selected, index)) {
+      this.view.shakeColumn(index);
+      this.view.flashTargetHint(index);
+      this.select(-1);
     } else if (canPick) {
       this.select(index); // reselect another source
     } else {
@@ -211,8 +219,8 @@ export class SortingController {
 
   useKey(): boolean {
     if (this.busy) return false;
-    const index = this.model.unlockColumn();
-    if (index === null) return false;
+    const res = this.model.unlockColumn();
+    if (res === null) return false;
     this.selected = -1;
     eventBus.emit('booster_used', { level_id: this.model.levelId, booster: 'key' });
     eventBus.emit('player_action_made', {
@@ -220,7 +228,7 @@ export class SortingController {
       action_type: 'booster_key',
       actions_count: this.model.moves,
     });
-    this.view.rebuild({ landedColumn: index, landedCount: 0 });
+    this.view.rebuild({ landedColumn: res.column, landedCount: 0 });
     this.callbacks.onStateChanged();
     return true;
   }

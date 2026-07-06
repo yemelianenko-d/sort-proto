@@ -23,6 +23,8 @@ export class SortingView implements SortingViewContract {
   private root: Phaser.GameObjects.Container;
   private columnContainers: Phaser.GameObjects.Container[] = [];
   private blockContainers: Phaser.GameObjects.Container[][] = [];
+  /** Chalk previews inside target columns, per column index (for the flash). */
+  private targetGhosts = new Map<number, Phaser.GameObjects.Container[]>();
   private layout!: ColumnLayout;
   private area = { x: 0, y: 0, width: 0, height: 0 };
 
@@ -102,11 +104,13 @@ export class SortingView implements SortingViewContract {
     const hideCount = hideColumn >= 0 ? this.model.topGroup(hideColumn) : 0;
     const targets = selected >= 0 ? new Set(this.model.validTargets(selected)) : new Set<number>();
 
+    this.targetGhosts.clear();
     this.model.columns.forEach((column, ci) => {
       const pos = this.layout.positions[ci];
       const container = this.scene.add.container(this.area.x + pos.x, this.area.y + pos.y);
 
       container.add(this.buildFrame(ci, selected === ci, targets.has(ci)));
+      if (this.model.targetColor(ci) !== null) this.addTargetGhosts(container, ci);
 
       const liftGroup = selected === ci && hideColumn !== ci ? this.model.topGroup(ci) : 0;
       const blocks: Phaser.GameObjects.Container[] = [];
@@ -146,6 +150,7 @@ export class SortingView implements SortingViewContract {
       });
 
       if (this.model.lockedColumn === ci) this.addLockDecor(container, ci);
+      if (this.model.setLockedColumn === ci) this.addSetLockDecor(container, ci);
       if (this.model.isTaped(ci)) container.add(this.buildTapeOverlay());
 
       setContainerTapArea(container, this.layout.colWidth, this.layout.colHeights[ci], 'topLeft');
@@ -335,6 +340,53 @@ export class SortingView implements SortingViewContract {
     return c;
   }
 
+  /** Faint chalk preview of the future set inside an (empty) target column. */
+  private addTargetGhosts(container: Phaser.GameObjects.Container, ci: number): void {
+    const color = this.model.targetColor(ci);
+    if (color === null) return;
+    const ghosts: Phaser.GameObjects.Container[] = [];
+    for (let i = 0; i < this.model.capacity(ci); i++) {
+      const g = this.buildBlock(color);
+      const { x, y } = this.blockLocalPos(i, ci);
+      g.setPosition(x, y).setAlpha(GAME_SETTINGS.targetColumn.ghostAlpha);
+      container.add(g);
+      ghosts.push(g);
+    }
+    this.targetGhosts.set(ci, ghosts);
+  }
+
+  /** Wrong color tapped into a target column: the pattern briefly brightens. */
+  flashTargetHint(ci: number): void {
+    const ghosts = this.targetGhosts.get(ci);
+    if (!ghosts) return;
+    for (const g of ghosts) {
+      this.scene.tweens.add({
+        targets: g,
+        alpha: GAME_SETTINGS.targetColumn.flashAlpha,
+        duration: 110,
+        yoyo: true,
+        repeat: 1,
+        onComplete: () => g.setAlpha(GAME_SETTINGS.targetColumn.ghostAlpha),
+      });
+    }
+  }
+
+  /** Star badge on the set-locked column: complete N sets to open it. */
+  private addSetLockDecor(container: Phaser.GameObjects.Container, ci: number): void {
+    const colH = this.layout.colHeights[ci];
+    const cx = this.layout.colWidth / 2;
+    const stars = '\u2605'.repeat(Math.max(1, this.model.setsLeft));
+    container.add(
+      this.scene.add
+        .text(cx, colH / 2, stars, {
+          fontFamily: FONTS.body,
+          fontSize: '22px',
+          color: COLORS.pencilCss,
+        })
+        .setOrigin(0.5),
+    );
+  }
+
   private addLockDecor(container: Phaser.GameObjects.Container, ci: number): void {
     const colH = this.layout.colHeights[ci];
     const cx = this.layout.colWidth / 2;
@@ -358,6 +410,17 @@ export class SortingView implements SortingViewContract {
     } else {
       container.add(
         this.scene.add.text(cx, colH / 2, '🔒', { fontSize: '24px' }).setOrigin(0.5),
+      );
+    }
+    if (this.model.locksLeft > 1) {
+      container.add(
+        this.scene.add
+          .text(cx + 16, colH / 2 + 12, `×${this.model.locksLeft}`, {
+            fontFamily: FONTS.body,
+            fontSize: '14px',
+            color: COLORS.inkCss,
+          })
+          .setOrigin(0.5),
       );
     }
 

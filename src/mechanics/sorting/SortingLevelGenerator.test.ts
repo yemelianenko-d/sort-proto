@@ -40,6 +40,18 @@ describe('generateSortingLevel', () => {
 
     const taped = generateSortingLevel(31); // tape from 31
     expect(taped.tapedColumns?.length).toBeGreaterThan(0);
+
+    const target = generateSortingLevel(37); // target column from 36
+    expect(target.targetColumns?.length).toBe(1);
+    expect(target.columns[target.targetColumns![0].col]).toHaveLength(0);
+
+    const setLock = generateSortingLevel(42); // set-unlock from 41
+    expect(setLock.setUnlockColumn).toBe(1);
+
+    const doubleLock = generateSortingLevel(47); // double lock from 46
+    expect(doubleLock.lockedColumn).toBe(true);
+    expect(doubleLock.lockedColumnLocks).toBe(2);
+    expect(doubleLock.columns.flat().filter((c) => c === SPECIAL.KEY)).toHaveLength(2);
   });
 
   it('keeps the color arithmetic: every color has exactly cap copies', { timeout: 30000 }, () => {

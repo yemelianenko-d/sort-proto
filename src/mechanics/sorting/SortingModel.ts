@@ -4,6 +4,9 @@ import type { BlockState, ColumnState, MoveResult, SortingLevelConfig } from './
 interface Snapshot {
   columns: ColumnState[];
   lockedColumn: number | null;
+  locksRemaining: number;
+  setLockedColumn: number | null;
+  setsRemaining: number;
   taped: number[];
   moves: number;
 }
@@ -20,6 +23,11 @@ interface Snapshot {
  *    (the column just has fewer playable slots);
  *  - a key block, once revealed on top, is consumed and opens the lock;
  *  - a taped column is take-only until emptied once (then the tape breaks);
+ *  - a locked column may need several keys (each key removes one lock);
+ *  - a set-locked column opens after N completed sets, as part of the
+ *    resolve sequence (move -> validate set -> unlock);
+ *  - a target column, while empty, accepts only its designated color as the
+ *    first block; once occupied it behaves like a normal column;
  *  - a full column of one color clears;
  *  - the level is won when only ink remains on the board.
  */
@@ -30,13 +38,18 @@ export class SortingModel {
 
   columns: ColumnState[];
   lockedColumn: number | null = null;
+  setLockedColumn: number | null = null;
   moves = 0;
 
+  private locksRemaining = 0;
+  private initialLocks = 0;
+  private setsRemaining = 0;
+  private targets = new Map<number, number>();
   private taped = new Set<number>();
   private history: Snapshot[] = [];
   /** Booster effects are permanent: undo reverts moves only. */
   private revealedByLens = new Set<number>();
-  private keyUsed = false;
+  private boosterKeys = 0;
 
   constructor(config: SortingLevelConfig) {
     this.cap = config.cap;
@@ -53,10 +66,46 @@ export class SortingModel {
       }),
     );
     (config.tapedColumns ?? []).forEach((i) => this.taped.add(i));
+    (config.targetColumns ?? []).forEach(({ col, color }) => this.targets.set(col, color));
     if (config.lockedColumn) {
       this.columns.push([]);
       this.lockedColumn = this.columns.length - 1;
+      this.initialLocks = Math.max(1, config.lockedColumnLocks ?? 1);
+      this.locksRemaining = this.initialLocks;
     }
+    if ((config.setUnlockColumn ?? 0) > 0) {
+      this.columns.push([]);
+      this.setLockedColumn = this.columns.length - 1;
+      this.setsRemaining = config.setUnlockColumn as number;
+    }
+  }
+
+  /* ---------------- new-mechanic queries ---------------- */
+
+  /** Designated color of a target column, or null. */
+  targetColor(i: number): number | null {
+    return this.targets.has(i) ? (this.targets.get(i) as number) : null;
+  }
+
+  hasTargetColumns(): boolean {
+    return this.targets.size > 0;
+  }
+
+  /** Locks still on the key-locked column (0 when open or absent). */
+  get locksLeft(): number {
+    return this.lockedColumn === null ? 0 : this.locksRemaining;
+  }
+
+  /** Completed sets still needed to open the set-locked column. */
+  get setsLeft(): number {
+    return this.setLockedColumn === null ? 0 : this.setsRemaining;
+  }
+
+  /** True when a drop from `from` onto `to` fails only due to the target color rule. */
+  isTargetMismatch(from: number, to: number): boolean {
+    if (!this.targets.has(to) || this.columns[to].length > 0) return false;
+    if (this.topGroup(from) === 0) return false;
+    return this.groupColor(from) !== this.targets.get(to);
   }
 
   /* ---------------- queries ---------------- */
@@ -101,7 +150,7 @@ export class SortingModel {
   }
 
   canDrop(from: number, to: number): boolean {
-    if (from === to || to === this.lockedColumn) return false;
+    if (from === to || to === this.lockedColumn || to === this.setLockedColumn) return false;
     if (this.taped.has(to)) return false;
     const src = this.columns[from];
     const dst = this.columns[to];
@@ -109,7 +158,11 @@ export class SortingModel {
     const group = this.topGroup(from);
     if (group === 0 || dst.length >= this.capacity(to)) return false;
     const color = this.groupColor(from);
-    if (dst.length === 0) return true;
+    if (dst.length === 0) {
+      // a target column, while empty, accepts only its designated color
+      const want = this.targets.get(to);
+      return want === undefined || want === color;
+    }
     return this.matches(color, dst[dst.length - 1].color);
   }
 
@@ -154,7 +207,15 @@ export class SortingModel {
 
     const settled = this.settle(from);
     const readyToClear = this.isUniformFull(to) ? to : null;
-    return { from, to, count, readyToClear, ...settled };
+    let setUnlocked: number | null = null;
+    if (readyToClear !== null && this.setLockedColumn !== null) {
+      this.setsRemaining -= 1;
+      if (this.setsRemaining <= 0) {
+        setUnlocked = this.setLockedColumn;
+        this.setLockedColumn = null;
+      }
+    }
+    return { from, to, count, readyToClear, setUnlocked, ...settled };
   }
 
   /** Empties a previously reported uniform column; returns newly revealed columns. */
@@ -170,6 +231,9 @@ export class SortingModel {
     if (!snap) return false;
     this.columns = snap.columns;
     this.lockedColumn = snap.lockedColumn;
+    this.locksRemaining = snap.locksRemaining;
+    this.setLockedColumn = snap.setLockedColumn;
+    this.setsRemaining = snap.setsRemaining;
     this.taped = new Set(snap.taped);
     this.moves = snap.moves;
     this.reapplyBoosterEffects();
@@ -178,7 +242,12 @@ export class SortingModel {
 
   /** Booster results survive undo: spent boosters must not be rolled back. */
   private reapplyBoosterEffects(): void {
-    if (this.keyUsed) this.lockedColumn = null;
+    // booster keys are permanent: cap the restored lock count accordingly
+    const cap = this.initialLocks - this.boosterKeys;
+    if (this.lockedColumn !== null) {
+      this.locksRemaining = Math.min(this.locksRemaining, Math.max(0, cap));
+      if (this.locksRemaining <= 0) this.lockedColumn = null;
+    }
     if (this.revealedByLens.size > 0) {
       for (const col of this.columns) {
         for (const block of col) {
@@ -189,12 +258,17 @@ export class SortingModel {
   }
 
   /** Unlocks the locked column (key booster). Permanent: not undo-able. */
-  unlockColumn(): number | null {
+  /** Booster key: removes one lock; returns the column and whether it opened. */
+  unlockColumn(): { column: number; opened: boolean } | null {
     if (this.lockedColumn === null) return null;
-    const index = this.lockedColumn;
-    this.lockedColumn = null;
-    this.keyUsed = true;
-    return index;
+    this.boosterKeys += 1;
+    this.locksRemaining -= 1;
+    if (this.locksRemaining <= 0) {
+      const column = this.lockedColumn;
+      this.lockedColumn = null;
+      return { column, opened: true };
+    }
+    return { column: this.lockedColumn, opened: false };
   }
 
   hasHiddenBlocks(): boolean {
@@ -287,8 +361,11 @@ export class SortingModel {
           col.pop();
           keysConsumed.push(ci);
           if (this.lockedColumn !== null) {
-            keyUnlocked = this.lockedColumn;
-            this.lockedColumn = null;
+            this.locksRemaining -= 1;
+            if (this.locksRemaining <= 0) {
+              keyUnlocked = this.lockedColumn;
+              this.lockedColumn = null;
+            }
           }
           changed = true;
         }
@@ -301,6 +378,9 @@ export class SortingModel {
     this.history.push({
       columns: this.columns.map((c) => c.map((b) => ({ ...b }))),
       lockedColumn: this.lockedColumn,
+      locksRemaining: this.locksRemaining,
+      setLockedColumn: this.setLockedColumn,
+      setsRemaining: this.setsRemaining,
       taped: [...this.taped],
       moves: this.moves,
     });

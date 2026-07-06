@@ -38,7 +38,11 @@ interface SolverState {
   cols: ColorId[][];
   cap: number;
   locked: number; // -1 = none
+  locks: number; // keys still needed for `locked`
+  setCol: number; // -1 = none
+  setsLeft: number; // completed sets still needed for `setCol`
   taped: Set<number>;
+  targets: Map<number, number>; // empty column -> required first color
 }
 
 const isSpecial = (c: number): boolean => c === SPECIAL.INK || c === SPECIAL.KEY;
@@ -75,7 +79,7 @@ function settle(st: SolverState, emptied: number | null): void {
       const top = col[col.length - 1];
       if (top === SPECIAL.KEY) {
         st.cols[i] = col.slice(0, -1);
-        if (st.locked >= 0) st.locked = -1;
+        if (st.locked >= 0 && --st.locks <= 0) st.locked = -1;
         changed = true;
       } else if (isUniformFull(col, st.cap)) {
         st.cols[i] = [];
@@ -83,6 +87,7 @@ function settle(st: SolverState, emptied: number | null): void {
           st.taped = new Set(st.taped);
           st.taped.delete(i);
         }
+        if (st.setCol >= 0 && --st.setsLeft <= 0) st.setCol = -1;
         changed = true;
       }
     }
@@ -90,10 +95,12 @@ function settle(st: SolverState, emptied: number | null): void {
 }
 
 function stateKey(st: SolverState): string {
-  return st.cols
-    .map((c, i) => `${st.taped.has(i) ? 't' : ''}${i === st.locked ? 'L' : ''}:${c.join(',')}`)
-    .sort()
-    .join('|');
+  return (
+    st.cols
+      .map((c, i) => `${st.taped.has(i) ? 't' : ''}${i === st.locked ? 'L' : ''}${i === st.setCol ? 'S' : ''}:${c.join(',')}`)
+      .sort()
+      .join('|') + `#${st.locks}/${st.setsLeft}`
+  );
 }
 
 function solve(start: SolverState, nodeLimit = 50000): number {
@@ -116,12 +123,14 @@ function solve(start: SolverState, nodeLimit = 50000): number {
         if (grp === 0) continue;
         const color = from[from.length - 1];
         for (let j = 0; j < st.cols.length; j++) {
-          if (i === j || j === st.locked || st.taped.has(j)) continue;
+          if (i === j || j === st.locked || j === st.setCol || st.taped.has(j)) continue;
           const to = st.cols[j];
           if ((to.length === 0) !== wantEmpty) continue;
           if (to.length >= st.cap) continue;
           const toTop = to.length > 0 ? to[to.length - 1] : null;
           if (toTop !== null && toTop !== SPECIAL.INK && toTop !== color) continue;
+          const want = to.length === 0 ? st.targets.get(j) : undefined;
+          if (want !== undefined && want !== color) continue;
           if (to.length === 0 && grp === from.length) {
             continue; // pointless full-group shuffle to another empty
           }
@@ -130,7 +139,11 @@ function solve(start: SolverState, nodeLimit = 50000): number {
             cols: st.cols.map((c) => c.slice()),
             cap: st.cap,
             locked: st.locked,
+            locks: st.locks,
+            setCol: st.setCol,
+            setsLeft: st.setsLeft,
             taped: st.taped,
+            targets: st.targets,
           };
           next.cols[j] = next.cols[j].concat(next.cols[i].splice(next.cols[i].length - n, n));
           settle(next, i);
@@ -142,7 +155,16 @@ function solve(start: SolverState, nodeLimit = 50000): number {
     return -1;
   }
   return dfs(
-    { cols: start.cols.map((c) => c.slice()), cap: start.cap, locked: start.locked, taped: new Set(start.taped) },
+    {
+      cols: start.cols.map((c) => c.slice()),
+      cap: start.cap,
+      locked: start.locked,
+      locks: start.locks,
+      setCol: start.setCol,
+      setsLeft: start.setsLeft,
+      taped: new Set(start.taped),
+      targets: start.targets,
+    },
     0,
   );
 }
@@ -156,6 +178,12 @@ interface LevelSpec {
   ink: number;
   keyInPile: boolean;
   locked: boolean;
+  /** Keys needed to open the locked column (1..2). */
+  locks: number;
+  /** Empty columns that require a designated first color (0..2). */
+  targets: number;
+  /** Extra column that opens after N completed sets (0 = none). */
+  setSets: number;
   taped: number;
   hidden: boolean;
 }
@@ -172,6 +200,9 @@ function specFor(index: number, rng: () => number): LevelSpec {
     ink: 0,
     keyInPile: false,
     locked: false,
+    locks: 1,
+    targets: 0,
+    setSets: 0,
     taped: 0,
     hidden: true,
   };
@@ -200,31 +231,55 @@ function specFor(index: number, rng: () => number): LevelSpec {
     spec.colors = pick([6, 7]);
     spec.taped = 1;
     spec.ink = pick([0, 1]);
+  } else if (index < 40) {
+    // 36-40: target column intro — one empty accepts only its color
+    spec.colors = pick([6, 7]);
+    spec.targets = 1;
+  } else if (index < 45) {
+    // 41-45: set-unlock intro — complete any set to open the extra column
+    spec.colors = pick([6, 7]);
+    spec.setSets = 1;
+  } else if (index < 50) {
+    // 46-50: double lock — the locked column needs two keys from the pile
+    spec.colors = pick([6, 7]);
+    spec.locked = true;
+    spec.keyInPile = true;
+    spec.locks = 2;
   } else {
-    // 36-100: rotating combinations, ramping up
+    // 51-100: rotating combinations, ramping up
     const hard = index >= 60;
     spec.colors = hard ? 7 : pick([6, 7]);
     spec.cap = hard ? 4 : pick([3, 4]);
     spec.ink = pick(hard ? [0, 1, 2] : [0, 1]);
     spec.locked = rng() < 0.45;
     spec.keyInPile = spec.locked && rng() < 0.7;
-    spec.taped = rng() < (hard ? 0.4 : 0.25) ? 1 : 0;
+    spec.locks = spec.locked && spec.keyInPile && hard && rng() < 0.35 ? 2 : 1;
+    spec.targets = rng() < (hard ? 0.35 : 0.25) ? (hard && rng() < 0.3 ? 2 : 1) : 0;
+    spec.setSets = spec.targets === 0 && rng() < 0.3 ? (hard && rng() < 0.3 ? 2 : 1) : 0;
+    spec.taped = rng() < (hard ? 0.35 : 0.2) ? 1 : 0;
     if (index % 10 === 9) {
       // breathers before each new decade
       spec.colors = Math.max(5, spec.colors - 1);
       spec.ink = 0;
       spec.taped = 0;
+      spec.targets = 0;
+      spec.setSets = 0;
+      spec.locks = 1;
     }
   }
   // ink must leave at least one playable slot in its column
   spec.ink = Math.min(spec.ink, spec.cap - 1);
-  // board width guard: colors + key slack + ink column + 2 empties + lock <= 11
+  if (!spec.locked) spec.locks = 1;
+  // board width guard: colors + key slack + ink column + empties (2, or 3
+  // when two of them are targets) + lock + set column <= 11
   const width = () =>
     spec.colors +
     (spec.keyInPile ? 1 : 0) +
     (spec.ink > 0 ? 1 : 0) +
     2 +
-    (spec.locked ? 1 : 0);
+    (spec.targets >= 2 ? 1 : 0) +
+    (spec.locked ? 1 : 0) +
+    (spec.setSets > 0 ? 1 : 0);
   while (width() > 11) spec.colors -= 1;
   return spec;
 }
@@ -255,7 +310,9 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
     for (let c = 0; c < spec.colors; c++) {
       for (let k = 0; k < spec.cap; k++) pool.push(c);
     }
-    if (spec.locked && spec.keyInPile) pool.push(SPECIAL.KEY);
+    if (spec.locked && spec.keyInPile) {
+      for (let k = 0; k < spec.locks; k++) pool.push(SPECIAL.KEY);
+    }
     shuffle(pool, rng);
 
     // ink column: dead bottom slots + a couple of color blocks parked on top
@@ -277,7 +334,20 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
     }
     if (p < pool.length) continue; // did not fit; reshuffle
     if (spec.ink > 0) cols.push(inkCol);
-    cols.push([], []);
+    // empties: two universal, one of which may become a target column;
+    // with two targets a third universal empty is added
+    const emptyCount = 2 + (spec.targets >= 2 ? 1 : 0);
+    const targetCols: { col: number; color: number }[] = [];
+    for (let e = 0; e < emptyCount; e++) {
+      cols.push([]);
+      if (targetCols.length < spec.targets) {
+        targetCols.push({ col: cols.length - 1, color: (rng() * spec.colors) | 0 });
+      }
+    }
+    // two targets must want different colors
+    if (targetCols.length === 2 && targetCols[0].color === targetCols[1].color) {
+      targetCols[1].color = (targetCols[1].color + 1) % spec.colors;
+    }
 
     // no column may start completed
     if (cols.some((c) => isUniformFull(c, spec.cap))) continue;
@@ -291,12 +361,25 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
     }
 
     const solveCols = cols.map((c) => c.slice());
-    if (spec.locked) solveCols.push([]);
+    let lockedIdx = -1;
+    let setIdx = -1;
+    if (spec.locked) {
+      solveCols.push([]);
+      lockedIdx = solveCols.length - 1;
+    }
+    if (spec.setSets > 0) {
+      solveCols.push([]);
+      setIdx = solveCols.length - 1;
+    }
     const solution = solve({
       cols: solveCols,
       cap: spec.cap,
-      locked: spec.locked ? solveCols.length - 1 : -1,
+      locked: lockedIdx,
+      locks: spec.locks,
+      setCol: setIdx,
+      setsLeft: spec.setSets,
       taped: new Set(taped),
+      targets: new Map(targetCols.map((t) => [t.col, t.color])),
     });
     if (solution > 0) {
       return {
@@ -307,6 +390,9 @@ export function generateSortingLevel(index: number): SortingLevelConfig {
         columns: cols,
         hiddenBelowTop: spec.hidden,
         lockedColumn: spec.locked,
+        lockedColumnLocks: spec.locked && spec.locks > 1 ? spec.locks : undefined,
+        setUnlockColumn: spec.setSets > 0 ? spec.setSets : undefined,
+        targetColumns: targetCols.length ? targetCols : undefined,
         tapedColumns: taped.length ? taped : undefined,
       };
     }

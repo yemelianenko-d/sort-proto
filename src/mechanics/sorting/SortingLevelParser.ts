@@ -107,6 +107,62 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
     throw new Error(`${at} (${id}): key blocks require "lockedColumn": true.`);
   }
 
+  // multi-key lock
+  let lockedColumnLocks: number | undefined;
+  if (lvl.lockedColumnLocks !== undefined) {
+    const n = lvl.lockedColumnLocks as number;
+    if (!Number.isInteger(n) || n < 1 || n > 3) {
+      throw new Error(`${at} (${id}): "lockedColumnLocks" must be an integer in [1..3].`);
+    }
+    if (lvl.lockedColumn !== true) {
+      throw new Error(`${at} (${id}): "lockedColumnLocks" requires "lockedColumn": true.`);
+    }
+    lockedColumnLocks = n;
+  }
+  if (keys > (lockedColumnLocks ?? (lvl.lockedColumn === true ? 1 : 0))) {
+    throw new Error(`${at} (${id}): more key blocks (${keys}) than locks to open.`);
+  }
+
+  // set-unlock column
+  let setUnlockColumn: number | undefined;
+  if (lvl.setUnlockColumn !== undefined) {
+    const n = lvl.setUnlockColumn as number;
+    if (!Number.isInteger(n) || n < 1 || n > 3) {
+      throw new Error(`${at} (${id}): "setUnlockColumn" must be an integer in [1..3].`);
+    }
+    setUnlockColumn = n;
+  }
+
+  // target columns: empty at start, valid color, unique, not taped
+  let targetColumns: { col: number; color: number }[] | undefined;
+  if (lvl.targetColumns !== undefined) {
+    if (!Array.isArray(lvl.targetColumns)) {
+      throw new Error(`${at} (${id}): "targetColumns" must be an array of {col, color}.`);
+    }
+    const seenCols = new Set<number>();
+    lvl.targetColumns.forEach((t) => {
+      const col = (t as { col?: unknown }).col;
+      const color = (t as { color?: unknown }).color;
+      if (!Number.isInteger(col) || (col as number) < 0 || (col as number) >= columns.length) {
+        throw new Error(`${at} (${id}): target column index ${String(col)} is out of range.`);
+      }
+      if (!Number.isInteger(color) || (color as number) < 0 || (color as number) >= BLOCK_STYLES.length) {
+        throw new Error(`${at} (${id}): target column ${col}: invalid color ${String(color)}.`);
+      }
+      if (seenCols.has(col as number)) {
+        throw new Error(`${at} (${id}): duplicated target column ${col}.`);
+      }
+      seenCols.add(col as number);
+      if ((columns[col as number] as unknown[]).length !== 0) {
+        throw new Error(`${at} (${id}): target column ${col} must start empty.`);
+      }
+      if (Array.isArray(lvl.tapedColumns) && (lvl.tapedColumns as number[]).includes(col as number)) {
+        throw new Error(`${at} (${id}): target column ${col} must not be taped.`);
+      }
+    });
+    targetColumns = lvl.targetColumns as { col: number; color: number }[];
+  }
+
   // the arithmetic contract: every color has exactly `cap` copies, always
   for (const [color, count] of colorCounts) {
     if (count !== capN) {
@@ -144,6 +200,9 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
     difficulty: difficulty as number,
     columns: columns as ColorId[][],
     hiddenBelowTop: lvl.hiddenBelowTop === true,
+    lockedColumnLocks,
+    setUnlockColumn,
+    targetColumns,
     lockedColumn: lvl.lockedColumn === true,
     tapedColumns: taped,
   };

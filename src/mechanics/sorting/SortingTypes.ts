@@ -32,6 +32,8 @@ export interface MoveResult {
   keysConsumed: number[];
   /** The formerly locked column, if a key block just opened it. */
   keyUnlocked: number | null;
+  /** The set-locked column, if the set completed this move opened it. */
+  setUnlocked: number | null;
   /** Column whose tape broke after being emptied this move. */
   tapeBroken: number | null;
 }
@@ -45,6 +47,12 @@ export interface SortingLevelConfig {
   difficulty: number;
   columns: ColorId[][];
   hiddenBelowTop?: boolean;
+  /** Keys needed to open the locked column (default 1). */
+  lockedColumnLocks?: number;
+  /** Extra column that opens after N completed sets (Any Set Unlock). */
+  setUnlockColumn?: number;
+  /** Empty columns that accept only the given color as their FIRST block. */
+  targetColumns?: { col: number; color: number }[];
   lockedColumn?: boolean;
   /** Columns sealed with tape: take-only until emptied once. */
   tapedColumns?: number[];
@@ -75,6 +83,8 @@ export interface SortingViewContract {
   }): void;
   animateClear(columnIndex: number, onDone: () => void): void;
   shakeColumn(columnIndex: number): void;
+  /** Brief target-pattern brightening on a wrong-color attempt. */
+  flashTargetHint(columnIndex: number): void;
   pulseColumn(columnIndex: number): void;
   clearPulse(): void;
 }

@@ -32,6 +32,9 @@ class StubView implements SortingViewContract {
   shakeColumn(columnIndex: number): void {
     this.shakes.push(columnIndex);
   }
+  flashTargetHint(columnIndex: number): void {
+    void columnIndex;
+  }
   pulses: number[] = [];
   pulseColumn(columnIndex: number): void {
     this.pulses.push(columnIndex);

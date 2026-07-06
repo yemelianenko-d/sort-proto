@@ -40,6 +40,12 @@ export const GAME_SETTINGS = {
     hudHeight: 64,
     boosterBarHeight: 84,
   },
+  targetColumn: {
+    /** Chalk preview opacity inside an empty target column. */
+    ghostAlpha: 0.16,
+    /** Brief brightening when the wrong color is tapped into it. */
+    flashAlpha: 0.45,
+  },
   animation: {
     landDurationMs: 200,
     revealDurationMs: 260,
