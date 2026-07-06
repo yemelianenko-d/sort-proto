@@ -395,14 +395,19 @@ export class SortingView implements SortingViewContract {
     // key" combo look); a plain locked column keeps the classic centered lock.
     const hasKeyBlock = this.model.hasBlockOfColor(SPECIAL.KEY);
     if (hasKeyBlock && hasTexture(this.scene, 'icon_lock_col')) {
+      // one badge per remaining lock, side by side on the top edge
       const frame = this.scene.textures.getFrame('icon_lock_col');
-      const w = this.layout.colWidth * 0.4;
-      container.add(
-        this.scene.add
-          .image(cx, 6, 'icon_lock_col')
-          .setOrigin(0.5, 0.62)
-          .setDisplaySize(w, (w * frame.height) / frame.width),
-      );
+      const n = Math.max(1, this.model.locksLeft);
+      const w = this.layout.colWidth * (n > 1 ? 0.32 : 0.4);
+      const spacing = this.layout.colWidth * 0.36;
+      for (let k = 0; k < n; k++) {
+        container.add(
+          this.scene.add
+            .image(cx + (k - (n - 1) / 2) * spacing, 6, 'icon_lock_col')
+            .setOrigin(0.5, 0.62)
+            .setDisplaySize(w, (w * frame.height) / frame.width),
+        );
+      }
     } else if (hasTexture(this.scene, ASSET_KEYS.iconLock)) {
       container.add(
         this.scene.add.image(cx, colH / 2, ASSET_KEYS.iconLock).setDisplaySize(30, 30),
@@ -412,7 +417,8 @@ export class SortingView implements SortingViewContract {
         this.scene.add.text(cx, colH / 2, '🔒', { fontSize: '24px' }).setOrigin(0.5),
       );
     }
-    if (this.model.locksLeft > 1) {
+    const badges = hasKeyBlock && hasTexture(this.scene, 'icon_lock_col');
+    if (!badges && this.model.locksLeft > 1) {
       container.add(
         this.scene.add
           .text(cx + 16, colH / 2 + 12, `×${this.model.locksLeft}`, {
