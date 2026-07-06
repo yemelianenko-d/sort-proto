@@ -52,6 +52,7 @@ export class SortingScene extends Phaser.Scene {
   private nudgeTimer: Phaser.Time.TimerEvent | null = null;
   private backBtn!: Button;
   private restartBtn!: Button;
+  private fullscreenBtn: Button | null = null;
   private popupOpen = false;
   private plusLensBtn: Button | null = null;
   private plusKeyBtn: Button | null = null;
@@ -415,6 +416,7 @@ export class SortingScene extends Phaser.Scene {
     this.hudMoves.setPosition(w - safe.right - 60, top + 4);
     this.backBtn.setPosition(safe.left + 30, top + 20);
     this.restartBtn.setPosition(w - safe.right - 30, top + 20);
+    this.fullscreenBtn?.setPosition(w - safe.right - 82, top + 20);
 
 
     const bottomY = h - safe.bottom - boosterBarHeight / 2;
@@ -477,6 +479,15 @@ export class SortingScene extends Phaser.Scene {
       iconOnly: true,
       onClick: () => this.confirmQuit(),
     });
+    if (this.scale.fullscreen.available) {
+      this.fullscreenBtn = new Button(this, 0, 0, {
+        width: 44,
+        height: 44,
+        label: '⛶',
+        fontSize: 22,
+        onClick: () => this.scale.toggleFullscreen(),
+      });
+    }
     this.restartBtn = new Button(this, 0, 0, {
       width: 44,
       height: 44,

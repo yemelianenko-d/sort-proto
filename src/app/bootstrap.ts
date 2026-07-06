@@ -25,7 +25,27 @@ import { logWarn } from '../core/utils/logger';
  * Creates the platform layer, the app controller and the Phaser game,
  * then hands control to the loading flow (PreloadScene).
  */
-function bootstrap(): void {
+/** Wait for the bundled handwriting fonts before any canvas text is drawn
+ * (otherwise the first frames render in a system fallback and then "jump").
+ * Best-effort with a timeout: the game must still start if FontFaceSet is
+ * unavailable (sandboxed previews) or a font fails. */
+async function waitForFonts(timeoutMs = 2500): Promise<void> {
+  const fonts = document.fonts as FontFaceSet | undefined;
+  if (!fonts?.load) return;
+  const wanted = [
+    fonts.load('500 16px Caveat'),
+    fonts.load('600 16px Caveat'),
+    fonts.load('700 16px Caveat'),
+    fonts.load('16px Neucha'),
+  ];
+  await Promise.race([
+    Promise.all(wanted).then(() => fonts.ready),
+    new Promise((resolve) => setTimeout(resolve, timeoutMs)),
+  ]);
+}
+
+async function bootstrap(): Promise<void> {
+  await waitForFonts();
   const flags = readAppFlags();
   const platform = new WebPlatformService();
   const controller = new GameController(platform);
@@ -92,4 +112,4 @@ function bootstrap(): void {
   });
 }
 
-bootstrap();
+void bootstrap();

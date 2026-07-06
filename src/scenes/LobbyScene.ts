@@ -140,6 +140,18 @@ export class LobbyScene extends Phaser.Scene {
       }),
     );
 
+    if (this.scale.fullscreen.available) {
+      this.header.add(
+        new Button(this, w - safe.right - 34, safe.top + 34, {
+          width: 44,
+          height: 44,
+          label: '⛶',
+          fontSize: 22,
+          onClick: () => this.scale.toggleFullscreen(),
+        }),
+      );
+    }
+
     const title = this.add
       .text(cx, safe.top + 64, UI_TEXTS.app.title, {
         fontFamily: FONTS.display,
