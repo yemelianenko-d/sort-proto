@@ -29,6 +29,7 @@ interface SceneData {
 const wallet = {
   keys: GAME_SETTINGS.boosters.initialKeys,
   lenses: GAME_SETTINGS.boosters.initialLenses,
+  undos: GAME_SETTINGS.boosters.initialUndos,
 };
 
 type TutorialId = 'howto' | 'hidden' | 'locked' | 'ink' | 'keyblock' | 'taped' | 'target' | 'chains' | 'multilock';
@@ -54,6 +55,7 @@ export class SortingScene extends Phaser.Scene {
   private popupOpen = false;
   private plusLensBtn: Button | null = null;
   private plusKeyBtn: Button | null = null;
+  private plusUndoBtn: Button | null = null;
   private winBtn: Button | null = null;
 
   constructor() {
@@ -290,6 +292,7 @@ export class SortingScene extends Phaser.Scene {
     this.keyBtn.setPosition(w / 2 + 88, bottomY);
     this.plusLensBtn?.setPosition(w / 2 + 44, bottomY - 24);
     this.plusKeyBtn?.setPosition(w / 2 + 132, bottomY - 24);
+    this.plusUndoBtn?.setPosition(w / 2 - 44, bottomY - 24);
     this.winBtn?.setPosition(w / 2, top + 24);
 
     this.view.setArea(
@@ -353,13 +356,15 @@ export class SortingScene extends Phaser.Scene {
     this.undoBtn = new Button(this, 0, 0, {
       width: 76,
       height: 52,
-      label: t.undo,
+      label: hasTexture(this, 'icon_undo') ? t.countOnly(wallet.undos) : t.undo,
       fontSize: 19,
       iconKey: 'icon_undo',
-      iconOnly: true,
       light: true,
       onClick: () => {
-        this.controller.undo();
+        if (wallet.undos > 0 && this.controller.undo()) {
+          wallet.undos -= 1;
+          this.refreshHud();
+        }
       },
     });
     this.lensBtn = new Button(this, 0, 0, {
@@ -413,6 +418,16 @@ export class SortingScene extends Phaser.Scene {
           this.refreshHud();
         },
       });
+      this.plusUndoBtn = new Button(this, 0, 0, {
+        width: 26,
+        height: 26,
+        label: '+',
+        fontSize: 18,
+        onClick: () => {
+          wallet.undos += 1;
+          this.refreshHud();
+        },
+      });
       this.winBtn = new Button(this, 0, 0, {
         width: 58,
         height: 34,
@@ -428,7 +443,9 @@ export class SortingScene extends Phaser.Scene {
   private refreshHud(): void {
     const t = UI_TEXTS.hud;
     this.hudMoves.setText(t.moves(this.model.moves));
-    this.undoBtn.setEnabled(this.model.canUndo && !this.controller.isBusy);
+    this.undoBtn
+      .setLabel(hasTexture(this, 'icon_undo') ? t.countOnly(wallet.undos) : t.undo)
+      .setEnabled(wallet.undos > 0 && this.model.canUndo && !this.controller.isBusy);
     this.lensBtn
       .setLabel(hasTexture(this, 'icon_lens') ? t.countOnly(wallet.lenses) : t.lens(wallet.lenses))
       .setEnabled(wallet.lenses > 0 && this.model.hasHiddenBlocks() && !this.controller.isBusy);
@@ -506,13 +523,16 @@ export class SortingScene extends Phaser.Scene {
 
     const t = UI_TEXTS.deadlock;
     const actions: PopupAction[] = [];
-    if (this.model.canUndo) {
+    if (this.model.canUndo && wallet.undos > 0) {
       actions.push({
         label: t.undo,
         primary: true,
         onClick: () => {
           this.popupOpen = false;
-          this.controller.undo();
+          if (this.controller.undo()) {
+            wallet.undos -= 1;
+            this.refreshHud();
+          }
         },
       });
     }

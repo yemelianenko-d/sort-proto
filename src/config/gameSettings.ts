@@ -8,6 +8,8 @@ export const GAME_SETTINGS = {
     initialKeys: 3,
     /** Lens charges per session (reveals one hidden block). */
     initialLenses: 3,
+    /** Undo charges per session (the back button is a booster too). */
+    initialUndos: 3,
   },
   input: {
     /** Pointer travel (px) that turns a press into a drag. */
