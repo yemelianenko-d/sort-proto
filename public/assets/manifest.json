@@ -232,6 +232,18 @@
     {
       "key": "ui_button_light",
       "url": "assets/images/ui_button_light.png"
+    },
+    {
+      "key": "block_key",
+      "url": "assets/images/block_key.png"
+    },
+    {
+      "key": "block_stone",
+      "url": "assets/images/block_stone.png"
+    },
+    {
+      "key": "icon_lock_col",
+      "url": "assets/images/icon_lock_col.png"
     }
   ],
   "atlases": [],
