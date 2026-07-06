@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { toLogical } from '../../core/utils/hidpi';
 import { BLOCK_STYLES, BLOCK_TINTS, COLORS, FONTS } from '../../app/gameConfig';
 import { computeColumnLayout, type ColumnLayout, BLOCK_GAP } from '../../core/utils/layout';
 import { strokeSketchRect, fillPattern } from '../../ui/sketch';
@@ -950,8 +951,8 @@ export class SortingView implements SortingViewContract {
     // still arm a potential drag for this column
     this.gesture = {
       column: index,
-      startX: pointer.x,
-      startY: pointer.y,
+      startX: toLogical(pointer.x),
+      startY: toLogical(pointer.y),
       dragging: false,
       ghost: null,
     };
@@ -961,7 +962,7 @@ export class SortingView implements SortingViewContract {
     const g = this.gesture;
     if (!g) return;
     if (!g.dragging) {
-      const travel = Math.hypot(pointer.x - g.startX, pointer.y - g.startY);
+      const travel = Math.hypot(toLogical(pointer.x) - g.startX, toLogical(pointer.y) - g.startY);
       if (travel < GAME_SETTINGS.input.dragThresholdPx) return;
       if (!this.onDragStart(g.column)) {
         this.gesture = null;
@@ -970,7 +971,7 @@ export class SortingView implements SortingViewContract {
       g.dragging = true;
       g.ghost = this.buildGhost(g.column);
     }
-    g.ghost?.setPosition(pointer.x, pointer.y);
+    g.ghost?.setPosition(toLogical(pointer.x), toLogical(pointer.y));
   }
 
   private onPointerUp(pointer: Phaser.Input.Pointer): void {
@@ -982,7 +983,7 @@ export class SortingView implements SortingViewContract {
       return;
     }
     g.ghost?.destroy(true);
-    this.onDrop(g.column, this.columnAt(pointer.x, pointer.y));
+    this.onDrop(g.column, this.columnAt(toLogical(pointer.x), toLogical(pointer.y)));
   }
 
   /** Floating copy of the dragged top group, following the pointer. */

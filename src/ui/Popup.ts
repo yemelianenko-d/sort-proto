@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { logicalSize } from '../core/utils/hidpi';
 import { COLORS, FONTS } from '../app/gameConfig';
 import { strokeSketchRect } from './sketch';
 import { Button } from './Button';
@@ -43,8 +44,7 @@ export class Popup extends Phaser.GameObjects.Container {
     super(scene, 0, 0);
     this.setDepth(1000);
 
-    const w = scene.scale.width;
-    const h = scene.scale.height;
+    const { w, h } = logicalSize(scene);
 
     const dim = hasTexture(scene, 'bg_paper')
       ? scene.add

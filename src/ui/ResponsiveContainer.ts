@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { applyHiDpiCamera, logicalSize } from '../core/utils/hidpi';
 
 export type LayoutFn = (width: number, height: number) => void;
 
@@ -23,6 +24,8 @@ export class ResponsiveContainer {
   }
 
   apply(): void {
-    this.layout(this.scene.scale.width, this.scene.scale.height);
+    applyHiDpiCamera(this.scene);
+    const { w, h } = logicalSize(this.scene);
+    this.layout(w, h);
   }
 }

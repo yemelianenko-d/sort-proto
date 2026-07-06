@@ -10,6 +10,7 @@ import { hasTexture } from '../core/assets/AssetLoader';
 import { scatterDoodles } from '../ui/doodles';
 import { SPECIAL } from '../mechanics/sorting/SortingTypes';
 import { GAME_SETTINGS } from '../config/gameSettings';
+import { applyHiDpiCamera, logicalSize, toLogical } from '../core/utils/hidpi';
 
 const PER_ROW = 5;
 const CELL_GAP_X = 14;
@@ -62,18 +63,19 @@ export class LobbyScene extends Phaser.Scene {
     this.gridWrap.setMask(this.maskShape.createGeometryMask());
 
     this.input.on(Phaser.Input.Events.POINTER_DOWN, (p: Phaser.Input.Pointer) => {
-      if (p.y >= this.gridTop && p.y <= this.gridBottom) {
+      const py = toLogical(p.y);
+      if (py >= this.gridTop && py <= this.gridBottom) {
         this.dragging = true;
-        this.dragStartY = p.y;
+        this.dragStartY = py;
         this.dragStartScroll = this.scrollY;
         this.dragDist = 0;
       }
     });
     this.input.on(Phaser.Input.Events.POINTER_MOVE, (p: Phaser.Input.Pointer) => {
       if (!this.dragging || !p.isDown) return;
-      this.dragDist = Math.abs(p.y - this.dragStartY);
+      this.dragDist = Math.abs(toLogical(p.y) - this.dragStartY);
       if (this.dragDist > TAP_TOLERANCE) this.userScrolled = true;
-      this.setScroll(this.dragStartScroll + (p.y - this.dragStartY));
+      this.setScroll(this.dragStartScroll + (toLogical(p.y) - this.dragStartY));
     });
     this.input.on(Phaser.Input.Events.POINTER_UP, () => {
       this.dragging = false;
@@ -90,11 +92,15 @@ export class LobbyScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.onResize, this);
     });
-    this.layout(this.scale.width, this.scale.height);
+    applyHiDpiCamera(this);
+    const { w, h } = logicalSize(this);
+    this.layout(w, h);
   }
 
   private onResize(): void {
-    this.layout(this.scale.width, this.scale.height);
+    applyHiDpiCamera(this);
+    const { w, h } = logicalSize(this);
+    this.layout(w, h);
   }
 
   private setScroll(value: number): void {
@@ -585,7 +591,7 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   private openSettings(): void {
-    const cardW = Math.min(330, this.scale.width - 40);
+    const cardW = Math.min(330, logicalSize(this).w - 40);
     new Popup(this, {
       icon: 'icon_settings',
       emoji: '⚙️',
@@ -595,7 +601,7 @@ export class LobbyScene extends Phaser.Scene {
         {
           label: UI_TEXTS.settings.ok,
           // чит-режим впливає на лоббі -> перерендер після закриття
-          onClick: () => this.layout(this.scale.width, this.scale.height),
+          onClick: () => this.layout(logicalSize(this).w, logicalSize(this).h),
         },
       ],
     });

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { applyHiDpiCamera, logicalSize } from '../core/utils/hidpi';
 import { COLORS, FONTS, SCENE_KEYS } from '../app/gameConfig';
 import { UI_TEXTS } from '../config/uiTexts';
 import { GAME_SETTINGS } from '../config/gameSettings';
@@ -21,10 +22,12 @@ export class PreloadScene extends Phaser.Scene {
     const game = this.registry.get('game') as GameController;
 
     const paper = this.add.graphics();
-    drawPaper(paper, this.scale.width, this.scale.height);
+    applyHiDpiCamera(this);
+    const { w: lw, h: lh } = logicalSize(this);
+    drawPaper(paper, lw, lh);
 
     const label = this.add
-      .text(this.scale.width / 2, this.scale.height / 2, UI_TEXTS.app.loading, {
+      .text(lw / 2, lh / 2, UI_TEXTS.app.loading, {
         fontFamily: FONTS.body,
         fontSize: '20px',
         color: COLORS.pencilCss,

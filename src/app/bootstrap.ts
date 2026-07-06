@@ -9,6 +9,7 @@ import '@fontsource/caveat/latin-700.css';
 import '@fontsource/neucha/cyrillic-400.css';
 import '@fontsource/neucha/latin-400.css';
 import Phaser from 'phaser';
+import { DPR } from '../core/utils/hidpi';
 import { COLORS, readAppFlags } from './gameConfig';
 import { WebPlatformService } from '../platform/WebPlatformService';
 import { GameController } from '../core/game/GameController';
@@ -55,10 +56,13 @@ async function bootstrap(): Promise<void> {
     parent: 'app',
     backgroundColor: COLORS.paperCss,
     scale: {
-      mode: Phaser.Scale.RESIZE, // true responsive canvas, no letterboxing
+      // HiDPI: the backing store is physical pixels; zoom keeps the CSS size.
+      // Scenes work in logical (CSS) px via applyHiDpiCamera (see hidpi.ts).
+      mode: Phaser.Scale.NONE,
+      zoom: 1 / DPR,
       autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: window.innerWidth,
-      height: window.innerHeight,
+      width: window.innerWidth * DPR,
+      height: window.innerHeight * DPR,
     },
     render: {
       antialias: true,
@@ -75,6 +79,24 @@ async function bootstrap(): Promise<void> {
 
   game.registry.set('game', controller);
 
+  // Scale.NONE needs a manual resize feed (fires the same RESIZE event the
+  // scenes already subscribe to через ResponsiveContainer/onResize).
+  const feedResize = () => game.scale.resize(window.innerWidth * DPR, window.innerHeight * DPR);
+  window.addEventListener('resize', feedResize);
+
+  // Crisp canvas text on HiDPI: default every text object to DPR resolution
+  // (Phaser has no global setting for it; one wrapper beats ~50 call sites).
+  const origText = Phaser.GameObjects.GameObjectFactory.prototype.text;
+  Phaser.GameObjects.GameObjectFactory.prototype.text = function patchedText(
+    this: Phaser.GameObjects.GameObjectFactory,
+    x: number,
+    y: number,
+    content: string | string[],
+    style?: Phaser.Types.GameObjects.Text.TextStyle,
+  ) {
+    return origText.call(this, x, y, content, { resolution: DPR, ...style });
+  };
+
   // Track that the scene stack knows the current level (used by debug tools).
   game.events.on(Phaser.Core.Events.READY, () => {
     if (flags.debug) mountDebugOverlay(game, controller);
@@ -86,7 +108,7 @@ async function bootstrap(): Promise<void> {
     if (!document.hidden) game.scale.refresh();
   });
   window.addEventListener('orientationchange', () => {
-    setTimeout(() => game.scale.refresh(), 250);
+    setTimeout(feedResize, 250);
   });
 
   eventBus.emit('app_started', {
