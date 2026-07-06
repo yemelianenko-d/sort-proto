@@ -321,7 +321,7 @@ export class LobbyScene extends Phaser.Scene {
     }
     if (cfg.tapedColumns?.length) parts.push('T');
     if (cfg.targetColumns?.length) parts.push(cfg.targetColumns.length > 1 ? `C${cfg.targetColumns.length}` : 'C');
-    if (cfg.setUnlockColumn) parts.push(cfg.setUnlockColumn > 1 ? `S${cfg.setUnlockColumn}` : 'S');
+    if (cfg.chains?.length) parts.push(cfg.chains.length > 1 ? `S${cfg.chains.length}` : 'S');
     return parts.join(' ');
   }
   private buildCell(

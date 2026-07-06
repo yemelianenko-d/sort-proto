@@ -45,8 +45,8 @@ describe('generateSortingLevel', () => {
     expect(target.targetColumns?.length).toBe(1);
     expect(target.columns[target.targetColumns![0].col]).toHaveLength(0);
 
-    const setLock = generateSortingLevel(42); // set-unlock from 41
-    expect(setLock.setUnlockColumn).toBe(1);
+    const chained = generateSortingLevel(42); // chained column from 41
+    expect(chained.chains).toEqual([-1]); // neutral chain first
 
     const doubleLock = generateSortingLevel(47); // double lock from 46
     expect(doubleLock.lockedColumn).toBe(true);

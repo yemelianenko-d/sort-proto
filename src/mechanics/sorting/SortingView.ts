@@ -153,7 +153,7 @@ export class SortingView implements SortingViewContract {
       });
 
       if (this.model.lockedColumn === ci) this.addLockDecor(container, ci);
-      if (this.model.setLockedColumn === ci) this.addSetLockDecor(container, ci);
+      if (this.model.chainedColumn === ci) this.addChainDecor(container);
       if (this.model.isTaped(ci)) {
         const tape = this.buildTapeOverlay();
         container.add(tape);
@@ -183,11 +183,14 @@ export class SortingView implements SortingViewContract {
     isSelected: boolean,
     isTarget: boolean,
   ): Phaser.GameObjects.GameObject {
-    const key = isSelected
-      ? ASSET_KEYS.columnFrameSelected
-      : isTarget
-        ? ASSET_KEYS.columnFrameTarget
-        : ASSET_KEYS.columnFrame;
+    const chained = this.model.chainedColumn === columnIndex;
+    const key = chained
+      ? 'col_frame_chained'
+      : isSelected
+        ? ASSET_KEYS.columnFrameSelected
+        : isTarget
+          ? ASSET_KEYS.columnFrameTarget
+          : ASSET_KEYS.columnFrame;
     const fallbackKey = ASSET_KEYS.columnFrame;
     const exact = hasTexture(this.scene, key);
     const useKey = exact ? key : hasTexture(this.scene, fallbackKey) ? fallbackKey : null;
@@ -447,20 +450,31 @@ export class SortingView implements SortingViewContract {
     }
   }
 
-  /** Star badge on the set-locked column: complete N sets to open it. */
-  private addSetLockDecor(container: Phaser.GameObjects.Container, ci: number): void {
-    const colH = this.layout.colHeights[ci];
+  /** Chains across the chained column: neutral gray, colored ones tinted.
+   * One completed set removes one chain (its color first, else a neutral). */
+  private addChainDecor(container: Phaser.GameObjects.Container): void {
+    const chains = this.model.chainsLeft();
     const cx = this.layout.colWidth / 2;
-    const stars = '\u2605'.repeat(Math.max(1, this.model.setsLeft));
-    container.add(
-      this.scene.add
-        .text(cx, colH / 2, stars, {
-          fontFamily: FONTS.body,
-          fontSize: '22px',
-          color: COLORS.pencilCss,
-        })
-        .setOrigin(0.5),
-    );
+    if (hasTexture(this.scene, 'deco_chain')) {
+      const frame = this.scene.textures.getFrame('deco_chain');
+      chains.forEach((chain, k) => {
+        const img = this.scene.add
+          .image(cx, 30 + k * 26, 'deco_chain')
+          .setScale((this.layout.colWidth * 1.18) / frame.width)
+          .setAngle(k % 2 === 0 ? -3 : 3);
+        if (chain >= 0) img.setTint(BLOCK_STYLES[chain].ink);
+        container.add(img);
+      });
+      return;
+    }
+    // fallback: hand-drawn bars in the chain colors
+    const g = this.scene.add.graphics();
+    chains.forEach((chain, k) => {
+      const color = chain >= 0 ? BLOCK_STYLES[chain].ink : COLORS.pencil;
+      g.fillStyle(color, 0.85);
+      g.fillRoundedRect(-4, 24 + k * 26, this.layout.colWidth + 8, 10, 5);
+    });
+    container.add(g);
   }
 
   private addLockDecor(container: Phaser.GameObjects.Container, ci: number): void {

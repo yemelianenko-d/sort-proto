@@ -5,8 +5,8 @@ interface Snapshot {
   columns: ColumnState[];
   lockedColumn: number | null;
   locksRemaining: number;
-  setLockedColumn: number | null;
-  setsRemaining: number;
+  chainedColumn: number | null;
+  chains: number[];
   taped: number[];
   moves: number;
 }
@@ -26,8 +26,10 @@ interface Snapshot {
  *  - a locked column may need several keys (each key removes one lock);
  *    once every lock is off, key blocks still on the board are dead weight
  *    and dissolve immediately (booster keys included);
- *  - a set-locked column opens after N completed sets, as part of the
- *    resolve sequence (move -> validate set -> unlock);
+ *  - a chained column carries chains: a neutral chain falls to any
+ *    completed set, a colored one only to a set of its color; the column
+ *    opens when the last chain falls (in the resolve sequence, at set
+ *    validation time);
  *  - a target column, while empty, accepts only its designated color as the
  *    first block; once occupied it behaves like a normal column;
  *  - a full column of one color clears;
@@ -40,12 +42,12 @@ export class SortingModel {
 
   columns: ColumnState[];
   lockedColumn: number | null = null;
-  setLockedColumn: number | null = null;
+  chainedColumn: number | null = null;
   moves = 0;
 
   private locksRemaining = 0;
   private initialLocks = 0;
-  private setsRemaining = 0;
+  private chains: number[] = [];
   private targets = new Map<number, number>();
   private taped = new Set<number>();
   private history: Snapshot[] = [];
@@ -75,10 +77,10 @@ export class SortingModel {
       this.initialLocks = Math.max(1, config.lockedColumnLocks ?? 1);
       this.locksRemaining = this.initialLocks;
     }
-    if ((config.setUnlockColumn ?? 0) > 0) {
+    if ((config.chains ?? []).length > 0) {
       this.columns.push([]);
-      this.setLockedColumn = this.columns.length - 1;
-      this.setsRemaining = config.setUnlockColumn as number;
+      this.chainedColumn = this.columns.length - 1;
+      this.chains = [...(config.chains as number[])];
     }
   }
 
@@ -98,9 +100,9 @@ export class SortingModel {
     return this.lockedColumn === null ? 0 : this.locksRemaining;
   }
 
-  /** Completed sets still needed to open the set-locked column. */
-  get setsLeft(): number {
-    return this.setLockedColumn === null ? 0 : this.setsRemaining;
+  /** Chains still hanging on the chained column (-1 neutral, >=0 color). */
+  chainsLeft(): number[] {
+    return this.chainedColumn === null ? [] : [...this.chains];
   }
 
   /** True when a drop from `from` onto `to` fails only due to the target color rule. */
@@ -152,7 +154,7 @@ export class SortingModel {
   }
 
   canDrop(from: number, to: number): boolean {
-    if (from === to || to === this.lockedColumn || to === this.setLockedColumn) return false;
+    if (from === to || to === this.lockedColumn || to === this.chainedColumn) return false;
     if (this.taped.has(to)) return false;
     const src = this.columns[from];
     const dst = this.columns[to];
@@ -209,15 +211,22 @@ export class SortingModel {
 
     const settled = this.settle(from);
     const readyToClear = this.isUniformFull(to) ? to : null;
-    let setUnlocked: number | null = null;
-    if (readyToClear !== null && this.setLockedColumn !== null) {
-      this.setsRemaining -= 1;
-      if (this.setsRemaining <= 0) {
-        setUnlocked = this.setLockedColumn;
-        this.setLockedColumn = null;
+    let chainRemoved: number | null = null;
+    let unchained: number | null = null;
+    if (readyToClear !== null && this.chainedColumn !== null) {
+      const setColor = this.columns[readyToClear][0].color;
+      let idx = this.chains.indexOf(setColor); // colored chain matches first
+      if (idx === -1) idx = this.chains.indexOf(-1); // else a neutral one falls
+      if (idx !== -1) {
+        chainRemoved = this.chains[idx];
+        this.chains.splice(idx, 1);
+        if (this.chains.length === 0) {
+          unchained = this.chainedColumn;
+          this.chainedColumn = null;
+        }
       }
     }
-    return { from, to, count, readyToClear, setUnlocked, ...settled };
+    return { from, to, count, readyToClear, chainRemoved, unchained, ...settled };
   }
 
   /** Empties a previously reported uniform column; returns newly revealed columns. */
@@ -234,8 +243,8 @@ export class SortingModel {
     this.columns = snap.columns;
     this.lockedColumn = snap.lockedColumn;
     this.locksRemaining = snap.locksRemaining;
-    this.setLockedColumn = snap.setLockedColumn;
-    this.setsRemaining = snap.setsRemaining;
+    this.chainedColumn = snap.chainedColumn;
+    this.chains = [...snap.chains];
     this.taped = new Set(snap.taped);
     this.moves = snap.moves;
     this.reapplyBoosterEffects();
@@ -410,8 +419,8 @@ export class SortingModel {
       columns: this.columns.map((c) => c.map((b) => ({ ...b }))),
       lockedColumn: this.lockedColumn,
       locksRemaining: this.locksRemaining,
-      setLockedColumn: this.setLockedColumn,
-      setsRemaining: this.setsRemaining,
+      chainedColumn: this.chainedColumn,
+      chains: [...this.chains],
       taped: [...this.taped],
       moves: this.moves,
     });

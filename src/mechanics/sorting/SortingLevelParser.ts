@@ -123,14 +123,24 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
     throw new Error(`${at} (${id}): more key blocks (${keys}) than locks to open.`);
   }
 
-  // set-unlock column
-  let setUnlockColumn: number | undefined;
-  if (lvl.setUnlockColumn !== undefined) {
-    const n = lvl.setUnlockColumn as number;
-    if (!Number.isInteger(n) || n < 1 || n > 3) {
-      throw new Error(`${at} (${id}): "setUnlockColumn" must be an integer in [1..3].`);
+  // chained column: -1 neutral chain, >=0 color-bound chain
+  let chains: number[] | undefined;
+  if (lvl.chains !== undefined) {
+    if (!Array.isArray(lvl.chains) || lvl.chains.length < 1 || lvl.chains.length > 3) {
+      throw new Error(`${at} (${id}): "chains" must be an array of 1..3 entries.`);
     }
-    setUnlockColumn = n;
+    lvl.chains.forEach((c) => {
+      const v = c as number;
+      if (!Number.isInteger(v) || v < -1 || v >= BLOCK_STYLES.length) {
+        throw new Error(`${at} (${id}): chain value ${String(c)} must be -1 or a color id.`);
+      }
+      if (v >= 0 && !colorCounts.has(v)) {
+        throw new Error(
+          `${at} (${id}): colored chain ${v} has no matching color on the level (it could never fall).`,
+        );
+      }
+    });
+    chains = lvl.chains as number[];
   }
 
   // target columns: empty at start, valid color, unique, not taped
@@ -201,7 +211,7 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
     columns: columns as ColorId[][],
     hiddenBelowTop: lvl.hiddenBelowTop === true,
     lockedColumnLocks,
-    setUnlockColumn,
+    chains,
     targetColumns,
     lockedColumn: lvl.lockedColumn === true,
     tapedColumns: taped,

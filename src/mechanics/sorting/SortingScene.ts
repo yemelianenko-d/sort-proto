@@ -31,7 +31,7 @@ const wallet = {
   lenses: GAME_SETTINGS.boosters.initialLenses,
 };
 
-type TutorialId = 'howto' | 'hidden' | 'locked' | 'ink' | 'keyblock' | 'taped' | 'target' | 'setlock' | 'multilock';
+type TutorialId = 'howto' | 'hidden' | 'locked' | 'ink' | 'keyblock' | 'taped' | 'target' | 'chains' | 'multilock';
 
 export class SortingScene extends Phaser.Scene {
   private game_!: GameController;
@@ -130,7 +130,7 @@ export class SortingScene extends Phaser.Scene {
     else if (m.hasHiddenBlocks() && !seen('hidden')) id = 'hidden';
     else if (m.lockedColumn !== null && !m.hasBlockOfColor(SPECIAL.KEY) && !seen('locked')) id = 'locked';
     else if (m.hasTargetColumns() && !seen('target')) id = 'target';
-    else if (m.setsLeft > 0 && !seen('setlock')) id = 'setlock';
+    else if (m.chainsLeft().length > 0 && !seen('chains')) id = 'chains';
     else if (m.locksLeft > 1 && !seen('multilock')) id = 'multilock';
     else if (m.hasBlockOfColor(SPECIAL.INK) && !seen('ink')) id = 'ink';
     else if (m.hasBlockOfColor(SPECIAL.KEY) && !seen('keyblock')) id = 'keyblock';

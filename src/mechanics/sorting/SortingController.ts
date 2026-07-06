@@ -89,7 +89,7 @@ export class SortingController {
   private onTap(index: number): void {
     if (this.busy || this.movedOnPress) return;
 
-    if (index === this.model.lockedColumn || index === this.model.setLockedColumn) {
+    if (index === this.model.lockedColumn || index === this.model.chainedColumn) {
       this.view.shakeColumn(index);
       if (this.selected !== -1) this.select(-1);
       return;

@@ -54,19 +54,35 @@ describe('SortingModel specials', () => {
     expect(m.canDrop(3, 2)).toBe(true); // the designated color may return
   });
 
-  it('the set-locked column opens as part of the resolve sequence', () => {
+  it('a neutral chain falls to any completed set; the column opens chain-free', () => {
     const m = new SortingModel(
-      cfg({ cap: 2, columns: [[0], [0], [1, 1]], setUnlockColumn: 1 }),
+      cfg({ cap: 2, columns: [[0], [0], [1, 1]], chains: [-1] }),
     );
-    const setCol = m.columns.length - 1;
-    expect(m.setLockedColumn).toBe(setCol);
-    expect(m.canDrop(0, setCol)).toBe(false); // closed until a set completes
+    const chainCol = m.columns.length - 1;
+    expect(m.chainedColumn).toBe(chainCol);
+    expect(m.canDrop(0, chainCol)).toBe(false); // closed while chained
     const res = m.move(0, 1); // completes the 0-0 set
     expect(res?.readyToClear).toBe(1);
-    expect(res?.setUnlocked).toBe(setCol); // unlock happens at validation
-    expect(m.setLockedColumn).toBeNull();
+    expect(res?.chainRemoved).toBe(-1);
+    expect(res?.unchained).toBe(chainCol); // unlock happens at validation
+    expect(m.chainedColumn).toBeNull();
     m.commitClear(1);
-    expect(m.canDrop(2, setCol)).toBe(true); // and the column is usable
+    expect(m.canDrop(2, chainCol)).toBe(true); // and the column is usable
+  });
+
+  it('a colored chain falls only to a set of its color', () => {
+    const m = new SortingModel(
+      cfg({ cap: 2, columns: [[0], [0], [1], [1], []], chains: [1, -1] }),
+    );
+    const chainCol = m.columns.length - 1;
+    let res = m.move(0, 1); // set of color 0: the colored chain 1 stays
+    expect(res?.chainRemoved).toBe(-1); // ...the neutral one falls instead
+    expect(m.chainsLeft()).toEqual([1]);
+    m.commitClear(1);
+    res = m.move(2, 3); // set of color 1 takes its chain down
+    expect(res?.chainRemoved).toBe(1);
+    expect(res?.unchained).toBe(chainCol);
+    expect(m.chainedColumn).toBeNull();
   });
 
   it('a double lock needs two keys; booster and key blocks both count', () => {

@@ -36,8 +36,10 @@ export interface MoveResult {
   keysDissolved: { col: number; slot: number; hidden: boolean }[];
   /** The formerly locked column, if a key block just opened it. */
   keyUnlocked: number | null;
-  /** The set-locked column, if the set completed this move opened it. */
-  setUnlocked: number | null;
+  /** The chain removed by the set completed this move (-1 neutral, >=0 color), or null. */
+  chainRemoved: number | null;
+  /** The chained column, if the last chain removed this move opened it. */
+  unchained: number | null;
   /** Column whose tape broke after being emptied this move. */
   tapeBroken: number | null;
 }
@@ -53,8 +55,10 @@ export interface SortingLevelConfig {
   hiddenBelowTop?: boolean;
   /** Keys needed to open the locked column (default 1). */
   lockedColumnLocks?: number;
-  /** Extra column that opens after N completed sets (Any Set Unlock). */
-  setUnlockColumn?: number;
+  /** Extra column wrapped in chains. Each entry is one chain: -1 is neutral
+   * (any completed set removes it), a color id means only that color's set
+   * removes it. The column opens when no chains remain. */
+  chains?: number[];
   /** Empty columns that accept only the given color as their FIRST block. */
   targetColumns?: { col: number; color: number }[];
   lockedColumn?: boolean;
