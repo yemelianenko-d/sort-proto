@@ -1,3 +1,13 @@
+// Self-hosted handwriting fonts: bundled woff2, identical on every device
+// and available offline (subsets: Cyrillic + Latin, the weights we use).
+import '@fontsource/caveat/cyrillic-500.css';
+import '@fontsource/caveat/cyrillic-600.css';
+import '@fontsource/caveat/cyrillic-700.css';
+import '@fontsource/caveat/latin-500.css';
+import '@fontsource/caveat/latin-600.css';
+import '@fontsource/caveat/latin-700.css';
+import '@fontsource/neucha/cyrillic-400.css';
+import '@fontsource/neucha/latin-400.css';
 import Phaser from 'phaser';
 import { COLORS, readAppFlags } from './gameConfig';
 import { WebPlatformService } from '../platform/WebPlatformService';
