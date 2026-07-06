@@ -263,7 +263,10 @@ export class LobbyScene extends Phaser.Scene {
         primary: true,
         iconKey: 'icon_play',
         iconScale: 0.72,
-        onClick: () => this.startLevel(allDone ? available - 1 : nextIndex),
+        onClick: () => {
+          this.enterFullscreenOnTouch();
+          this.startLevel(allDone ? available - 1 : nextIndex);
+        },
       }),
     );
     if (cheat) {
@@ -295,6 +298,7 @@ export class LobbyScene extends Phaser.Scene {
     ], this.doodleSeed);
 
     const contentHeight = this.buildGrid(w, nextIndex);
+    this.maybeShowIosHint(w, h);
     this.minScroll = Math.min(0, this.gridBottom - this.gridTop - contentHeight);
     if (this.userScrolled) {
       this.setScroll(this.scrollY); // re-clamp after resize
@@ -521,6 +525,63 @@ export class LobbyScene extends Phaser.Scene {
       .setScale(width / frame.width)
       .setFlipX(flip);
     parent.add(img);
+  }
+
+  /** Android/touch: entering the game doubles as the fullscreen gesture —
+   * the screen just clears, no extra taps. Desktop is left alone (forcing
+   * fullscreen there is rude), iOS has no Fullscreen API for games. */
+  private enterFullscreenOnTouch(): void {
+    const touch = window.matchMedia('(pointer: coarse)').matches;
+    if (!touch || !this.scale.fullscreen.available || this.scale.isFullscreen) return;
+    try {
+      this.scale.startFullscreen();
+    } catch {
+      /* gesture edge cases: silently keep playing windowed */
+    }
+  }
+
+  /** iOS Safari (not installed): one-time hint that the real fullscreen is
+   * "Add to Home Screen". Dismissed by tap, remembered in localStorage. */
+  private maybeShowIosHint(w: number, h: number): void {
+    const KEY = 'sortproto.iosHintShown';
+    const ua = navigator.userAgent;
+    const isIos = /iPhone|iPad|iPod/.test(ua) || (ua.includes('Mac') && 'ontouchend' in document);
+    const installed =
+      window.matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches ||
+      (navigator as { standalone?: boolean }).standalone === true;
+    let seen = false;
+    try {
+      seen = window.localStorage.getItem(KEY) === 'true';
+    } catch {
+      seen = true; // no storage: не набридаємо повторами
+    }
+    if (!isIos || installed || seen) return;
+
+    const note = this.add.container(w / 2, h - 46).setDepth(60);
+    const text = this.add
+      .text(0, 0, UI_TEXTS.iosHomeHint, {
+        fontFamily: FONTS.body,
+        fontSize: '15px',
+        color: COLORS.inkCss,
+        align: 'center',
+        wordWrap: { width: Math.min(340, w - 48) },
+      })
+      .setOrigin(0.5);
+    const g = this.add.graphics();
+    g.fillStyle(0xfff9df, 0.97);
+    g.fillRoundedRect(-text.width / 2 - 14, -text.height / 2 - 10, text.width + 28, text.height + 20, 10);
+    g.lineStyle(2, COLORS.pencil, 0.9);
+    g.strokeRoundedRect(-text.width / 2 - 14, -text.height / 2 - 10, text.width + 28, text.height + 20, 10);
+    note.add([g, text]);
+    note.setSize(text.width + 28, text.height + 20).setInteractive();
+    note.once('pointerdown', () => {
+      try {
+        window.localStorage.setItem(KEY, 'true');
+      } catch {
+        /* ignore */
+      }
+      this.tweens.add({ targets: note, alpha: 0, duration: 200, onComplete: () => note.destroy() });
+    });
   }
 
   private openSettings(): void {
