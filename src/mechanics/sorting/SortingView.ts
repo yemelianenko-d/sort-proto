@@ -49,6 +49,11 @@ export class SortingView implements SortingViewContract {
   } | null = null;
   private moveHandler: (p: Phaser.Input.Pointer) => void;
   private upHandler: (p: Phaser.Input.Pointer) => void;
+  /** Cached slot permutation (presentational). Computed once per level while
+   * the locked column is still locked, then reused on every rebuild — so
+   * unlocking a column can't reshuffle the board. */
+  private displayPerm: number[] | null = null;
+  private displayPermKey = '';
 
   constructor(
     private scene: Phaser.Scene,
@@ -214,6 +219,24 @@ export class SortingView implements SortingViewContract {
   private applyDisplayPermutation(): void {
     const n = this.layout.positions.length;
     if (n <= 2) return;
+    const key = `${this.model.levelId}:${n}`;
+    if (this.displayPermKey !== key || !this.displayPerm) {
+      this.displayPerm = this.computeDisplayPermutation(n);
+      this.displayPermKey = key;
+    }
+    const slotOf = this.displayPerm;
+    this.layout = {
+      ...this.layout,
+      positions: slotOf.map((s) => this.layout.positions[s]),
+      colHeights: slotOf.map((s) => this.layout.colHeights[s]),
+    };
+  }
+
+  /** Builds the presentational slot permutation for the level. Deterministic
+   * from the level id, with the locked (key) column pinned to the right edge.
+   * Called once (while the column is still locked) and cached by the caller;
+   * recomputing after an unlock would drop the pin and visibly reshuffle. */
+  private computeDisplayPermutation(n: number): number[] {
     let seed = 0;
     const id = this.model.levelId;
     for (let i = 0; i < id.length; i++) seed = (seed * 31 + id.charCodeAt(i)) | 0;
@@ -247,11 +270,7 @@ export class SortingView implements SortingViewContract {
         slotOf[other] = cur;
       }
     }
-    this.layout = {
-      ...this.layout,
-      positions: slotOf.map((s) => this.layout.positions[s]),
-      colHeights: slotOf.map((s) => this.layout.colHeights[s]),
-    };
+    return slotOf;
   }
 
   private buildFrame(
