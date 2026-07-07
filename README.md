@@ -211,15 +211,18 @@ unit-тестів на цьому етапі (за гайдлайном).
 відкочуються). Вигляд замкненої колонки єдиний: N замочків по центру
 (по одному на замок, що лишився), а маленький ключик поруч із замком
 означає "ключ до нього лежить у завалі" — щоб гравець не витрачав
-бустер даремно. Крива (150 рівнів) — слот-мапа за Balance & Level Design Guideline v2
-(SortingLevelGenerator.ts): 1-10 onboarding (3-4 типи, C3), 11-20 planning,
-далі інтро-декади Show→Use→Plan→Master із хвилею всередині кожної
-(1 легкий, 5 і 10 видих, 8 hard, 9 пік): 21-30 Target, 31-40 Tape,
-41-50 Neutral Chain, 51-60 Key, 61-70 mastery + перші пари, 71-80 Colored
-Chain, 81-90 Multi-Lock, 91-110 advanced (перші C5), 111-130 комбінації,
-131-150 expert (трипли = пара + чорнило, тільки на піках). Buffer Units —
-головна ручка складності (1-3 порожні), чорнило — board-приправа тиску,
-booster-only замки не генеруються. Necessity кожної механіки перевіряється
+бустер даремно. Крива (150 рівнів) — слот-мапа за Balance & Level Design Guideline v3
+(SortingLevelGenerator.ts), макро-мапа за розділом 13: 1-12 core onboarding
+(3-4 типи, C3), 13-25 planning, 26-40 Ink Blot intro, 41-55 Target intro
+(1→2 різні), 56-70 multi-target + Tape intro, 71-85 tape mastery + Key intro,
+86-100 Key/Multi-Lock mastery (перші C5 після 92), 101-115 Neutral Chain vaults
+(блоки всередині ланцюгів), 116-130 Colored/mixed chains, 131-142 cross-mechanic
+(2 родини), 143-150 expert peaks. Хвиля всередині кожного 10-слота за 13.2
+(M M MH H relief M MH H MH peak). Chain/lock колонки тепер містять блоки-сейф
+(forever-варіант unsolvable → necessity 4). Buffer Units — ручка простору
+(1-3 порожні), чорнило — повноцінна focus-механіка (1-2 плями на дні 1-2
+колонок), booster-only замки не генеруються. Pressure Profile рахується як
+дорадчий сигнал у метаданих. Necessity кожної механіки перевіряється
 ablation-солвами прямо в accept-циклі генерації (пороги Meaningful Impact
 Gate: unsolvable=4, +20% ходів=3, +8%=2; гейт ≥2, на plan/master ≥3) із
 драбиною релаксації (+порожня → без другої механіки → multilock→key).

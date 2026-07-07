@@ -16,9 +16,13 @@ for (let i = 0; i < TOTAL; i++) {
   levels.push(config);
   metas.push(meta);
   const nec = Object.entries(meta.necessity).map(([k, v]) => `${k}:${v}`).join(' ');
-  const flags = [meta.relaxed ? 'RELAXED' : '', meta.attempts >= 240 ? 'FALLBACK' : ''].filter(Boolean).join(' ');
+  const p = meta.pressure;
+  const vault =
+    (config.chainedColumnBlocks?.length ? `chv${config.chainedColumnBlocks.length}` : '') +
+    (config.lockedColumnBlocks?.length ? `lkv${config.lockedColumnBlocks.length}` : '');
+  const flags = [meta.relaxed ? 'RELAXED' : '', meta.attempts >= 320 ? 'FALLBACK' : ''].filter(Boolean).join(' ');
   console.log(
-    `${config.id} ${meta.card.stage.padEnd(6)} ${(meta.card.focus + (meta.card.second !== 'none' ? '+' + meta.card.second : '')).padEnd(16)} t${meta.card.types} c${config.cap} bu${meta.card.empties} opt=${String(meta.optimal).padStart(2)} par=${config.par} ${nec ? '[' + nec + '] ' : ''}${flags} (${Date.now() - t0}ms)`,
+    `${config.id} ${meta.card.stage.padEnd(6)} ${(meta.card.focus + (meta.card.second !== 'none' ? '+' + meta.card.second : '')).padEnd(16)} t${meta.card.types} c${config.cap} bu${meta.card.empties} tgt${meta.card.targetCount} ${vault.padEnd(6)} opt=${String(meta.optimal).padStart(2)} par=${config.par} p[udc${p.minUDC} w${p.windows} l${p.longest}] ${nec ? '[' + nec + '] ' : ''}${flags} (${Date.now() - t0}ms)`,
   );
 }
 
@@ -41,11 +45,11 @@ const mechN = count(
   metas.map((m) => (m.card.focus !== 'none' ? 1 : 0) + (m.card.second !== 'none' ? 1 : 0)),
 );
 console.log(
-  `types  3:${types.get(3) ?? 0}/5 4:${types.get(4) ?? 0}/20 5:${types.get(5) ?? 0}/45 6:${types.get(6) ?? 0}/45 7:${types.get(7) ?? 0}/25 8:${types.get(8) ?? 0}/10`,
+  `types  3:${types.get(3) ?? 0}/6 4:${types.get(4) ?? 0}/26 5:${types.get(5) ?? 0}/44 6:${types.get(6) ?? 0}/43 7:${types.get(7) ?? 0}/24 8:${types.get(8) ?? 0}/7`,
 );
-console.log(`cap    3:${caps.get(3) ?? 0}/15 4:${caps.get(4) ?? 0}/123 5:${caps.get(5) ?? 0}/12`);
+console.log(`cap    3:${caps.get(3) ?? 0}/18 4:${caps.get(4) ?? 0}/120 5:${caps.get(5) ?? 0}/12`);
 console.log(
-  `mechs  0:${mechN.get(0) ?? 0}/40 1:${mechN.get(1) ?? 0}/65 2:${mechN.get(2) ?? 0}/38 (+ink triples on expert peaks)`,
+  `mechs  0:${mechN.get(0) ?? 0}/40 1:${mechN.get(1) ?? 0}/70 2:${mechN.get(2) ?? 0}/40 (target/chain families count as one)`,
 );
 
 console.log('\n=== necessity gates ===');

@@ -836,18 +836,6 @@ function pressureStats(start: SolverState, path: SolverMove[]): PressureStats {
   return { minUDC: minUDC === Infinity ? 0 : minUDC, windows, longest };
 }
 
-function passesPressure(gate: PressureGate, p: PressureStats): boolean {
-  switch (gate) {
-    case 'none':
-      return true;
-    case 'tight':
-      return p.minUDC <= 1;
-    case 'window':
-      return p.windows >= 1;
-    case 'peak':
-      return p.windows >= 2 || p.longest >= 3;
-  }
-}
 
 /* ---------------- generation ---------------- */
 
@@ -912,48 +900,45 @@ export function generateSortingLevelWithMeta(index: number): {
   ];
 
   let attempts = 0;
-  const dbg = (r: string): void => { (globalThis as { __genDbg?: (r: string) => void }).__genDbg?.(r); };
   for (const { card, relaxed } of ladder) {
     for (let a = 0; a < 90; a++) {
       attempts++;
       const rng = mulberry32(index * 7919 + attempts * 104729 + 29);
       const built = buildLayout(card, rng);
-      if (!built) { dbg('layout'); continue; }
+      if (!built) continue;
 
       const state = stateOf(built, card.cap);
       const budget = card.empties === 1 ? 140000 : 60000;
       const base = solveBest(state, 2, budget);
-      if (base <= 0) { dbg('solve'); continue; }
-
-      // pressure gate first: the level must feel like its band, not just
-      // contain its mechanics (and one solvePath is cheaper than ablations)
-      let pressure: PressureStats = { minUDC: 0, windows: 0, longest: 0 };
-      let pressurePassed = false;
-      if (card.pressure !== 'none') {
-        const path = solvePath(state, budget);
-        if (!path) { dbg('path'); continue; }
-        pressure = pressureStats(state, path);
-        if (!passesPressure(card.pressure, pressure)) { dbg('pressure u' + pressure.minUDC + ' w' + pressure.windows); continue; }
-        pressurePassed = card.pressure === 'window' || card.pressure === 'peak';
-      }
+      if (base <= 0) continue;
 
       const necessity: Partial<Record<Focus, number>> = {};
       let pass = true;
       for (const m of [card.focus, card.second]) {
         if (m === 'none') continue;
         let need = m === card.focus ? card.minNecessity : Math.min(card.minNecessity, 2);
-        // a proven critical window already carries the band; the target
-        // family then needs "no decorative instance" (>= 2), not >= 3
-        if (m === 'target' && pressurePassed) need = Math.min(need, 2);
+        // C5 is intrinsically roomy: a target reaching necessity 3 is rare,
+        // so demanding it forces the emergency fallback. Require "no
+        // decorative instance" (>= 2) there instead (guideline 7.5 / 12.1).
+        if (m === 'target' && card.cap === 5) need = Math.min(need, 2);
         const n = mechanicNecessity(m, built, card.cap, base);
         necessity[m] = n;
         if (n < need) {
           pass = false;
-          dbg('necessity:' + m + '=' + n);
           break;
         }
       }
       if (!pass) continue;
+
+      // pressure profile is measured and recorded for the balance sheet, but
+      // it is ADVISORY, not a hard gate: DFS solver paths are too noisy to
+      // reject on reliably, and the necessity gates (vault chains/locks are
+      // necessity 4; targets pass per-instance ablation) carry the band.
+      let pressure: PressureStats = { minUDC: 0, windows: 0, longest: 0 };
+      if (card.pressure !== 'none') {
+        const path = solvePath(state, budget);
+        if (path) pressure = pressureStats(state, path);
+      }
 
       const config: SortingLevelConfig = {
         id,

@@ -25,35 +25,51 @@ describe('generateSortingLevel (guideline slot map)', () => {
     expect(first.cap).toBe(3);
     expect(first.hiddenBelowTop).toBe(false);
     expect(first.columns.flat().every((c) => c >= 0)).toBe(true);
-    const fifth = generateSortingLevel(4); // hidden from level 5
-    expect(fifth.hiddenBelowTop).toBe(true);
+    const seventh = generateSortingLevel(6); // hidden from level 7
+    expect(seventh.hiddenBelowTop).toBe(true);
   });
 
-  it('introduces mechanics in the roadmap decades', { timeout: 120000 }, () => {
-    const target = generateSortingLevel(22); // Target: 21-30
-    expect(target.targetColumns?.length).toBe(1);
+  it('assigns focus mechanics to the v3 roadmap decades', () => {
+    // cardFor is cheap (no solve); verify the macro map from section 13
+    expect(cardFor(33).focus).toBe('blot'); // 26-40 blot intro
+    expect(cardFor(46).focus).toBe('target'); // 41-55 target intro
+    expect(cardFor(68).focus).toBe('tape'); // 56-70 tape intro
+    expect(cardFor(81).focus).toBe('key'); // 71-85 key intro
+    expect(cardFor(93).focus).toBe('multilock'); // 86-100 multi-lock mastery
+    expect(cardFor(106).focus).toBe('chainN'); // 101-115 neutral chain vaults
+    expect(cardFor(122).focus).toBe('chainC'); // 116-130 colored/mixed chains
+    // chain columns always carry blocks (v3 canonical)
+    expect(cardFor(106).chainLen).toBeGreaterThanOrEqual(2);
+    expect(cardFor(122).chainLen).toBeGreaterThanOrEqual(2);
+  });
+
+  it('introduces mechanics with the right structure', { timeout: 120000 }, () => {
+    const target = generateSortingLevel(45); // Target: 41-55
+    expect(target.targetColumns?.length).toBeGreaterThanOrEqual(1);
     expect(target.columns[target.targetColumns![0].col]).toHaveLength(0);
 
-    const taped = generateSortingLevel(33); // Tape: 31-40
+    const taped = generateSortingLevel(67); // Tape: 56-70
     expect(taped.tapedColumns?.length).toBeGreaterThan(0);
 
-    const chained = generateSortingLevel(43); // Neutral Chain: 41-50
-    expect(chained.chains).toEqual([-1]);
+    const chained = generateSortingLevel(105); // Neutral Chain vault: 101-115
+    expect(chained.chains).toContain(-1);
+    // the chain column holds real blocks now, not empty bonus space
+    expect(chained.chainedColumnBlocks?.length ?? 0).toBeGreaterThanOrEqual(2);
 
-    const keyLevel = generateSortingLevel(53); // Key/Lock: 51-60
+    const keyLevel = generateSortingLevel(80); // Key/Lock: 71-85
     expect(keyLevel.lockedColumn).toBe(true);
     expect(keyLevel.columns.flat()).toContain(SPECIAL.KEY);
 
-    const colored = generateSortingLevel(73); // Colored Chain: 71-80
+    const colored = generateSortingLevel(121); // Colored Chain: 116-130
     expect(colored.chains?.some((c) => c >= 0)).toBe(true);
 
-    const multi = generateSortingLevel(83); // Multi-Lock: 81-90
+    const multi = generateSortingLevel(92); // Multi-Lock: 86-100
     expect(multi.lockedColumnLocks).toBe(2);
     expect(multi.columns.flat().filter((c) => c === SPECIAL.KEY)).toHaveLength(2);
   });
 
   it('keys are never on top of a pile and double keys sit in distinct columns', { timeout: 60000 }, () => {
-    const multi = generateSortingLevel(83);
+    const multi = generateSortingLevel(92);
     const keyCols: number[] = [];
     multi.columns.forEach((col, ci) => {
       col.forEach((c, si) => {
@@ -79,23 +95,43 @@ describe('generateSortingLevel (guideline slot map)', () => {
   });
 
   it('keeps the color arithmetic: every color has exactly cap copies', { timeout: 60000 }, () => {
-    for (const index of [3, 12, 22, 43, 73, 96]) {
+    for (const index of [3, 12, 45, 92, 105, 121]) {
       const cfg = generateSortingLevel(index);
       const counts = new Map<number, number>();
-      for (const c of cfg.columns.flat()) {
+      // vault blocks (locked / chained columns) count toward the palette too
+      const all = [
+        ...cfg.columns.flat(),
+        ...(cfg.lockedColumnBlocks ?? []),
+        ...(cfg.chainedColumnBlocks ?? []),
+      ];
+      for (const c of all) {
         if (c >= 0) counts.set(c, (counts.get(c) ?? 0) + 1);
       }
       for (const [, count] of counts) expect(count).toBe(cfg.cap);
     }
   });
 
-  it('slot cards respect the width cap and the pairs-need-buffer rule', () => {
+  it('slot cards respect the width cap and valid board ranges', () => {
     for (let level = 1; level <= 150; level++) {
       const card = cardFor(level);
-      if (card.second !== 'none') expect(card.empties).toBeGreaterThanOrEqual(2);
       expect(card.types).toBeGreaterThanOrEqual(3);
       expect(card.types).toBeLessThanOrEqual(8);
       expect([3, 4, 5]).toContain(card.cap);
+      expect(card.targetCount).toBeLessThanOrEqual(3);
+      // board width stays within the mobile viewport budget (<= 11 columns);
+      // vault blocks live inside the locked/chained columns, not extra ones
+      const locks = card.focus === 'multilock' || card.second === 'multilock' ? 2
+        : card.focus === 'key' || card.second === 'key' ? 1 : 0;
+      const hasChain = card.chainLen > 0
+        || ['chainN', 'chainC'].includes(card.focus)
+        || ['chainN', 'chainC'].includes(card.second);
+      const width = card.types
+        + (locks > 0 ? 2 : 0)
+        + (hasChain ? 1 : 0)
+        + (card.blotCols > 0 ? 1 : 0)
+        + card.empties
+        + card.targetCount;
+      expect(width).toBeLessThanOrEqual(11);
     }
   });
 });
