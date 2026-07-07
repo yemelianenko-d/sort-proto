@@ -134,4 +134,43 @@ describe('generateSortingLevel (guideline slot map)', () => {
       expect(width).toBeLessThanOrEqual(11);
     }
   });
+
+  it('no level starts with a completed (done) column (no-clear rule)', { timeout: 90000 }, () => {
+    // under the no-clear rule a full uniform column is already "done"; a level
+    // must never start in that state (it would be a free win)
+    for (const index of [3, 20, 33, 45, 67, 92, 104, 121, 137, 149]) {
+      const cfg = generateSortingLevel(index);
+      cfg.columns.forEach((col) => {
+        if (col.length !== cfg.cap) return;
+        const first = col[0];
+        if (first < 0) return; // ink/key columns are fine
+        const uniform = col.every((c) => c === first);
+        expect(uniform).toBe(false);
+      });
+    }
+  });
+
+  it('budgets spare space: targets substitute for universal empties', { timeout: 90000 }, () => {
+    // the "too many free columns" fix — target columns are the buffers, so a
+    // level never stacks a full set of universal empties on top of them.
+    // Spare = empty universal + empty target + near-empty columns stays small.
+    for (const index of [40, 49, 55, 56, 62, 131, 141, 146]) {
+      const cfg = generateSortingLevel(index);
+      const targetCols = new Set((cfg.targetColumns ?? []).map((t) => t.col));
+      let emptyUniversal = 0;
+      let spare = 0;
+      cfg.columns.forEach((col, i) => {
+        const real = col.filter((c) => c >= 0 && c !== SPECIAL.KEY).length;
+        if (col.length === 0) {
+          spare += 1;
+          if (!targetCols.has(i)) emptyUniversal += 1;
+        } else if (real <= 1) {
+          spare += 1;
+        }
+      });
+      // with 2+ targets, universal empties collapse to none (targets are the room)
+      if (targetCols.size >= 2) expect(emptyUniversal).toBe(0);
+      expect(spare).toBeLessThanOrEqual(3);
+    }
+  });
 });
