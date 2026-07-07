@@ -34,22 +34,35 @@ function stateFor(cfg: SortingLevelConfig, opts: {
   let chains = (cfg.chains ?? []).slice();
   if (opts.coloredToNeutral) chains = chains.map(() => -1);
 
+  // vault blocks live INSIDE the locked / chained columns (v3): they must be
+  // loaded or the board loses copies and looks unsolvable. `openFromStart`
+  // merges them onto the board as a normal column; `lockedForever` keeps the
+  // column present but never openable (so a level that needs those blocks is
+  // provably unsolvable — necessity 4).
+  const lockVault = cfg.lockedColumnBlocks ?? [];
+  const chainVault = cfg.chainedColumnBlocks ?? [];
+
   if (cfg.lockedColumn) {
-    if (!opts.lockedForever) {
-      cols.push([]);
-      if (!opts.openFromStart) {
-        locked = cols.length - 1;
-        locks = cfg.lockedColumnLocks ?? 1;
-      }
+    cols.push(lockVault.slice());
+    if (opts.openFromStart) {
+      // column is a normal, immediately usable column
+    } else if (opts.lockedForever) {
+      locked = cols.length - 1;
+      locks = 1_000_000; // never satisfiable
+    } else {
+      locked = cols.length - 1;
+      locks = cfg.lockedColumnLocks ?? 1;
     }
-    // lockedForever: the column simply never exists for the solver
   }
   if (chains.length > 0) {
-    if (!opts.lockedForever) {
-      cols.push([]);
-      if (!opts.openFromStart) {
-        chainCol = cols.length - 1;
-      }
+    cols.push(chainVault.slice());
+    if (opts.openFromStart) {
+      // normal column
+    } else if (opts.lockedForever) {
+      chainCol = cols.length - 1;
+      chains = [-2]; // sentinel: no completed set ever removes it
+    } else {
+      chainCol = cols.length - 1;
     }
   }
   const taped = opts.tapeToNormal ? new Set<number>() : new Set(cfg.tapedColumns ?? []);
@@ -264,7 +277,7 @@ const dupes: string[] = [];
 
 for (let i = 0; i < levels.length; i++) {
   const cfg = levels[i];
-  const base = solveBest(stateFor(cfg), 2, 80000);
+  const base = solveBest(stateFor(cfg), 2, 220000);
   const { avg, keyMax } = accessDepths(cfg);
   const mechs = analyzeMechanics(cfg, base);
   const flat = cfg.columns.flat();
