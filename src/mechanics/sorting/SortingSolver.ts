@@ -6,9 +6,15 @@ import type { ColorId } from './SortingTypes';
  * ink blots, key blocks, multi-key locks, taped columns, target columns
  * and the chained column. Used only at level-generation time (offline and
  * for endless levels) to guarantee solvability and to calibrate `par`.
+ *
+ * Move generation lives in ONE place (`legalMoves` + `applyMove`); the three
+ * searches (`solve`, `solveBounded`, `solvePath`) all consume it, so the
+ * rules can never drift between them. `legalMoves` emits non-empty
+ * destinations before empty-column dumps — a move-ordering heuristic that
+ * finds solutions faster and keeps `par` deterministic.
  */
 
-/* ---------------- solver ---------------- */
+/* ---------------- state ---------------- */
 
 export interface SolverState {
   cols: ColorId[][];
@@ -19,6 +25,11 @@ export interface SolverState {
   chains: number[]; // remaining chains: -1 neutral, >=0 color-bound
   taped: Set<number>;
   targets: Map<number, number>; // empty column -> required first color
+}
+
+export interface SolverMove {
+  from: number;
+  to: number;
 }
 
 const isSpecial = (c: number): boolean => c === SPECIAL.INK || c === SPECIAL.KEY;
@@ -88,6 +99,72 @@ function stateKey(st: SolverState): string {
   );
 }
 
+/* ---------------- move generation (single source of truth) ---------------- */
+
+export function cloneState(st: SolverState): SolverState {
+  return {
+    cols: st.cols.map((c) => c.slice()),
+    cap: st.cap,
+    locked: st.locked,
+    locks: st.locks,
+    chainCol: st.chainCol,
+    chains: st.chains.slice(),
+    taped: new Set(st.taped),
+    targets: st.targets,
+  };
+}
+
+/** Whether the top group of `i` may legally move onto column `j`. */
+function canMove(st: SolverState, i: number, j: number): boolean {
+  if (i === j || j === st.locked || j === st.chainCol || st.taped.has(j)) return false;
+  const from = st.cols[i];
+  const grp = topGroup(from);
+  if (grp === 0) return false;
+  const color = from[from.length - 1];
+  const to = st.cols[j];
+  if (to.length >= st.cap) return false;
+  const toTop = to.length > 0 ? to[to.length - 1] : null;
+  if (toTop !== null && toTop !== SPECIAL.INK && toTop !== color) return false;
+  if (to.length === 0) {
+    const want = st.targets.get(j);
+    if (want !== undefined && want !== color) return false;
+    if (grp === from.length) return false; // pointless full-group shuffle to empty
+  }
+  return true;
+}
+
+/** All legal moves, non-empty destinations first then empty-column dumps.
+ * This ordering is load-bearing: the searches rely on it for speed and for
+ * deterministic `par`. */
+export function legalMoves(st: SolverState): SolverMove[] {
+  const out: SolverMove[] = [];
+  for (const wantEmpty of [false, true]) {
+    for (let i = 0; i < st.cols.length; i++) {
+      if (i === st.locked || i === st.chainCol) continue; // closed: untouchable
+      if (topGroup(st.cols[i]) === 0) continue;
+      for (let j = 0; j < st.cols.length; j++) {
+        if ((st.cols[j].length === 0) !== wantEmpty) continue;
+        if (canMove(st, i, j)) out.push({ from: i, to: j });
+      }
+    }
+  }
+  return out;
+}
+
+/** Applies a move in place (top group, clipped to space) and settles. */
+export function applyMove(st: SolverState, mv: SolverMove): void {
+  const grp = topGroup(st.cols[mv.from]);
+  const n = Math.min(grp, st.cap - st.cols[mv.to].length);
+  st.cols[mv.to] = st.cols[mv.to].concat(st.cols[mv.from].splice(st.cols[mv.from].length - n, n));
+  settle(st, mv.from);
+}
+
+const isSolved = (st: SolverState): boolean =>
+  st.cols.every((c) => c.every((b) => b === SPECIAL.INK));
+
+/* ---------------- searches ---------------- */
+
+/** Depth of the first solution DFS finds (not necessarily shortest), or -1. */
 export function solve(start: SolverState, nodeLimit = 50000): number {
   const seen = new Set<string>();
   let nodes = 0;
@@ -95,66 +172,45 @@ export function solve(start: SolverState, nodeLimit = 50000): number {
   function dfs(st: SolverState, depth: number): number {
     if (++nodes > nodeLimit) return -1;
     settle(st, null);
-    if (st.cols.every((c) => c.every((b) => b === SPECIAL.INK))) return depth;
+    if (isSolved(st)) return depth;
     const key = stateKey(st);
     if (seen.has(key)) return -1;
     seen.add(key);
-
-    // matching non-empty targets first, empty-column dumps last
-    for (const wantEmpty of [false, true]) {
-      for (let i = 0; i < st.cols.length; i++) {
-        if (i === st.locked || i === st.chainCol) continue; // closed: untouchable
-        const from = st.cols[i];
-        const grp = topGroup(from);
-        if (grp === 0) continue;
-        const color = from[from.length - 1];
-        for (let j = 0; j < st.cols.length; j++) {
-          if (i === j || j === st.locked || j === st.chainCol || st.taped.has(j)) continue;
-          const to = st.cols[j];
-          if ((to.length === 0) !== wantEmpty) continue;
-          if (to.length >= st.cap) continue;
-          const toTop = to.length > 0 ? to[to.length - 1] : null;
-          if (toTop !== null && toTop !== SPECIAL.INK && toTop !== color) continue;
-          const want = to.length === 0 ? st.targets.get(j) : undefined;
-          if (want !== undefined && want !== color) continue;
-          if (to.length === 0 && grp === from.length) {
-            continue; // pointless full-group shuffle to another empty
-          }
-          const n = Math.min(grp, st.cap - to.length);
-          const next: SolverState = {
-            cols: st.cols.map((c) => c.slice()),
-            cap: st.cap,
-            locked: st.locked,
-            locks: st.locks,
-            chainCol: st.chainCol,
-            chains: st.chains,
-            taped: st.taped,
-            targets: st.targets,
-          };
-          next.cols[j] = next.cols[j].concat(next.cols[i].splice(next.cols[i].length - n, n));
-          settle(next, i);
-          const res = dfs(next, depth + 1);
-          if (res >= 0) return res;
-        }
-      }
+    for (const mv of legalMoves(st)) {
+      const next = cloneState(st);
+      applyMove(next, mv);
+      const res = dfs(next, depth + 1);
+      if (res >= 0) return res;
     }
     return -1;
   }
-  return dfs(
-    {
-      cols: start.cols.map((c) => c.slice()),
-      cap: start.cap,
-      locked: start.locked,
-      locks: start.locks,
-      chainCol: start.chainCol,
-      chains: start.chains.slice(),
-      taped: new Set(start.taped),
-      targets: start.targets,
-    },
-    0,
-  );
+  return dfs(cloneState(start), 0);
 }
 
+/** Like solve(), but rejects branches once `depth` exceeds `maxDepth`. */
+export function solveBounded(start: SolverState, maxDepth: number, nodeLimit: number): number {
+  if (maxDepth <= 0) return -1;
+  const seen = new Map<string, number>();
+  let nodes = 0;
+
+  function dfs(st: SolverState, depth: number): number {
+    if (++nodes > nodeLimit || depth > maxDepth) return -1;
+    settle(st, null);
+    if (isSolved(st)) return depth;
+    const key = stateKey(st);
+    const prev = seen.get(key);
+    if (prev !== undefined && prev <= depth) return -1;
+    seen.set(key, depth);
+    for (const mv of legalMoves(st)) {
+      const next = cloneState(st);
+      applyMove(next, mv);
+      const res = dfs(next, depth + 1);
+      if (res >= 0) return res;
+    }
+    return -1;
+  }
+  return dfs(cloneState(start), 0);
+}
 
 /**
  * Finds a solution, then tries to shorten it with depth-bounded re-searches.
@@ -172,59 +228,6 @@ export function solveBest(start: SolverState, rounds = 2, nodeLimit = 50000): nu
   return best;
 }
 
-/* ---------------- path extraction & pressure metrics ---------------- */
-
-export interface SolverMove {
-  from: number;
-  to: number;
-}
-
-export function cloneState(st: SolverState): SolverState {
-  return {
-    cols: st.cols.map((c) => c.slice()),
-    cap: st.cap,
-    locked: st.locked,
-    locks: st.locks,
-    chainCol: st.chainCol,
-    chains: st.chains.slice(),
-    taped: new Set(st.taped),
-    targets: st.targets,
-  };
-}
-
-/** Legal moves under the exact rules `solve` searches (incl. the pointless
- * full-group-to-empty prune). */
-export function legalMoves(st: SolverState): SolverMove[] {
-  const out: SolverMove[] = [];
-  for (let i = 0; i < st.cols.length; i++) {
-    if (i === st.locked || i === st.chainCol) continue;
-    const from = st.cols[i];
-    const grp = topGroup(from);
-    if (grp === 0) continue;
-    const color = from[from.length - 1];
-    for (let j = 0; j < st.cols.length; j++) {
-      if (i === j || j === st.locked || j === st.chainCol || st.taped.has(j)) continue;
-      const to = st.cols[j];
-      if (to.length >= st.cap) continue;
-      const toTop = to.length > 0 ? to[to.length - 1] : null;
-      if (toTop !== null && toTop !== SPECIAL.INK && toTop !== color) continue;
-      const want = to.length === 0 ? st.targets.get(j) : undefined;
-      if (want !== undefined && want !== color) continue;
-      if (to.length === 0 && grp === from.length) continue;
-      out.push({ from: i, to: j });
-    }
-  }
-  return out;
-}
-
-/** Applies a move in place (top group, clipped to space) and settles. */
-export function applyMove(st: SolverState, mv: SolverMove): void {
-  const grp = topGroup(st.cols[mv.from]);
-  const n = Math.min(grp, st.cap - st.cols[mv.to].length);
-  st.cols[mv.to] = st.cols[mv.to].concat(st.cols[mv.from].splice(st.cols[mv.from].length - n, n));
-  settle(st, mv.from);
-}
-
 /** Like solve(), but returns the found move sequence (not necessarily the
  * shortest) for pressure-profile replay, or null. */
 export function solvePath(start: SolverState, nodeLimit = 50000): SolverMove[] | null {
@@ -232,90 +235,21 @@ export function solvePath(start: SolverState, nodeLimit = 50000): SolverMove[] |
   let nodes = 0;
   const path: SolverMove[] = [];
 
-  function dfs(st: SolverState, depth: number): boolean {
+  function dfs(st: SolverState): boolean {
     if (++nodes > nodeLimit) return false;
     settle(st, null);
-    if (st.cols.every((c) => c.every((b) => b === SPECIAL.INK))) return true;
+    if (isSolved(st)) return true;
     const key = stateKey(st);
     if (seen.has(key)) return false;
     seen.add(key);
-    for (const wantEmpty of [false, true]) {
-      for (const mv of legalMoves(st)) {
-        if ((st.cols[mv.to].length === 0) !== wantEmpty) continue;
-        const next = cloneState(st);
-        applyMove(next, mv);
-        path.push(mv);
-        if (dfs(next, depth + 1)) return true;
-        path.pop();
-      }
+    for (const mv of legalMoves(st)) {
+      const next = cloneState(st);
+      applyMove(next, mv);
+      path.push(mv);
+      if (dfs(next)) return true;
+      path.pop();
     }
     return false;
   }
-  return dfs(cloneState(start), 0) ? path : null;
-}
-
-/** Like solve(), but rejects branches once `depth` exceeds `maxDepth`. */
-export function solveBounded(start: SolverState, maxDepth: number, nodeLimit: number): number {
-  if (maxDepth <= 0) return -1;
-  const seen = new Map<string, number>();
-  let nodes = 0;
-
-  function dfs(st: SolverState, depth: number): number {
-    if (++nodes > nodeLimit || depth > maxDepth) return -1;
-    settle(st, null);
-    if (st.cols.every((c) => c.every((b) => b === SPECIAL.INK))) return depth;
-    const key = stateKey(st);
-    const prev = seen.get(key);
-    if (prev !== undefined && prev <= depth) return -1;
-    seen.set(key, depth);
-    for (const wantEmpty of [false, true]) {
-      for (let i = 0; i < st.cols.length; i++) {
-        if (i === st.locked || i === st.chainCol) continue; // closed: untouchable
-        const from = st.cols[i];
-        const grp = topGroup(from);
-        if (grp === 0) continue;
-        const color = from[from.length - 1];
-        for (let j = 0; j < st.cols.length; j++) {
-          if (i === j || j === st.locked || j === st.chainCol || st.taped.has(j)) continue;
-          const to = st.cols[j];
-          if ((to.length === 0) !== wantEmpty) continue;
-          if (to.length >= st.cap) continue;
-          const toTop = to.length > 0 ? to[to.length - 1] : null;
-          if (toTop !== null && toTop !== SPECIAL.INK && toTop !== color) continue;
-          const want = to.length === 0 ? st.targets.get(j) : undefined;
-          if (want !== undefined && want !== color) continue;
-          if (to.length === 0 && grp === from.length) continue;
-          const n = Math.min(grp, st.cap - to.length);
-          const next: SolverState = {
-            cols: st.cols.map((c) => c.slice()),
-            cap: st.cap,
-            locked: st.locked,
-            locks: st.locks,
-            chainCol: st.chainCol,
-            chains: st.chains,
-            taped: st.taped,
-            targets: st.targets,
-          };
-          next.cols[j] = next.cols[j].concat(next.cols[i].splice(next.cols[i].length - n, n));
-          settle(next, i);
-          const res = dfs(next, depth + 1);
-          if (res >= 0) return res;
-        }
-      }
-    }
-    return -1;
-  }
-  return dfs(
-    {
-      cols: start.cols.map((c) => c.slice()),
-      cap: start.cap,
-      locked: start.locked,
-      locks: start.locks,
-      chainCol: start.chainCol,
-      chains: start.chains.slice(),
-      taped: new Set(start.taped),
-      targets: start.targets,
-    },
-    0,
-  );
+  return dfs(cloneState(start)) ? path : null;
 }
