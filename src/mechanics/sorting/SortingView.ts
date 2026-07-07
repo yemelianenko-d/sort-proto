@@ -508,16 +508,16 @@ export class SortingView implements SortingViewContract {
     return col.every((b) => b.color === first && !b.hidden);
   }
 
-  /** Paperclip clipped over the top edge of a completed column (concept #1):
-   * part of the clip rides above the column, the rest clamps the first block.
-   * Falls back to nothing if the asset is missing. */
+  /** Full paperclip clamped on the top edge of a completed column (concept
+   * #1): the whole clip is visible, sitting above the column, and only its
+   * small bottom tip overlaps the first block. Missing asset -> nothing. */
   private addDoneClip(container: Phaser.GameObjects.Container, _ci: number): void {
     if (!hasTexture(this.scene, ASSET_KEYS.doneClip)) return;
     const cell = this.layout.cell;
     const clip = this.scene.add
-      .image(this.layout.colWidth * 0.62, 0, ASSET_KEYS.doneClip)
-      .setOrigin(0.5, 0.34); // 34% sits above the top edge, the rest clamps down
-    clip.setScale((cell * 1.55) / clip.height);
+      .image(this.layout.colWidth * 0.5, cell * 0.34, ASSET_KEYS.doneClip)
+      .setOrigin(0.5, 1); // anchor the clip's BOTTOM just inside the first block
+    clip.setScale((cell * 1.7) / clip.height); // full clip ~1.7 blocks tall
     clip.setDepth(60); // above blocks
     container.add(clip);
   }
