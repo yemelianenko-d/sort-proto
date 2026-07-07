@@ -519,9 +519,9 @@ export class SortingView implements SortingViewContract {
     if (!hasTexture(this.scene, ASSET_KEYS.doneClip)) return;
     const cell = this.layout.cell;
     const clip = this.scene.add
-      .image(this.layout.colWidth * 0.56, 0, ASSET_KEYS.doneClip)
-      .setOrigin(0.5, 0.6); // most of the clip rides above the top edge
-    clip.setScale((cell * 1.3) / clip.height);
+      .image(this.layout.colWidth * 0.55, 0, ASSET_KEYS.doneClip)
+      .setOrigin(0.5, 0.58); // ~58% of the clip rides above the top edge
+    clip.setScale((cell * 1.2) / clip.height); // a touch smaller, near the concept
     container.add(clip);
   }
 
