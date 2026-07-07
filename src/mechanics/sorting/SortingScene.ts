@@ -711,20 +711,25 @@ export class SortingScene extends Phaser.Scene {
 
     const t = UI_TEXTS.win;
     const hasNext = this.levelIndex + 1 < this.game_.levels.count;
-    new Popup(this, {
-      title: t.title,
-      stars,
-      body: t.moves(moves),
-      note: stars < 3 ? { before: t.hintBefore, after: t.hintAfter(cfg.par) } : undefined,
-      actions: [
-        {
-          label: hasNext ? t.next : t.toLobby,
-          success: true,
-          onClick: () =>
-            hasNext ? this.gotoLevel(this.levelIndex + 1) : this.scene.start(SCENE_KEYS.lobby),
-        },
-        { label: t.replay, onClick: () => this.restart('button') },
-      ],
+    // Delay the popup briefly: the move that completes the level can fire on
+    // pointer-down, and without this gap the same tap's pointer-up lands on the
+    // freshly-shown "Next" button and skips to the next level.
+    this.time.delayedCall(300, () => {
+      new Popup(this, {
+        title: t.title,
+        stars,
+        body: t.moves(moves),
+        note: stars < 3 ? { before: t.hintBefore, after: t.hintAfter(cfg.par) } : undefined,
+        actions: [
+          {
+            label: hasNext ? t.next : t.toLobby,
+            success: true,
+            onClick: () =>
+              hasNext ? this.gotoLevel(this.levelIndex + 1) : this.scene.start(SCENE_KEYS.lobby),
+          },
+          { label: t.replay, onClick: () => this.restart('button') },
+        ],
+      });
     });
   }
 
