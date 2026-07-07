@@ -54,6 +54,10 @@
       "url": "assets/images/col_frame_target.png"
     },
     {
+      "key": "col_frame_tint",
+      "url": "assets/images/col_frame_tint.png"
+    },
+    {
       "key": "ui_button",
       "url": "assets/images/ui_button.png"
     },
@@ -391,6 +395,12 @@
       "right": 20,
       "top": 20,
       "bottom": 20
+    },
+    "col_frame_tint": {
+      "left": 14,
+      "right": 14,
+      "top": 14,
+      "bottom": 14
     }
   },
   "animations": []

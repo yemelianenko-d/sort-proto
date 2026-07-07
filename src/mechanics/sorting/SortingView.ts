@@ -206,11 +206,19 @@ export class SortingView implements SortingViewContract {
     isSelected: boolean,
     isTarget: boolean,
   ): Phaser.GameObjects.GameObject {
+    // Target-color column wears the ink color of its designated blocks via
+    // the white-on-alpha frame + runtime tint (exact BLOCK_TINTS match).
+    // Selected / valid-drop states take priority so feedback stays readable.
+    const targetInk = this.model.targetColor(columnIndex);
+    const wantsColorFrame =
+      !isSelected && !isTarget && targetInk !== null && hasTexture(this.scene, ASSET_KEYS.columnFrameTint);
     const key = isSelected
       ? ASSET_KEYS.columnFrameSelected
       : isTarget
         ? ASSET_KEYS.columnFrameTarget
-        : ASSET_KEYS.columnFrame;
+        : wantsColorFrame
+          ? ASSET_KEYS.columnFrameTint
+          : ASSET_KEYS.columnFrame;
     const fallbackKey = ASSET_KEYS.columnFrame;
     const exact = hasTexture(this.scene, key);
     const useKey = exact ? key : hasTexture(this.scene, fallbackKey) ? fallbackKey : null;
@@ -228,6 +236,7 @@ export class SortingView implements SortingViewContract {
         ns.top,
         ns.bottom,
       );
+      if (wantsColorFrame && exact) slice.setTint(BLOCK_TINTS[targetInk!]);
       // State texture not delivered -> tint the base frame instead, so the
       // state stays visible (selected: warm, target: green).
       if (!exact) {
@@ -384,16 +393,18 @@ export class SortingView implements SortingViewContract {
     }
     this.targetGhosts.set(ci, ghosts);
 
-    // маленька стрілка кольору колонки над верхнім краєм: "цей колір — сюди"
+    // маленька стрілка кольору колонки над верхнім краєм: "цей колір — сюди".
+    // Компактна: висота 14px < міжрядного зазору (26px), тож на мобільних
+    // розкладках у 2-3 ряди вона не налазить на колонки верхнього ряду.
     const cx = this.layout.colWidth / 2;
     // трохи темніший за сприйнятий колір арту, щоб штрих читався на папері
     const t = BLOCK_TINTS[color];
     const dark = (((t >> 16) & 255) * 0.8 << 16) | ((((t >> 8) & 255) * 0.8) << 8) | (((t & 255) * 0.8) | 0);
     const ar = this.scene.add.graphics();
     ar.lineStyle(3, dark, 0.95);
-    ar.lineBetween(cx, -28, cx, -10);
-    ar.lineBetween(cx, -10, cx - 6, -18);
-    ar.lineBetween(cx, -10, cx + 6, -18);
+    ar.lineBetween(cx, -18, cx, -4);
+    ar.lineBetween(cx, -4, cx - 5, -11);
+    ar.lineBetween(cx, -4, cx + 5, -11);
     container.add(ar);
   }
 

@@ -13,7 +13,7 @@ const SORTING_DOODLE_KEYS = Array.from(
   (_, i) => `deco_sort_${String(i + 1).padStart(2, '0')}`,
 );
 import { Button } from '../../ui/Button';
-import { Popup, type PopupAction } from '../../ui/Popup';
+import { Popup } from '../../ui/Popup';
 import { ResponsiveContainer } from '../../ui/ResponsiveContainer';
 import { SortingModel } from './SortingModel';
 import { SortingView } from './SortingView';
@@ -91,7 +91,9 @@ export class SortingScene extends Phaser.Scene {
       {
         onStateChanged: () => this.refreshHud(),
         onWin: () => this.onWin(),
-        onDeadlock: (canOfferKey) => this.onDeadlock(canOfferKey),
+        // Deadlock popup removed by design: the player keeps full control via
+        // the regular undo/restart buttons; level_failed analytics still fires.
+        onDeadlock: () => {},
         onPlayerInteracted: () => this.cancelNudge(),
       },
       () => wallet.keys,
@@ -664,7 +666,7 @@ export class SortingScene extends Phaser.Scene {
     });
   }
 
-  restart(source: 'button' | 'deadlock' | 'debug'): void {
+  restart(source: 'button' | 'debug'): void {
     eventBus.emit('level_restarted', {
       level_id: this.model.levelId,
       source,
@@ -724,43 +726,4 @@ export class SortingScene extends Phaser.Scene {
     });
   }
 
-  private onDeadlock(canOfferKey: boolean): void {
-    if (this.popupOpen) return;
-    this.popupOpen = true;
-
-    const t = UI_TEXTS.deadlock;
-    const actions: PopupAction[] = [];
-    if (this.model.canUndo && wallet.undos > 0) {
-      actions.push({
-        label: t.undo,
-        primary: true,
-        onClick: () => {
-          this.popupOpen = false;
-          if (this.controller.undo()) {
-            wallet.undos -= 1;
-            this.refreshHud();
-          }
-        },
-      });
-    }
-    if (canOfferKey) {
-      actions.push({
-        label: t.useKey,
-        primary: actions.length === 0,
-        onClick: () => {
-          this.popupOpen = false;
-          if (wallet.keys > 0 && this.controller.useKey()) wallet.keys -= 1;
-          this.refreshHud();
-        },
-      });
-    }
-    actions.push({ label: t.restart, onClick: () => this.restart('deadlock') });
-
-    new Popup(this, {
-      emoji: '🤔',
-      title: t.title,
-      body: t.body,
-      actions,
-    });
-  }
 }

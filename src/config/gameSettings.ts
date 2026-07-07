@@ -44,7 +44,7 @@ export const GAME_SETTINGS = {
   },
   targetColumn: {
     /** Chalk preview opacity inside an empty target column. */
-    ghostAlpha: 0.16,
+    ghostAlpha: 0.24,
     /** Brief brightening when the wrong color is tapped into it. */
     flashAlpha: 0.45,
   },
