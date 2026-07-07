@@ -159,7 +159,7 @@ export class SortingView implements SortingViewContract {
         const { x, y } = this.blockLocalPos(bi, ci);
         b.setPosition(x, y);
         if (liftGroup > 0 && bi >= column.length - liftGroup) {
-          b.y -= 6;
+          b.y -= 9;
           b.setScale(1.03);
         }
         if (opts.landedColumn === ci && bi >= column.length - (opts.landedCount ?? 0)) {
