@@ -192,6 +192,7 @@ export class SortingView implements SortingViewContract {
         container.add(tape);
         this.tapeOverlays.set(ci, tape);
       }
+      if (this.isColumnDone(ci)) this.addDoneClip(container, ci);
 
       setContainerTapArea(container, this.layout.colWidth, this.layout.colHeights[ci], 'topLeft');
       container.on('pointerdown', (p: Phaser.Input.Pointer) => this.onColumnDown(ci, p));
@@ -494,6 +495,31 @@ export class SortingView implements SortingViewContract {
         onComplete: () => g.setAlpha(GAME_SETTINGS.targetColumn.ghostAlpha),
       });
     }
+  }
+
+  /** A completed set that stays in place under the no-clear rule: full,
+   * one non-special color, and an open (not locked/chained) column. */
+  private isColumnDone(ci: number): boolean {
+    const col = this.model.columns[ci];
+    if (!col || col.length !== this.model.capacity(ci)) return false;
+    if (ci === this.model.lockedColumn || ci === this.model.chainedColumn) return false;
+    const first = col[0].color;
+    if (first === SPECIAL.INK || first === SPECIAL.KEY) return false;
+    return col.every((b) => b.color === first && !b.hidden);
+  }
+
+  /** Paperclip clipped over the top edge of a completed column (concept #1):
+   * part of the clip rides above the column, the rest clamps the first block.
+   * Falls back to nothing if the asset is missing. */
+  private addDoneClip(container: Phaser.GameObjects.Container, _ci: number): void {
+    if (!hasTexture(this.scene, ASSET_KEYS.doneClip)) return;
+    const cell = this.layout.cell;
+    const clip = this.scene.add
+      .image(this.layout.colWidth * 0.62, 0, ASSET_KEYS.doneClip)
+      .setOrigin(0.5, 0.34); // 34% sits above the top edge, the rest clamps down
+    clip.setScale((cell * 1.55) / clip.height);
+    clip.setDepth(60); // above blocks
+    container.add(clip);
   }
 
   /** Called when a move completes a column; the set stays as a done column,
