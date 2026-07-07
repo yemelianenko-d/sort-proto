@@ -367,7 +367,7 @@ export class SortingView implements SortingViewContract {
   private buildTapeOverlay(): Phaser.GameObjects.GameObject {
     const w = this.layout.colWidth;
     if (hasTexture(this.scene, ASSET_KEYS.tapeFlap)) {
-      const img = this.scene.add.image(w / 2, -12, ASSET_KEYS.tapeFlap).setOrigin(0.5, 0);
+      const img = this.scene.add.image(w / 2, -10, ASSET_KEYS.tapeFlap).setOrigin(0.5, 0);
       const frame = this.scene.textures.getFrame(ASSET_KEYS.tapeFlap);
       img.setScale((w * 0.9) / frame.width); // a touch narrower than the column
       return img;
