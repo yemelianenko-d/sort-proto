@@ -141,10 +141,6 @@ export class SortingView implements SortingViewContract {
 
       container.add(this.buildFrame(ci, selected === ci, targets.has(ci)));
       if (this.model.targetColor(ci) !== null) this.addTargetGhosts(container, ci);
-      // done clip goes on the frame but BEHIND the blocks, so its lower body is
-      // occluded by the first block (the "clipped over the edge" look) while
-      // the loop rides above the column top
-      if (this.isColumnDone(ci)) this.addDoneClip(container, ci);
 
       const liftGroup = selected === ci && hideColumn !== ci ? this.model.topGroup(ci) : 0;
       // vault: blocks inside a still-closed locked/chained column are visible
@@ -196,6 +192,9 @@ export class SortingView implements SortingViewContract {
         container.add(tape);
         this.tapeOverlays.set(ci, tape);
       }
+      // done clip sits IN FRONT, clamped over the top edge (loop above, arms
+      // over the first block) — added last so it renders on top
+      if (this.isColumnDone(ci)) this.addDoneClip(container, ci);
 
       setContainerTapArea(container, this.layout.colWidth, this.layout.colHeights[ci], 'topLeft');
       container.on('pointerdown', (p: Phaser.Input.Pointer) => this.onColumnDown(ci, p));
@@ -515,13 +514,17 @@ export class SortingView implements SortingViewContract {
    * frame asset. Rendered BEHIND the blocks: the loop and upper body ride
    * above the column top while the bottom dips behind the first block, so the
    * "clipped over the edge" occlusion is real. Missing asset -> nothing. */
+  /** Paperclip clamped over the top edge of a completed column (concept #1):
+   * rendered in front of the blocks — the loop rides above the column top and
+   * the arms hang over the first block. Missing asset -> nothing. */
   private addDoneClip(container: Phaser.GameObjects.Container, _ci: number): void {
     if (!hasTexture(this.scene, ASSET_KEYS.doneClip)) return;
     const cell = this.layout.cell;
     const clip = this.scene.add
-      .image(this.layout.colWidth * 0.55, 0, ASSET_KEYS.doneClip)
-      .setOrigin(0.5, 0.58); // ~58% of the clip rides above the top edge
-    clip.setScale((cell * 1.2) / clip.height); // a touch smaller, near the concept
+      .image(this.layout.colWidth * 0.5, 0, ASSET_KEYS.doneClip)
+      .setOrigin(0.5, 0.33); // 33% (the loop) rides above; the arms hang over block 1
+    clip.setScale((cell * 1.35) / clip.height);
+    clip.setDepth(70);
     container.add(clip);
   }
 
