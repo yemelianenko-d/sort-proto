@@ -284,44 +284,40 @@ export class SortingView implements SortingViewContract {
     isSelected: boolean,
     isTarget: boolean,
   ): Phaser.GameObjects.GameObject {
-    // Target-color column wears the ink color of its designated blocks via
-    // the white-on-alpha frame + runtime tint (exact BLOCK_TINTS match).
-    // Selected / valid-drop states take priority so feedback stays readable.
     const targetInk = this.model.targetColor(columnIndex);
     const wantsColorFrame =
       !isSelected && !isTarget && targetInk !== null && hasTexture(this.scene, ASSET_KEYS.columnFrameTint);
-    // Selected uses the BASE frame tinted warm (not col_frame_selected, whose
-    // art has a tighter/thinner outline than the base — the orange border read
-    // smaller than the blue one). Same texture => identical outline geometry.
-    const key = isSelected
-      ? ASSET_KEYS.columnFrame
-      : isTarget
+    const w = this.layout.colWidth;
+    const h = this.layout.colHeights[columnIndex];
+    const mk = (key: string): Phaser.GameObjects.NineSlice => {
+      const ns = nineSliceConfig(this.scene, key);
+      return this.scene.add.nineslice(w / 2, h / 2, key, undefined, w, h, ns.left, ns.right, ns.top, ns.bottom);
+    };
+
+    if (hasTexture(this.scene, ASSET_KEYS.columnFrame)) {
+      // Selected: keep the base panel (white fill, same geometry) and lay an
+      // ORANGE OUTLINE over it from the tintable frame — tinting the base
+      // itself would flood the whole column orange. Outline matches the blue
+      // frame exactly (both are the base frame geometry).
+      if (isSelected) {
+        const cont = this.scene.add.container(0, 0);
+        cont.add(mk(ASSET_KEYS.columnFrame));
+        if (hasTexture(this.scene, ASSET_KEYS.columnFrameTint)) {
+          const outline = mk(ASSET_KEYS.columnFrameTint);
+          outline.setTint(0xf6a94a);
+          cont.add(outline);
+        }
+        return cont;
+      }
+      const useTargetTex = isTarget && hasTexture(this.scene, ASSET_KEYS.columnFrameTarget);
+      const key = useTargetTex
         ? ASSET_KEYS.columnFrameTarget
         : wantsColorFrame
           ? ASSET_KEYS.columnFrameTint
           : ASSET_KEYS.columnFrame;
-    const fallbackKey = ASSET_KEYS.columnFrame;
-    const exact = hasTexture(this.scene, key);
-    const useKey = exact ? key : hasTexture(this.scene, fallbackKey) ? fallbackKey : null;
-    if (useKey) {
-      const ns = nineSliceConfig(this.scene, useKey);
-      const slice = this.scene.add.nineslice(
-        this.layout.colWidth / 2,
-        this.layout.colHeights[columnIndex] / 2,
-        useKey,
-        undefined,
-        this.layout.colWidth,
-        this.layout.colHeights[columnIndex],
-        ns.left,
-        ns.right,
-        ns.top,
-        ns.bottom,
-      );
-      if (wantsColorFrame && exact) slice.setTint(BLOCK_TINTS[targetInk!]);
-      // warm tint marks the selected column on the base frame; green if the
-      // target texture wasn't delivered
-      if (isSelected) slice.setTint(0xf6a94a);
-      else if (!exact && isTarget) slice.setTint(0xc4ecc9);
+      const slice = mk(key);
+      if (wantsColorFrame) slice.setTint(BLOCK_TINTS[targetInk!]);
+      else if (isTarget && !useTargetTex) slice.setTint(0xc4ecc9); // target fallback
       return slice;
     }
     const g = this.scene.add.graphics();
