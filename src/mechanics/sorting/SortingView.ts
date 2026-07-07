@@ -28,6 +28,8 @@ export class SortingView implements SortingViewContract {
   private targetGhosts = new Map<number, Phaser.GameObjects.Container[]>();
   /** Tape overlays per taped column index (for the reject wiggle). */
   private tapeOverlays = new Map<number, Phaser.GameObjects.GameObject>();
+  /** Done-column tape containers, kept so the completion can animate them. */
+  private doneTapes = new Map<number, Phaser.GameObjects.Container>();
   /** The just-removed chain kept visually hanging until its break plays. */
   private ghostChain: { sprite: Phaser.GameObjects.Image | null; x: number; y: number } | null = null;
   /** Chain sprites of the chained column (for the reject rattle). */
@@ -134,6 +136,7 @@ export class SortingView implements SortingViewContract {
 
     this.targetGhosts.clear();
     this.tapeOverlays.clear();
+    this.doneTapes.clear();
     this.chainSprites = [];
     this.model.columns.forEach((column, ci) => {
       const pos = this.layout.positions[ci];
@@ -527,7 +530,7 @@ export class SortingView implements SortingViewContract {
   /** Completed column indicator (concept #2): the same washi tape used by the
    * tape mechanic (deco_tape asset), stuck across the top edge with a
    * "Готово ✓" label. Flat on top — no occlusion tricks. */
-  private addDoneTape(container: Phaser.GameObjects.Container, _ci: number): void {
+  private addDoneTape(container: Phaser.GameObjects.Container, _ci: number): Phaser.GameObjects.Container {
     const w = this.layout.colWidth;
     const cell = this.layout.cell;
     const tape = this.scene.add.container(w * 0.5, 3); // straddles the top edge
@@ -564,12 +567,33 @@ export class SortingView implements SortingViewContract {
 
     tape.setDepth(70);
     container.add(tape);
+    this.doneTapes.set(_ci, tape);
+    return tape;
   }
 
-  /** Called when a move completes a column; the set stays as a done column,
-   * so just re-render (completed columns are simply shown full). */
-  markColumnDone(_column: number): void {
+  /** A move just completed this column: rebuild, then play a quick "tape
+   * slaps on" animation (drops in slightly bigger, tilted and faint, then
+   * settles with a little overshoot). */
+  markColumnDone(column: number): void {
     this.rebuild();
+    const tape = this.doneTapes.get(column);
+    if (!tape) return;
+    const finalAngle = tape.angle;
+    const finalY = tape.y;
+    tape.setScale(1.2);
+    tape.setAngle(finalAngle - 9);
+    tape.setAlpha(0.45);
+    tape.y = finalY - 7;
+    this.scene.tweens.add({
+      targets: tape,
+      scaleX: 1,
+      scaleY: 1,
+      angle: finalAngle,
+      alpha: 1,
+      y: finalY,
+      duration: 260,
+      ease: 'Back.easeOut',
+    });
   }
 
   /** The taped column just emptied: the tape peels from one end, curls and
