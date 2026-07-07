@@ -107,6 +107,38 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
     throw new Error(`${at} (${id}): key blocks require "lockedColumn": true.`);
   }
 
+  // trapped blocks inside the locked / chained columns
+  const vault = (field: 'lockedColumnBlocks' | 'chainedColumnBlocks'): number[] | undefined => {
+    const raw = lvl[field];
+    if (raw === undefined) return undefined;
+    if (!Array.isArray(raw) || raw.length < 1 || raw.length > capN) {
+      throw new Error(`${at} (${id}): "${field}" must hold 1..cap blocks.`);
+    }
+    raw.forEach((c) => {
+      if (!Number.isInteger(c) || (c as number) < 0 || (c as number) >= BLOCK_STYLES.length) {
+        throw new Error(`${at} (${id}): "${field}": ${String(c)} must be a color id.`);
+      }
+      colorCounts.set(c as number, (colorCounts.get(c as number) ?? 0) + 1);
+    });
+    if (raw.length === capN && raw.every((c) => c === raw[0])) {
+      throw new Error(`${at} (${id}): "${field}" must not start as a completed set.`);
+    }
+    return raw as number[];
+  };
+  const lockedColumnBlocks = vault('lockedColumnBlocks');
+  const chainedColumnBlocks = vault('chainedColumnBlocks');
+  if (lockedColumnBlocks && lvl.lockedColumn !== true) {
+    throw new Error(`${at} (${id}): "lockedColumnBlocks" requires "lockedColumn": true.`);
+  }
+  if (lockedColumnBlocks && keys === 0) {
+    throw new Error(
+      `${at} (${id}): "lockedColumnBlocks" requires key blocks in the pile (booster-only locks stay empty).`,
+    );
+  }
+  if (chainedColumnBlocks && lvl.chains === undefined) {
+    throw new Error(`${at} (${id}): "chainedColumnBlocks" requires "chains".`);
+  }
+
   // multi-key lock
   let lockedColumnLocks: number | undefined;
   if (lvl.lockedColumnLocks !== undefined) {
@@ -211,7 +243,9 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
     columns: columns as ColorId[][],
     hiddenBelowTop: lvl.hiddenBelowTop === true,
     lockedColumnLocks,
+    lockedColumnBlocks,
     chains,
+    chainedColumnBlocks,
     targetColumns,
     lockedColumn: lvl.lockedColumn === true,
     tapedColumns: taped,

@@ -72,13 +72,18 @@ export class SortingModel {
     (config.tapedColumns ?? []).forEach((i) => this.taped.add(i));
     (config.targetColumns ?? []).forEach(({ col, color }) => this.targets.set(col, color));
     if (config.lockedColumn) {
-      this.columns.push([]);
+      // trapped blocks are always visible: the player must see the stakes
+      this.columns.push(
+        (config.lockedColumnBlocks ?? []).map((color) => ({ id: nextId++, color, hidden: false })),
+      );
       this.lockedColumn = this.columns.length - 1;
       this.initialLocks = Math.max(1, config.lockedColumnLocks ?? 1);
       this.locksRemaining = this.initialLocks;
     }
     if ((config.chains ?? []).length > 0) {
-      this.columns.push([]);
+      this.columns.push(
+        (config.chainedColumnBlocks ?? []).map((color) => ({ id: nextId++, color, hidden: false })),
+      );
       this.chainedColumn = this.columns.length - 1;
       this.chains = [...(config.chains as number[])];
     }

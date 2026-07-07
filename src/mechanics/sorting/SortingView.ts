@@ -120,6 +120,7 @@ export class SortingView implements SortingViewContract {
       availHeight: this.area.height,
       padding: PAD,
     });
+    this.applyDisplayPermutation();
 
     const selected = opts.selected ?? -1;
     const hideColumn = opts.hideTopGroup ?? -1;
@@ -137,9 +138,13 @@ export class SortingView implements SortingViewContract {
       if (this.model.targetColor(ci) !== null) this.addTargetGhosts(container, ci);
 
       const liftGroup = selected === ci && hideColumn !== ci ? this.model.topGroup(ci) : 0;
+      // vault: blocks inside a still-closed locked/chained column are visible
+      // but disabled — faded so "you can see it, you can't touch it" reads
+      const vaulted = this.model.lockedColumn === ci || this.model.chainedColumn === ci;
       const blocks: Phaser.GameObjects.Container[] = [];
       column.forEach((block, bi) => {
         const b = this.buildBlock(block.hidden ? -1 : block.color);
+        if (vaulted) b.setAlpha(0.55);
         if (hideColumn === ci && bi >= column.length - hideCount) b.setVisible(false);
         const { x, y } = this.blockLocalPos(bi, ci);
         b.setPosition(x, y);
@@ -201,6 +206,35 @@ export class SortingView implements SortingViewContract {
   }
 
   /** Column frame: artist nine-slice per state, or the procedural sketch. */
+  /** Shuffles which board slot each column occupies, seeded by the level id.
+   * The generator appends special columns (locked, chained, empties) in a
+   * fixed order, so without this the mechanics always sit on the same board
+   * positions. Purely presentational: `layout.positions[ci]` still answers
+   * "where does column ci live", so game logic and input are untouched. */
+  private applyDisplayPermutation(): void {
+    const n = this.layout.positions.length;
+    if (n <= 2) return;
+    let seed = 0;
+    const id = this.model.levelId;
+    for (let i = 0; i < id.length; i++) seed = (seed * 31 + id.charCodeAt(i)) | 0;
+    const rnd = (): number => {
+      seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    const slotOf = Array.from({ length: n }, (_, i) => i);
+    for (let i = n - 1; i > 0; i--) {
+      const j = (rnd() * (i + 1)) | 0;
+      [slotOf[i], slotOf[j]] = [slotOf[j], slotOf[i]];
+    }
+    this.layout = {
+      ...this.layout,
+      positions: slotOf.map((s) => this.layout.positions[s]),
+      colHeights: slotOf.map((s) => this.layout.colHeights[s]),
+    };
+  }
+
   private buildFrame(
     columnIndex: number,
     isSelected: boolean,

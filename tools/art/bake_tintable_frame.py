@@ -38,6 +38,13 @@ def main() -> None:
             factor = max(0.0, (CUTOFF - lum) / CUTOFF)
             alpha = min(255, int(round(a * factor * BOOST)))
             opx[x, y] = (255, 255, 255, alpha)
+    # thicken: 1px max-filter dilation on alpha so the tinted stroke reads
+    # as thick as the base frame's ink line (the luminance cutoff trims the
+    # anti-aliased halo and would otherwise leave a thinner line)
+    from PIL import ImageFilter
+
+    alpha_band = out.split()[3].filter(ImageFilter.MaxFilter(3))
+    out.putalpha(alpha_band)
     out.save(DST)
     print(f"baked {DST} ({w}x{h})")
 

@@ -54,6 +54,37 @@ describe('SortingModel specials', () => {
     expect(m.canDrop(3, 2)).toBe(true); // the designated color may return
   });
 
+  it('blocks behind chains are visible but untouchable until unchained', () => {
+    const m = new SortingModel(
+      cfg({ cap: 2, columns: [[0], [0], [1]], chains: [-1], chainedColumnBlocks: [1] }),
+    );
+    const chainCol = m.columns.length - 1;
+    expect(m.columns[chainCol].map((b) => b.color)).toEqual([1]);
+    expect(m.columns[chainCol][0].hidden).toBe(false); // stakes are visible
+    expect(m.canDrop(chainCol, 2)).toBe(false); // cannot lift out while chained
+    expect(m.isWon()).toBe(false);
+    const res = m.move(0, 1); // any set drops the neutral chain
+    expect(res?.unchained).toBe(chainCol);
+    m.commitClear(1);
+    expect(m.canDrop(chainCol, 2)).toBe(true); // freed: the block can leave
+  });
+
+  it('blocks behind a lock stay untouchable until the keys open it', () => {
+    const m = new SortingModel(
+      cfg({
+        cap: 3,
+        columns: [[SPECIAL.KEY, 0], [0], [0], [], []],
+        lockedColumn: true,
+        lockedColumnBlocks: [1, 1],
+      }),
+    );
+    const lockCol = m.columns.length - 1;
+    expect(m.canDrop(lockCol, 4)).toBe(false);
+    m.move(0, 3); // uncover the key -> lock opens
+    expect(m.lockedColumn).toBeNull();
+    expect(m.canDrop(lockCol, 4)).toBe(true); // freed: onto the empty column
+  });
+
   it('a neutral chain falls to any completed set; the column opens chain-free', () => {
     const m = new SortingModel(
       cfg({ cap: 2, columns: [[0], [0], [1, 1]], chains: [-1] }),
