@@ -287,8 +287,11 @@ export class SortingView implements SortingViewContract {
     const targetInk = this.model.targetColor(columnIndex);
     const wantsColorFrame =
       !isSelected && !isTarget && targetInk !== null && hasTexture(this.scene, ASSET_KEYS.columnFrameTint);
+    // Selected uses the BASE frame tinted warm (not col_frame_selected, whose
+    // art has a tighter/thinner outline than the base — the orange border read
+    // smaller than the blue one). Same texture => identical outline geometry.
     const key = isSelected
-      ? ASSET_KEYS.columnFrameSelected
+      ? ASSET_KEYS.columnFrame
       : isTarget
         ? ASSET_KEYS.columnFrameTarget
         : wantsColorFrame
@@ -312,12 +315,10 @@ export class SortingView implements SortingViewContract {
         ns.bottom,
       );
       if (wantsColorFrame && exact) slice.setTint(BLOCK_TINTS[targetInk!]);
-      // State texture not delivered -> tint the base frame instead, so the
-      // state stays visible (selected: warm, target: green).
-      if (!exact) {
-        if (isSelected) slice.setTint(0xffd9a0);
-        else if (isTarget) slice.setTint(0xc4ecc9);
-      }
+      // warm tint marks the selected column on the base frame; green if the
+      // target texture wasn't delivered
+      if (isSelected) slice.setTint(0xf6a94a);
+      else if (!exact && isTarget) slice.setTint(0xc4ecc9);
       return slice;
     }
     const g = this.scene.add.graphics();
