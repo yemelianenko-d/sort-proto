@@ -45,7 +45,6 @@ class StubView implements SortingViewContract {
     this.wiggles.push(columnIndex);
   }
   peels: number[] = [];
-  animateFlapOpen(_columnIndex: number): void {}
   animateTapePeel(columnIndex: number): void {
     this.peels.push(columnIndex);
   }

@@ -162,7 +162,6 @@ export class SortingController {
     });
     if (result.keysDissolved.length > 0) this.view.animateKeyDissolve(result.keysDissolved);
     if (result.tapeBroken !== null) this.view.animateTapePeel(result.tapeBroken);
-    else if (this.model.isTaped(from)) this.view.animateFlapOpen(from);
     if (result.keysApplied.length > 0) {
       const lockCol = result.keyUnlocked ?? this.model.lockedColumn;
       if (lockCol !== null) {

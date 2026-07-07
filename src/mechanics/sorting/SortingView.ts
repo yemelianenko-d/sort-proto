@@ -594,37 +594,6 @@ export class SortingView implements SortingViewContract {
     });
   }
 
-  /** A block was taken from a still-sealed flapped column: the flap flips up
-   * on its top hinge (faked with a scaleY foreshorten so it reads as 3D, not a
-   * flat spin), holds briefly while the block slides out, then flops shut with
-   * a soft overshoot. */
-  animateFlapOpen(ci: number): void {
-    const flap = this.tapeOverlays.get(ci) as Phaser.GameObjects.Image | undefined;
-    if (!flap || typeof flap.setScale !== 'function') return;
-    const baseScaleY = flap.scaleY;
-    const baseAngle = flap.angle;
-    const baseY = flap.y;
-    this.scene.tweens.add({
-      targets: flap,
-      scaleY: baseScaleY * 0.32, // roll up toward the top hinge -> reveals block
-      angle: baseAngle - 4,
-      y: baseY - 2,
-      duration: 115,
-      ease: 'Sine.easeOut',
-      onComplete: () => {
-        if (!flap.active) return;
-        this.scene.tweens.add({
-          targets: flap,
-          scaleY: baseScaleY,
-          angle: baseAngle,
-          y: baseY,
-          delay: 45, // let the block clear before it flops shut
-          duration: 200,
-          ease: 'Back.easeOut',
-        });
-      },
-    });
-  }
 
   /** The taped column just emptied: the tape peels from one end, curls and
    * flutters away. Plays as an overlay right after the rebuild removed it. */
