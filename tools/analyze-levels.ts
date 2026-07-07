@@ -208,10 +208,19 @@ function analyzeMechanics(cfg: SortingLevelConfig, base: number): MechReport[] {
   }
 
   if ((cfg.targetColumns ?? []).length > 0) {
-    const normal = solveVariant({ targetToNormal: true });
-    const delta = normal > 0 ? (base - normal) / Math.max(normal, 1) : 1;
-    const necessity = delta >= 0.2 ? 3 : delta >= 0.08 ? 2 : delta > 0 ? 1 : 0;
-    out.push({ mechanic: 'target', necessity, detail: `normalVariant=${normal} base=${base}` });
+    // consistent with the generator gate: the specialized buffer must be
+    // needed — remove the target column entirely and re-solve
+    const st = stateFor(cfg);
+    const drop = (cfg.targetColumns as { col: number; color: number }[])[0].col;
+    st.cols = st.cols.filter((_, i) => i !== drop);
+    st.locked = st.locked > drop ? st.locked - 1 : st.locked;
+    st.chainCol = st.chainCol > drop ? st.chainCol - 1 : st.chainCol;
+    st.taped = new Set([...st.taped].map((t) => (t > drop ? t - 1 : t)));
+    st.targets = new Map(
+      [...st.targets.entries()].filter(([c]) => c !== drop).map(([c, v]) => [c > drop ? c - 1 : c, v]),
+    );
+    const without = solveBest(st, 1, 40000);
+    out.push({ mechanic: 'target', necessity: necessityFromDelta(base, without), detail: `without=${without} base=${base}` });
   }
 
   const ink = cfg.columns.flat().filter((c) => c === SPECIAL_INK).length;

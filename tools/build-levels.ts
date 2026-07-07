@@ -1,62 +1,75 @@
-/** Build-time level baker: curated 1-10 + generated 11-150 -> one JSON,
- * with a per-decade mechanics distribution report for curve review. */
-import { readFileSync, writeFileSync } from 'node:fs';
-import { generateSortingLevel } from '../src/mechanics/sorting/SortingLevelGenerator';
+/** Level baker v2: generates ALL 150 levels from the guideline slot map,
+ * validates, writes JSON, and prints the balance report (necessity per
+ * mechanic, distributions vs guideline targets, DI-ish curve stats). */
+import { writeFileSync } from 'node:fs';
+import { generateSortingLevelWithMeta, type LevelMeta } from '../src/mechanics/sorting/SortingLevelGenerator';
 import { parseSortingLevels } from '../src/mechanics/sorting/SortingLevelParser';
 import type { SortingLevelConfig } from '../src/mechanics/sorting/SortingTypes';
 
 const TOTAL = 150;
-const path = 'public/levels/sorting_levels.json';
-const file = JSON.parse(readFileSync(path, 'utf8'));
-const curated = file.levels.slice(0, 10) as SortingLevelConfig[];
+const levels: SortingLevelConfig[] = [];
+const metas: LevelMeta[] = [];
 
-const levels: SortingLevelConfig[] = [...curated];
-for (let i = 10; i < TOTAL; i++) {
+for (let i = 0; i < TOTAL; i++) {
   const t0 = Date.now();
-  const cfg = generateSortingLevel(i);
-  levels.push(cfg);
-  const specials = cfg.columns.flat().filter((c) => c < 0).length;
+  const { config, meta } = generateSortingLevelWithMeta(i);
+  levels.push(config);
+  metas.push(meta);
+  const nec = Object.entries(meta.necessity).map(([k, v]) => `${k}:${v}`).join(' ');
+  const flags = [meta.relaxed ? 'RELAXED' : '', meta.attempts >= 240 ? 'FALLBACK' : ''].filter(Boolean).join(' ');
   console.log(
-    `${cfg.id} par=${cfg.par} cols=${cfg.columns.length} specials=${specials}` +
-      `${cfg.lockedColumn ? ' lock' : ''}${cfg.tapedColumns?.length ? ' tape' : ''} (${Date.now() - t0}ms)`,
+    `${config.id} ${meta.card.stage.padEnd(6)} ${(meta.card.focus + (meta.card.second !== 'none' ? '+' + meta.card.second : '')).padEnd(16)} t${meta.card.types} c${config.cap} bu${meta.card.empties} opt=${String(meta.optimal).padStart(2)} par=${config.par} ${nec ? '[' + nec + '] ' : ''}${flags} (${Date.now() - t0}ms)`,
   );
 }
 
 const out = { version: 1, mechanic: 'sorting', levels };
 parseSortingLevels(out); // full validation before writing
-writeFileSync(path, JSON.stringify(out));
-console.log(`written ${levels.length} levels`);
+writeFileSync('public/levels/sorting_levels.json', JSON.stringify(out));
+console.log(`\nwritten ${levels.length} levels`);
 
-/* ---------------- curve review report ---------------- */
+/* ---------------- balance report ---------------- */
 
-function mechanics(cfg: SortingLevelConfig): string[] {
-  const flat = cfg.columns.flat();
-  const parts: string[] = [];
-  if (flat.includes(-3)) parts.push('ink');
-  const keys = flat.filter((c) => c === -4).length;
-  if (cfg.lockedColumn) parts.push(keys > 0 ? ((cfg.lockedColumnLocks ?? 1) > 1 ? 'lock2' : 'key') : 'lockB');
-  if (cfg.tapedColumns?.length) parts.push('tape');
-  if (cfg.targetColumns?.length) parts.push(cfg.targetColumns.length > 1 ? 'target2' : 'target');
-  if (cfg.chains?.length) {
-    parts.push(cfg.chains.some((c) => c >= 0) ? 'chainC' : 'chainN');
+console.log('\n=== distributions vs guideline targets ===');
+const count = <T>(arr: T[]): Map<T, number> => {
+  const m = new Map<T, number>();
+  for (const x of arr) m.set(x, (m.get(x) ?? 0) + 1);
+  return m;
+};
+const types = count(metas.map((m) => m.card.types));
+const caps = count(levels.map((l) => l.cap));
+const mechN = count(
+  metas.map((m) => (m.card.focus !== 'none' ? 1 : 0) + (m.card.second !== 'none' ? 1 : 0)),
+);
+console.log(
+  `types  3:${types.get(3) ?? 0}/5 4:${types.get(4) ?? 0}/20 5:${types.get(5) ?? 0}/45 6:${types.get(6) ?? 0}/45 7:${types.get(7) ?? 0}/25 8:${types.get(8) ?? 0}/10`,
+);
+console.log(`cap    3:${caps.get(3) ?? 0}/15 4:${caps.get(4) ?? 0}/123 5:${caps.get(5) ?? 0}/12`);
+console.log(
+  `mechs  0:${mechN.get(0) ?? 0}/40 1:${mechN.get(1) ?? 0}/65 2:${mechN.get(2) ?? 0}/38 (+ink triples on expert peaks)`,
+);
+
+console.log('\n=== necessity gates ===');
+let fails = 0;
+metas.forEach((m, i) => {
+  for (const [mech, n] of Object.entries(m.necessity)) {
+    if ((n as number) <= 1) {
+      fails++;
+      console.log(`${levels[i].id}: ${mech}:${n} — below gate`);
+    }
   }
-  return parts;
-}
+});
+console.log(fails === 0 ? 'all mechanic levels pass (necessity >= 2)' : `${fails} FAILURES`);
 
-console.log('\n=== distribution per decade ===');
+console.log('\n=== curve per decade (avg optimal / BU / relaxed count) ===');
 for (let d = 0; d < TOTAL; d += 10) {
-  const slice = levels.slice(d, d + 10);
-  const counts = new Map<string, number>();
-  let parSum = 0;
-  for (const l of slice) {
-    parSum += l.par;
-    for (const mech of mechanics(l)) counts.set(mech, (counts.get(mech) ?? 0) + 1);
-  }
-  const desc = [...counts.entries()]
-    .sort()
-    .map(([k, v]) => `${k}:${v}`)
-    .join(' ');
+  const ms = metas.slice(d, d + 10);
+  const avgOpt = ms.reduce((a, m) => a + m.optimal, 0) / ms.length;
+  const avgBu = ms.reduce((a, m) => a + m.card.empties, 0) / ms.length;
+  const relaxed = ms.filter((m) => m.relaxed).length;
+  const mechs = ms
+    .flatMap((m) => [m.card.focus, m.card.second])
+    .filter((f) => f !== 'none');
   console.log(
-    `${String(d + 1).padStart(3)}-${String(d + 10).padStart(3)}  avg par ${(parSum / slice.length).toFixed(1).padStart(5)}  ${desc || '(clean)'}`,
+    `${String(d + 1).padStart(3)}-${String(d + 10).padStart(3)}: opt ${avgOpt.toFixed(1).padStart(5)}  BU ${avgBu.toFixed(1)}  relaxed ${relaxed}  [${[...count(mechs).entries()].map(([k, v]) => `${k}:${v}`).join(' ')}]`,
   );
 }
