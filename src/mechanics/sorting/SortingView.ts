@@ -361,17 +361,26 @@ export class SortingView implements SortingViewContract {
     }
   }
 
-  /** Tape strip across the top of a sealed (take-only) column. */
+  /** Cover across the top of a sealed (take-only) column. The mechanic is
+   * unchanged — only the look: a folded paper flap (done_flap) if delivered,
+   * else the washi tape, else a procedural strip. */
   private buildTapeOverlay(): Phaser.GameObjects.GameObject {
+    const w = this.layout.colWidth;
+    if (hasTexture(this.scene, ASSET_KEYS.tapeFlap)) {
+      const img = this.scene.add.image(w / 2, -2, ASSET_KEYS.tapeFlap).setOrigin(0.5, 0);
+      const frame = this.scene.textures.getFrame(ASSET_KEYS.tapeFlap);
+      img.setScale((w * 1.06) / frame.width); // flap ~column width incl. side tabs
+      return img;
+    }
     if (hasTexture(this.scene, 'deco_tape')) {
-      const img = this.scene.add.image(this.layout.colWidth / 2, 4, 'deco_tape').setAngle(-5);
+      const img = this.scene.add.image(w / 2, 4, 'deco_tape').setAngle(-5);
       const frame = this.scene.textures.getFrame('deco_tape');
-      img.setScale((this.layout.colWidth * 1.35) / frame.width);
+      img.setScale((w * 1.35) / frame.width);
       return img;
     }
     const g = this.scene.add.graphics();
     g.fillStyle(0xf2e3b5, 0.9);
-    g.fillRect(-6, 2, this.layout.colWidth + 12, 14);
+    g.fillRect(-6, 2, w + 12, 14);
     return g;
   }
 
@@ -565,19 +574,25 @@ export class SortingView implements SortingViewContract {
   /** The taped column just emptied: the tape peels from one end, curls and
    * flutters away. Plays as an overlay right after the rebuild removed it. */
   animateTapePeel(ci: number): void {
-    if (!hasTexture(this.scene, 'deco_tape')) return;
+    const asset = hasTexture(this.scene, ASSET_KEYS.tapeFlap)
+      ? ASSET_KEYS.tapeFlap
+      : hasTexture(this.scene, 'deco_tape')
+        ? 'deco_tape'
+        : null;
+    if (!asset) return;
     const pos = this.layout.positions[ci];
     if (!pos) return;
-    const frame = this.scene.textures.getFrame('deco_tape');
-    const scale = (this.layout.colWidth * 1.35) / frame.width;
+    const frame = this.scene.textures.getFrame(asset);
+    const isFlap = asset === ASSET_KEYS.tapeFlap;
+    const scale = (this.layout.colWidth * (isFlap ? 1.06 : 1.35)) / frame.width;
     // anchored near the left end so the peel rotates around it
     const cx = this.area.x + pos.x + this.layout.colWidth / 2;
-    const cy = this.area.y + pos.y + 4;
+    const cy = this.area.y + pos.y + (isFlap ? frame.height * scale * 0.4 : 4);
     const tape = this.scene.add
-      .image(cx - frame.width * scale * 0.42, cy, 'deco_tape')
+      .image(cx - frame.width * scale * 0.42, cy, asset)
       .setOrigin(0.08, 0.5)
       .setScale(scale)
-      .setAngle(-5)
+      .setAngle(isFlap ? 0 : -5)
       .setDepth(40);
     this.root.add(tape);
 

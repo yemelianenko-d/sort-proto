@@ -332,6 +332,10 @@
     {
       "key": "ui_button_danger",
       "url": "assets/images/ui_button_danger.png"
+    },
+    {
+      "key": "done_flap",
+      "url": "assets/images/done_flap.png"
     }
   ],
   "atlases": [],
