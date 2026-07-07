@@ -194,7 +194,7 @@ export class SortingView implements SortingViewContract {
       }
       // done clip sits IN FRONT, clamped over the top edge (loop above, arms
       // over the first block) — added last so it renders on top
-      if (this.isColumnDone(ci)) this.addDoneClip(container, ci);
+      if (this.isColumnDone(ci)) this.addDoneTape(container, ci);
 
       setContainerTapArea(container, this.layout.colWidth, this.layout.colHeights[ci], 'topLeft');
       container.on('pointerdown', (p: Phaser.Input.Pointer) => this.onColumnDown(ci, p));
@@ -514,18 +514,46 @@ export class SortingView implements SortingViewContract {
    * frame asset. Rendered BEHIND the blocks: the loop and upper body ride
    * above the column top while the bottom dips behind the first block, so the
    * "clipped over the edge" occlusion is real. Missing asset -> nothing. */
-  /** Paperclip clamped over the top edge of a completed column (concept #1):
-   * rendered in front of the blocks — the loop rides above the column top and
-   * the arms hang over the first block. Missing asset -> nothing. */
-  private addDoneClip(container: Phaser.GameObjects.Container, _ci: number): void {
-    if (!hasTexture(this.scene, ASSET_KEYS.doneClip)) return;
+  /** Completed column indicator (concept #2): the same washi tape used by the
+   * tape mechanic (deco_tape asset), stuck across the top edge with a
+   * "Готово ✓" label. Flat on top — no occlusion tricks. */
+  private addDoneTape(container: Phaser.GameObjects.Container, _ci: number): void {
+    const w = this.layout.colWidth;
     const cell = this.layout.cell;
-    const clip = this.scene.add
-      .image(this.layout.colWidth * 0.5, 0, ASSET_KEYS.doneClip)
-      .setOrigin(0.5, 0.33); // 33% (the loop) rides above; the arms hang over block 1
-    clip.setScale((cell * 1.35) / clip.height);
-    clip.setDepth(70);
-    container.add(clip);
+    const tape = this.scene.add.container(w * 0.5, 3); // straddles the top edge
+    tape.setAngle(-5);
+
+    let tapeH = Math.max(28, cell * 0.46);
+    if (hasTexture(this.scene, 'deco_tape')) {
+      const img = this.scene.add.image(0, 0, 'deco_tape');
+      const frame = this.scene.textures.getFrame('deco_tape');
+      const scale = (w * 1.3) / frame.width;
+      img.setScale(scale);
+      tapeH = frame.height * scale;
+      tape.add(img);
+    } else {
+      const tapeW = w * 1.16;
+      const g = this.scene.add.graphics();
+      g.fillStyle(0xd8c299, 0.94);
+      g.fillRect(-tapeW / 2, -tapeH / 2, tapeW, tapeH);
+      g.fillStyle(0xffffff, 0.12);
+      g.fillRect(-tapeW / 2, -tapeH / 2, tapeW, tapeH * 0.4);
+      g.lineStyle(2, 0xb69a68, 0.9);
+      g.strokeRect(-tapeW / 2, -tapeH / 2, tapeW, tapeH);
+      tape.add(g);
+    }
+
+    const label = this.scene.add
+      .text(0, 0, 'Готово ✓', {
+        fontFamily: FONTS.display,
+        fontSize: `${Math.round(Math.min(tapeH * 0.5, cell * 0.34))}px`,
+        color: COLORS.inkCss,
+      })
+      .setOrigin(0.5);
+    tape.add(label);
+
+    tape.setDepth(70);
+    container.add(tape);
   }
 
   /** Called when a move completes a column; the set stays as a done column,
