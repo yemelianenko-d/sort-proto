@@ -39,7 +39,7 @@ export const GAME_SETTINGS = {
     totalCells: 150,
   },
   layoutSizes: {
-    hudHeight: 64,
+    hudHeight: 92,
     boosterBarHeight: 84,
   },
   targetColumn: {

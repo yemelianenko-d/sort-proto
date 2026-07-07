@@ -415,10 +415,12 @@ export class SortingScene extends Phaser.Scene {
 
     const top = safe.top + 8;
     this.hudLevel.setPosition(safe.left + 56, top + 4);
-    this.hudMoves.setPosition(w - safe.right - 60, top + 4);
     this.backBtn.setPosition(safe.left + 30, top + 20);
     this.restartBtn.setPosition(w - safe.right - 30, top + 20);
     this.fullscreenBtn?.setPosition(w - safe.right - 82, top + 20);
+    // moves counter drops under the top-right buttons (they share the corner,
+    // so keeping it on the button row clipped the label — see bug report)
+    this.hudMoves.setPosition(w - safe.right - 12, top + 46);
 
 
     const bottomY = h - safe.bottom - boosterBarHeight / 2;

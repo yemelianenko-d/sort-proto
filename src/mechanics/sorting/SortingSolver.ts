@@ -172,6 +172,88 @@ export function solveBest(start: SolverState, rounds = 2, nodeLimit = 50000): nu
   return best;
 }
 
+/* ---------------- path extraction & pressure metrics ---------------- */
+
+export interface SolverMove {
+  from: number;
+  to: number;
+}
+
+export function cloneState(st: SolverState): SolverState {
+  return {
+    cols: st.cols.map((c) => c.slice()),
+    cap: st.cap,
+    locked: st.locked,
+    locks: st.locks,
+    chainCol: st.chainCol,
+    chains: st.chains.slice(),
+    taped: new Set(st.taped),
+    targets: st.targets,
+  };
+}
+
+/** Legal moves under the exact rules `solve` searches (incl. the pointless
+ * full-group-to-empty prune). */
+export function legalMoves(st: SolverState): SolverMove[] {
+  const out: SolverMove[] = [];
+  for (let i = 0; i < st.cols.length; i++) {
+    if (i === st.locked || i === st.chainCol) continue;
+    const from = st.cols[i];
+    const grp = topGroup(from);
+    if (grp === 0) continue;
+    const color = from[from.length - 1];
+    for (let j = 0; j < st.cols.length; j++) {
+      if (i === j || j === st.locked || j === st.chainCol || st.taped.has(j)) continue;
+      const to = st.cols[j];
+      if (to.length >= st.cap) continue;
+      const toTop = to.length > 0 ? to[to.length - 1] : null;
+      if (toTop !== null && toTop !== SPECIAL.INK && toTop !== color) continue;
+      const want = to.length === 0 ? st.targets.get(j) : undefined;
+      if (want !== undefined && want !== color) continue;
+      if (to.length === 0 && grp === from.length) continue;
+      out.push({ from: i, to: j });
+    }
+  }
+  return out;
+}
+
+/** Applies a move in place (top group, clipped to space) and settles. */
+export function applyMove(st: SolverState, mv: SolverMove): void {
+  const grp = topGroup(st.cols[mv.from]);
+  const n = Math.min(grp, st.cap - st.cols[mv.to].length);
+  st.cols[mv.to] = st.cols[mv.to].concat(st.cols[mv.from].splice(st.cols[mv.from].length - n, n));
+  settle(st, mv.from);
+}
+
+/** Like solve(), but returns the found move sequence (not necessarily the
+ * shortest) for pressure-profile replay, or null. */
+export function solvePath(start: SolverState, nodeLimit = 50000): SolverMove[] | null {
+  const seen = new Set<string>();
+  let nodes = 0;
+  const path: SolverMove[] = [];
+
+  function dfs(st: SolverState, depth: number): boolean {
+    if (++nodes > nodeLimit) return false;
+    settle(st, null);
+    if (st.cols.every((c) => c.every((b) => b === SPECIAL.INK))) return true;
+    const key = stateKey(st);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    for (const wantEmpty of [false, true]) {
+      for (const mv of legalMoves(st)) {
+        if ((st.cols[mv.to].length === 0) !== wantEmpty) continue;
+        const next = cloneState(st);
+        applyMove(next, mv);
+        path.push(mv);
+        if (dfs(next, depth + 1)) return true;
+        path.pop();
+      }
+    }
+    return false;
+  }
+  return dfs(cloneState(start), 0) ? path : null;
+}
+
 /** Like solve(), but rejects branches once `depth` exceeds `maxDepth`. */
 export function solveBounded(start: SolverState, maxDepth: number, nodeLimit: number): number {
   if (maxDepth <= 0) return -1;
