@@ -14,12 +14,12 @@ from PIL import Image
 SRC = "public/assets/images/col_frame.png"
 DST = "public/assets/images/col_frame_tint.png"
 
-# Opacity = alpha * (WASH_FLOOR + (1 - WASH_FLOOR) * (1 - luminance)) * BOOST.
-# WASH_FLOOR keeps a subtle colored paper-wash inside the frame instead of
-# dropping it to nothing; BOOST compensates for the tint reading lighter
-# than the original dark-blue ink.
-WASH_FLOOR = 0.14
-BOOST = 1.2
+# Opacity: only genuinely dark (ink) pixels survive. Luminance above CUTOFF
+# (the paper wash inside the frame) maps to fully transparent, so the tint
+# colors the frame strokes only — the column interior stays clean paper.
+# BOOST compensates for the tint reading lighter than the original dark ink.
+CUTOFF = 0.55
+BOOST = 1.4
 
 
 def main() -> None:
@@ -35,7 +35,7 @@ def main() -> None:
                 opx[x, y] = (255, 255, 255, 0)
                 continue
             lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255.0
-            factor = WASH_FLOOR + (1.0 - WASH_FLOOR) * (1.0 - lum)
+            factor = max(0.0, (CUTOFF - lum) / CUTOFF)
             alpha = min(255, int(round(a * factor * BOOST)))
             opx[x, y] = (255, 255, 255, alpha)
     out.save(DST)
