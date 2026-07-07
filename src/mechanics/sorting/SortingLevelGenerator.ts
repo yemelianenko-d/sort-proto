@@ -873,6 +873,72 @@ function pressureStats(start: SolverState, path: SolverMove[]): PressureStats {
 }
 
 
+/* ---------------- hardness (prototype: difficulty engine) ---------------- */
+
+/** Universal free columns: empty, non-target, non-closed, non-taped. This is
+ * the "spare space" the player actually has — the thing that stays too high
+ * and even grows in our current levels. */
+function freeUniversal(st: SolverState): number {
+  let f = 0;
+  for (let j = 0; j < st.cols.length; j++) {
+    if (j === st.locked || j === st.chainCol || st.taped.has(j)) continue;
+    if (st.cols[j].length === 0 && !st.targets.has(j)) f++;
+  }
+  return f;
+}
+
+export interface Hardness {
+  score: number;
+  avgBranch: number;
+  tightStates: number;
+  minFree: number;
+  longestTight: number;
+}
+
+/** Scores how hard a layout plays by replaying a solution path: fewer legal
+ * moves per state (less aimless shuffling), more consecutive tight states
+ * (real critical windows), and less universal spare space all raise the
+ * score. Path is the DFS solution; used consistently so comparisons are fair. */
+function hardnessOf(start: SolverState, path: SolverMove[]): Hardness {
+  if (path.length === 0) {
+    return { score: 0, avgBranch: 99, tightStates: 0, minFree: 99, longestTight: 0 };
+  }
+  const st = cloneState(start);
+  let sumBranch = 0;
+  let tightStates = 0;
+  let minFree = Infinity;
+  let longestTight = 0;
+  let run = 0;
+  for (const mv of path) {
+    const branch = legalMoves(st).length;
+    const free = freeUniversal(st);
+    sumBranch += branch;
+    minFree = Math.min(minFree, free);
+    const tight = free <= 1 && branch <= 6;
+    if (tight) {
+      run++;
+      tightStates++;
+      longestTight = Math.max(longestTight, run);
+    } else {
+      run = 0;
+    }
+    applyMove(st, mv);
+  }
+  const avgBranch = sumBranch / path.length;
+  const minF = minFree === Infinity ? 0 : minFree;
+  // higher = harder: reward tight windows and low spare space, penalize a
+  // high average branching factor (lots of interchangeable options)
+  const score =
+    tightStates * 3 +
+    longestTight * 2 +
+    Math.max(0, 8 - avgBranch) * 1.5 +
+    Math.max(0, 2 - minF) * 2;
+  return { score, avgBranch, tightStates, minFree: minF, longestTight };
+}
+
+
+
+
 /* ---------------- generation ---------------- */
 
 export interface LevelMeta {
@@ -880,6 +946,7 @@ export interface LevelMeta {
   optimal: number;
   necessity: Partial<Record<Focus, number>>;
   pressure: PressureStats;
+  hardness?: Hardness;
   attempts: number;
   relaxed: boolean;
 }
@@ -896,7 +963,10 @@ function fallbackColumns(colors: number, cap: number): ColorId[][] {
   return cols;
 }
 
-export function generateSortingLevelWithMeta(index: number): {
+export function generateSortingLevelWithMeta(
+  index: number,
+  opts: { selectHardest?: boolean } = {},
+): {
   config: SortingLevelConfig;
   meta: LevelMeta;
 } {
@@ -937,7 +1007,9 @@ export function generateSortingLevelWithMeta(index: number): {
 
   let attempts = 0;
   let best: { config: SortingLevelConfig; meta: LevelMeta; score: number } | null = null;
+  let hardestPass: { config: SortingLevelConfig; meta: LevelMeta; h: Hardness } | null = null;
   for (const { card, relaxed } of ladder) {
+    hardestPass = null; // hardest is chosen within a single (preferably strict) rung
     for (let a = 0; a < 90; a++) {
       attempts++;
       const rng = mulberry32(index * 7919 + attempts * 104729 + 29);
@@ -991,13 +1063,31 @@ export function generateSortingLevelWithMeta(index: number): {
       };
       const meta: LevelMeta = { card, optimal: base, necessity, pressure, attempts, relaxed };
 
-      if (pass) return { config, meta };
+      if (pass) {
+        if (!opts.selectHardest) return { config, meta };
+        // difficulty engine: score this passing layout and keep the hardest
+        // one found on this rung (fewer options / more tight windows / less
+        // spare space) instead of taking the first that merely passes
+        const hp = solvePath(state, budget);
+        const h = hp
+          ? hardnessOf(state, hp)
+          : { score: -1, avgBranch: 99, tightStates: 0, minFree: 99, longestTight: 0 };
+        if (!hardestPass || h.score > hardestPass.h.score) {
+          hardestPass = { config, meta: { ...meta, hardness: h }, h };
+        }
+        continue;
+      }
 
       // no layout cleared the gate yet — remember the strongest real one so we
       // never fall back to a trivial board on a hard slot (score favors
       // mechanics closest to their gate, then longer solutions)
       const score = margin * 1000 + base;
       if (!best || score > best.score) best = { config, meta: { ...meta, relaxed: true }, score };
+    }
+    // hardest passing layout on this rung wins; only descend to relaxed rungs
+    // if this rung produced no passing candidate at all
+    if (opts.selectHardest && hardestPass) {
+      return { config: hardestPass.config, meta: hardestPass.meta };
     }
   }
 
