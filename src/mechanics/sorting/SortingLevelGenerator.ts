@@ -619,7 +619,14 @@ function buildLayout(card: SlotCard, rng: () => number): BuildOut | null {
       if (targets.every((t) => tops.has(t.color))) return null;
     }
   }
-  for (let e = 0; e < card.empties; e++) cols.push([]);
+  // targets are specialized buffers (an empty column that accepts one color);
+  // if we ALSO hand out the full universal-empty count the board turns into a
+  // field of empty columns (the "too many free columns" complaint). Budget
+  // total spare space: each target substitutes for one universal empty. Floor
+  // keeps a little maneuvering room; the relaxation ladder adds empties back
+  // if a board turns out unsolvable.
+  const universalEmpties = Math.max(card.targetCount > 0 ? 0 : 1, card.empties - card.targetCount);
+  for (let e = 0; e < universalEmpties; e++) cols.push([]);
 
   // no column may start completed (vaults are shorter than cap by design)
   const startCompleted = cols.some((col) => {
@@ -832,13 +839,16 @@ function hardnessOf(start: SolverState, path: SolverMove[]): Hardness {
   }
   const avgBranch = sumBranch / path.length;
   const minF = minFree === Infinity ? 0 : minFree;
+  const startFree = freeUniversal(start);
   // higher = harder: reward tight windows and low spare space, penalize a
-  // high average branching factor (lots of interchangeable options)
+  // high average branching factor (lots of interchangeable options) and a
+  // board that just starts loose (many empty columns on move one)
   const score =
     tightStates * 3 +
     longestTight * 2 +
     Math.max(0, 8 - avgBranch) * 1.5 +
-    Math.max(0, 2 - minF) * 2;
+    Math.max(0, 2 - minF) * 2 -
+    Math.max(0, startFree - 1) * 2.5;
   return { score, avgBranch, tightStates, minFree: minF, longestTight };
 }
 
