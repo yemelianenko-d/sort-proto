@@ -12,7 +12,7 @@ const metas: LevelMeta[] = [];
 
 for (let i = 0; i < TOTAL; i++) {
   const t0 = Date.now();
-  const { config, meta } = generateSortingLevelWithMeta(i);
+  const { config, meta } = generateSortingLevelWithMeta(i, { selectHardest: true });
   levels.push(config);
   metas.push(meta);
   const nec = Object.entries(meta.necessity).map(([k, v]) => `${k}:${v}`).join(' ');

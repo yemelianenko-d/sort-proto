@@ -974,9 +974,20 @@ export function generateSortingLevelWithMeta(
   const id = `level_${String(level).padStart(3, '0')}`;
   const baseCard = cardFor(level);
 
-  // relaxation ladder: strict card -> +1 empty (pressure gate off) ->
-  // drop second mechanic -> downgrade multilock
+  // scarcity lever: when hunting for the hardest layout, try a tighter-buffer
+  // variant of hard slots FIRST, so spare space stays scarce instead of the
+  // board only opening up as sets clear. Solvable tight boards win; if none
+  // solve, the ladder falls through to the normal buffer count.
+  const hardStage = baseCard.stage === 'plan' || baseCard.stage === 'master' || baseCard.stage === 'peak';
+  const tightRung: { card: SlotCard; relaxed: boolean }[] =
+    opts.selectHardest && hardStage && baseCard.empties > 1
+      ? [{ card: { ...baseCard, empties: (baseCard.empties - 1) as 1 | 2 | 3 }, relaxed: false }]
+      : [];
+
+  // relaxation ladder: [tight] -> strict card -> +1 empty (pressure gate off)
+  // -> drop second mechanic -> downgrade multilock
   const ladder: { card: SlotCard; relaxed: boolean }[] = [
+    ...tightRung,
     { card: baseCard, relaxed: false },
     {
       card: { ...baseCard, empties: Math.min(3, baseCard.empties + 1) as 1 | 2 | 3, pressure: 'none' },
@@ -1010,6 +1021,7 @@ export function generateSortingLevelWithMeta(
   let hardestPass: { config: SortingLevelConfig; meta: LevelMeta; h: Hardness } | null = null;
   for (const { card, relaxed } of ladder) {
     hardestPass = null; // hardest is chosen within a single (preferably strict) rung
+    let passCount = 0;
     for (let a = 0; a < 90; a++) {
       attempts++;
       const rng = mulberry32(index * 7919 + attempts * 104729 + 29);
@@ -1075,6 +1087,9 @@ export function generateSortingLevelWithMeta(
         if (!hardestPass || h.score > hardestPass.h.score) {
           hardestPass = { config, meta: { ...meta, hardness: h }, h };
         }
+        // a pool of ~24 candidates is plenty to pick a hard one from; stop
+        // scanning so the bake stays fast
+        if (++passCount >= 24) break;
         continue;
       }
 
