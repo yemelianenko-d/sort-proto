@@ -374,6 +374,13 @@ export class SortingModel {
     return col.every((b) => b.color === first);
   }
 
+  /** A completed "done" column (no-clear rule): a full single-color, open
+   * column. Done columns are terminal — untouchable, not selectable. */
+  isComplete(index: number): boolean {
+    if (index === this.lockedColumn || index === this.chainedColumn) return false;
+    return this.isUniformFull(index);
+  }
+
   /**
    * Post-move settlement: reveals tops, consumes revealed keys (opening the
    * lock), breaks tape on the just-emptied column. Loops until stable.

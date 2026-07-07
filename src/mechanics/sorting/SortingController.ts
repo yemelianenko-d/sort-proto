@@ -66,6 +66,7 @@ export class SortingController {
       if (index === this.model.chainedColumn) this.view.rattleChains(index);
       return false;
     }
+    if (this.model.isComplete(index)) return false; // done columns are inert
     if (this.model.topGroup(index) === 0) return false;
     this.selected = index;
     this.view.rebuild({ selected: index, hideTopGroup: index });
@@ -102,11 +103,13 @@ export class SortingController {
       return;
     }
 
-    const canPick = this.model.topGroup(index) > 0;
+    const canPick = this.model.topGroup(index) > 0 && !this.model.isComplete(index);
 
     if (this.selected === -1) {
       if (canPick) this.select(index);
-      else if (this.model.columns[index].length > 0) this.view.shakeColumn(index);
+      else if (this.model.columns[index].length > 0 && !this.model.isComplete(index)) {
+        this.view.shakeColumn(index); // occupied but unliftable — nudge; done columns stay inert
+      }
       return;
     }
 

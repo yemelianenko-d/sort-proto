@@ -154,8 +154,8 @@ export class SortingView implements SortingViewContract {
         const { x, y } = this.blockLocalPos(bi, ci);
         b.setPosition(x, y);
         if (liftGroup > 0 && bi >= column.length - liftGroup) {
-          b.y -= 12;
-          b.setScale(1.06);
+          b.y -= 6;
+          b.setScale(1.03);
         }
         if (opts.landedColumn === ci && bi >= column.length - (opts.landedCount ?? 0)) {
           const targetY = b.y;
@@ -367,9 +367,9 @@ export class SortingView implements SortingViewContract {
   private buildTapeOverlay(): Phaser.GameObjects.GameObject {
     const w = this.layout.colWidth;
     if (hasTexture(this.scene, ASSET_KEYS.tapeFlap)) {
-      const img = this.scene.add.image(w / 2, -2, ASSET_KEYS.tapeFlap).setOrigin(0.5, 0);
+      const img = this.scene.add.image(w / 2, 0, ASSET_KEYS.tapeFlap).setOrigin(0.5, 0.82);
       const frame = this.scene.textures.getFrame(ASSET_KEYS.tapeFlap);
-      img.setScale((w * 1.06) / frame.width); // flap ~column width incl. side tabs
+      img.setScale((w * 0.9) / frame.width); // a touch narrower than the column
       return img;
     }
     if (hasTexture(this.scene, 'deco_tape')) {
