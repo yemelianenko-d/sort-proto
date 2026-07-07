@@ -18,12 +18,13 @@ for (let i = 0; i < TOTAL; i++) {
   const nec = Object.entries(meta.necessity).map(([k, v]) => `${k}:${v}`).join(' ');
   const h = meta.hardness;
   const hard = h ? `h[br${h.avgBranch.toFixed(1)} t${h.tightStates} f${h.minFree}]` : '';
+  const trap = meta.trap ? `sr${Math.round(meta.trap.safeRatio * 100)} ke${meta.trap.knifeEdge}` : '';
   const vault =
     (config.chainedColumnBlocks?.length ? `chv${config.chainedColumnBlocks.length}` : '') +
     (config.lockedColumnBlocks?.length ? `lkv${config.lockedColumnBlocks.length}` : '');
   const flags = [meta.relaxed ? 'RELAXED' : '', meta.attempts >= 320 ? 'FALLBACK' : ''].filter(Boolean).join(' ');
   console.log(
-    `${config.id} ${meta.card.stage.padEnd(6)} ${(meta.card.focus + (meta.card.second !== 'none' ? '+' + meta.card.second : '')).padEnd(16)} t${meta.card.types} c${config.cap} bu${meta.card.empties} tgt${meta.card.targetCount} ${vault.padEnd(6)} opt=${String(meta.optimal).padStart(2)} par=${config.par} ${hard} ${nec ? '[' + nec + '] ' : ''}${flags} (${Date.now() - t0}ms)`,
+    `${config.id} ${meta.card.stage.padEnd(6)} ${(meta.card.focus + (meta.card.second !== 'none' ? '+' + meta.card.second : '')).padEnd(16)} t${meta.card.types} c${config.cap} bu${meta.card.empties} tgt${meta.card.targetCount} ${vault.padEnd(6)} opt=${String(meta.optimal).padStart(2)} par=${config.par} ${hard} ${trap} ${nec ? '[' + nec + '] ' : ''}${flags} (${Date.now() - t0}ms)`,
   );
 }
 
@@ -64,6 +65,18 @@ metas.forEach((m, i) => {
   }
 });
 console.log(fails === 0 ? 'all mechanic levels pass (necessity >= 2)' : `${fails} FAILURES`);
+
+console.log('\n=== trap density per decade (avg safeRatio on trap-targeted slots) ===');
+for (let d = 0; d < TOTAL; d += 10) {
+  const ts = metas.slice(d, d + 10).filter((m) => m.trap);
+  if (ts.length === 0) continue;
+  const avgSr = ts.reduce((a, m) => a + (m.trap?.safeRatio ?? 1), 0) / ts.length;
+  const knives = ts.reduce((a, m) => a + (m.trap?.knifeEdge ?? 0), 0);
+  const worst = Math.max(...ts.map((m) => m.trap?.safeRatio ?? 0));
+  console.log(
+    `${String(d + 1).padStart(3)}-${String(d + 10).padStart(3)}: slots ${ts.length}  avg sr ${(avgSr * 100).toFixed(0)}%  worst ${(worst * 100).toFixed(0)}%  knife-edges ${knives}`,
+  );
+}
 
 console.log('\n=== curve per decade (avg optimal / BU / relaxed count) ===');
 for (let d = 0; d < TOTAL; d += 10) {

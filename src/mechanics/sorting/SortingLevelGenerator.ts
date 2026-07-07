@@ -862,8 +862,21 @@ export interface LevelMeta {
   optimal: number;
   necessity: Partial<Record<Focus, number>>;
   hardness?: Hardness;
+  trap?: TrapStats;
   attempts: number;
   relaxed: boolean;
+}
+
+/** Trap-targeted selection (guideline: real difficulty is punished mistakes,
+ * not busywork). On planning-heavy stages the generator aims the pick at a
+ * trap-density goal: the fraction of legal moves that stay solvable
+ * (safeRatio) should drop to ~0.5-0.6 on the hardest slots instead of the
+ * 0.7-0.8 a purely structural pick tends to produce. */
+function trapTargetFor(stage: Stage): number | null {
+  if (stage === 'peak') return 0.6;
+  if (stage === 'master') return 0.62;
+  if (stage === 'plan') return 0.72;
+  return null;
 }
 
 /** Guaranteed-solvable trivial layout (emergency fallback). */
@@ -931,11 +944,16 @@ export function generateSortingLevelWithMeta(
 
   let attempts = 0;
   let best: { config: SortingLevelConfig; meta: LevelMeta; score: number } | null = null;
-  let hardestPass: { config: SortingLevelConfig; meta: LevelMeta; h: Hardness } | null = null;
+  type PassEntry = { config: SortingLevelConfig; meta: LevelMeta; h: Hardness; built: BuildOut };
+  let passPool: PassEntry[] = [];
   for (const { card, relaxed } of ladder) {
-    hardestPass = null; // hardest is chosen within a single (preferably strict) rung
+    passPool = []; // candidates are chosen within a single (preferably strict) rung
     let passCount = 0;
-    for (let a = 0; a < 90; a++) {
+    let trapHits = 0;
+    // trap-targeted stages keep digging (up to 150 attempts) while no board
+    // has hit the trap goal yet; everything else stays at the fast 90
+    const rungTarget = trapTargetFor(card.stage);
+    for (let a = 0; a < (rungTarget !== null && trapHits === 0 ? 150 : 90); a++) {
       attempts++;
       const rng = mulberry32(index * 7919 + attempts * 104729 + 29);
       const built = buildLayout(card, rng);
@@ -984,19 +1002,28 @@ export function generateSortingLevelWithMeta(
 
       if (pass) {
         if (!opts.selectHardest) return { config, meta };
-        // difficulty engine: score this passing layout and keep the hardest
-        // one found on this rung (fewer options / more tight windows / less
-        // spare space) instead of taking the first that merely passes
+        // difficulty engine: score this passing layout and keep every passing
+        // candidate of this rung; the final pick happens after the scan (by
+        // hardness, and on trap-targeted stages also by trap density)
         const hp = solvePath(state, budget);
         const h = hp
           ? hardnessOf(state, hp)
           : { score: -1, avgBranch: 99, tightStates: 0, minFree: 99, longestTight: 0 };
-        if (!hardestPass || h.score > hardestPass.h.score) {
-          hardestPass = { config, meta: { ...meta, hardness: h }, h };
-        }
-        // a pool of ~24 candidates is plenty to pick a hard one from; stop
-        // scanning so the bake stays fast
-        if (++passCount >= 24) break;
+        const target = trapTargetFor(card.stage);
+        // trap probe: a cheap prefix-bounded estimate of how punishing the
+        // board is; only measured on stages that have a trap goal
+        const trap =
+          target !== null ? trapStatsOf(stateOf(built, card.cap), 10, 40000, 10000) : undefined;
+        passPool.push({ config, meta: { ...meta, hardness: h, trap }, h, built });
+        if (trap && trap.safeRatio <= target!) trapHits++;
+        // pool sizing: ~24 candidates is plenty when picking purely by
+        // structure; on trap stages stop as soon as a few boards hit the
+        // trap goal, and keep scanning while none has (deeper on the
+        // hardest stages, where trap-dense boards are rarest)
+        passCount++;
+        if (target === null && passCount >= 24) break;
+        const noHitCap = card.stage === 'plan' ? 40 : 60;
+        if (target !== null && (trapHits >= 3 || passCount >= (trapHits > 0 ? 24 : noHitCap))) break;
         continue;
       }
 
@@ -1006,10 +1033,32 @@ export function generateSortingLevelWithMeta(
       const score = margin * 1000 + base;
       if (!best || score > best.score) best = { config, meta: { ...meta, relaxed: true }, score };
     }
-    // hardest passing layout on this rung wins; only descend to relaxed rungs
-    // if this rung produced no passing candidate at all
-    if (opts.selectHardest && hardestPass) {
-      return { config: hardestPass.config, meta: hardestPass.meta };
+    // a passing layout on this rung wins; only descend to relaxed rungs if
+    // this rung produced no passing candidate at all
+    if (opts.selectHardest && passPool.length > 0) {
+      passPool.sort((x, y) => y.h.score - x.h.score);
+      const target = trapTargetFor(card.stage);
+      if (target === null) {
+        // no trap goal on this stage: hardest by structural score, as before
+        const w = passPool[0];
+        return { config: w.config, meta: w.meta };
+      }
+      // trap-targeted selection (guideline: peak safeRatio 0.5-0.6): among
+      // candidates that hit the goal prefer knife-edge decisions and
+      // structure; when none does, the closest to the goal wins
+      const onTarget = passPool.filter((e) => (e.meta.trap?.safeRatio ?? 1) <= target);
+      const pick =
+        onTarget.length > 0
+          ? onTarget.reduce((a, b) =>
+              (b.meta.trap?.knifeEdge ?? 0) * 3 + b.h.score >
+              (a.meta.trap?.knifeEdge ?? 0) * 3 + a.h.score
+                ? b
+                : a,
+            )
+          : passPool.reduce((a, b) =>
+              (b.meta.trap?.safeRatio ?? 1) < (a.meta.trap?.safeRatio ?? 1) ? b : a,
+            );
+      return { config: pick.config, meta: pick.meta };
     }
   }
 
@@ -1053,8 +1102,13 @@ export interface TrapStats {
 /** Measures how punishing a layout is along a solution prefix: at each state,
  * how many legal moves stay solvable. Low safeRatio / high knifeEdge = the
  * player must plan ahead or deadlock. Prefix-bounded to stay affordable. */
-export function trapStatsOf(start: SolverState, prefix = 16): TrapStats {
-  const path = solvePath(start, 120000);
+export function trapStatsOf(
+  start: SolverState,
+  prefix = 16,
+  pathBudget = 120000,
+  moveBudget = 40000,
+): TrapStats {
+  const path = solvePath(start, pathBudget);
   if (!path) return { safeRatio: 1, knifeEdge: 0, decisions: 0 };
   const st = cloneState(start);
   let sumLegal = 0;
@@ -1069,7 +1123,7 @@ export function trapStatsOf(start: SolverState, prefix = 16): TrapStats {
       for (const m of legal) {
         const nx = cloneState(st);
         applyMove(nx, m);
-        if (solve(nx, 40000) >= 0) safe++;
+        if (solve(nx, moveBudget) >= 0) safe++;
       }
       sumLegal += legal.length;
       sumSafe += safe;
