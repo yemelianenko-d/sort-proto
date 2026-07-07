@@ -143,7 +143,9 @@ export class SortingView implements SortingViewContract {
       const container = this.scene.add.container(this.area.x + pos.x, this.area.y + pos.y);
 
       container.add(this.buildFrame(ci, selected === ci, targets.has(ci)));
-      if (this.model.targetColor(ci) !== null) this.addTargetGhosts(container, ci);
+      if (this.model.targetColor(ci) !== null && !this.isColumnDone(ci)) {
+        this.addTargetGhosts(container, ci);
+      }
 
       const liftGroup = selected === ci && hideColumn !== ci ? this.model.topGroup(ci) : 0;
       // vault: blocks inside a still-closed locked/chained column are visible
