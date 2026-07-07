@@ -16,8 +16,8 @@ import {
  * (mechanic-critical-path balance):
  *
  *  - difficulty is PRESSURE OVER TIME, not mechanic presence: accepted
- *    layouts replay a solver path and must show the target pressure shape
- *    (min UniversalDestinationColumns / critical windows) for their band;
+ *    the generator scores each candidate layout for hardness (branching
+ *    factor + tight-state runs + spare space) and keeps the hardest;
  *  - Chain Columns always CONTAIN BLOCKS of the level pool (the vault):
  *    locked-forever ablation is unsolvable by construction (Necessity 4);
  *    colored-chain deadlock gate: the required color never sits inside its
@@ -63,8 +63,6 @@ function shuffle<T>(arr: T[], rng: () => number): T[] {
 
 export type Focus = 'none' | 'target' | 'tape' | 'chainN' | 'chainC' | 'key' | 'multilock' | 'blot';
 export type Stage = 'show' | 'use' | 'plan' | 'master' | 'relief' | 'peak' | 'build';
-/** Pressure gate kind derived from the stage (guideline 3.3 / 13.2). */
-export type PressureGate = 'none' | 'tight' | 'window' | 'peak';
 
 export interface SlotCard {
   level: number;
@@ -86,7 +84,6 @@ export interface SlotCard {
   chainLen: number;
   /** Minimum necessity for the focus mechanic (0 disables the gate). */
   minNecessity: number;
-  pressure: PressureGate;
 }
 
 /** Wave role by position inside a 10-slot wave, per guideline 13.2:
@@ -116,12 +113,6 @@ function waveStage(pos10: number): Stage {
   }
 }
 
-function pressureFor(stage: Stage): PressureGate {
-  if (stage === 'master') return 'window';
-  if (stage === 'peak') return 'peak';
-  if (stage === 'plan') return 'tight';
-  return 'none';
-}
 
 function necessityFor(stage: Stage): number {
   if (stage === 'relief' || stage === 'build') return 0;
@@ -191,7 +182,6 @@ const RANGES: DecadeRange[] = [
       types: stage === 'relief' ? 4 : level <= 19 ? 4 : 5,
       cap: level <= 16 ? 3 : 4,
       empties: stage === 'master' || stage === 'peak' ? 1 : 2,
-      pressure: stage === 'master' || stage === 'peak' ? 'tight' : 'none',
     }),
   },
   // 26-40: topology / partial buffers — Ink Blot intro
@@ -209,7 +199,6 @@ const RANGES: DecadeRange[] = [
         blotCols: relief ? 0 : deep ? 2 : 1,
         blotsPer: relief ? 1 : stage === 'show' || stage === 'build' ? 1 : pick([1, 2]),
         minNecessity: relief ? 0 : necessityFor(stage),
-        pressure: pressureFor(stage),
       };
     },
   },
@@ -227,7 +216,6 @@ const RANGES: DecadeRange[] = [
         empties: stage === 'master' || stage === 'peak' ? 1 : 2,
         targetCount: relief ? 0 : two ? 2 : 1,
         minNecessity: relief ? 0 : necessityFor(stage),
-        pressure: pressureFor(stage),
       };
     },
   },
@@ -247,7 +235,6 @@ const RANGES: DecadeRange[] = [
           empties: stage === 'master' || stage === 'peak' ? 1 : 2,
           targetCount: three ? 3 : 2,
           minNecessity: necessityFor(stage),
-          pressure: pressureFor(stage),
         };
       }
       const withTarget = stage === 'master' || stage === 'peak';
@@ -260,7 +247,6 @@ const RANGES: DecadeRange[] = [
         empties: stage === 'master' || stage === 'peak' ? 1 : 2,
         targetCount: withTarget ? 1 : 0,
         minNecessity: necessityFor(stage),
-        pressure: pressureFor(stage),
       };
     },
   },
@@ -282,7 +268,6 @@ const RANGES: DecadeRange[] = [
           blotCols: withBlot ? 1 : 0,
           blotsPer: 1,
           minNecessity: necessityFor(stage),
-          pressure: pressureFor(stage),
         };
       }
       return {
@@ -292,7 +277,6 @@ const RANGES: DecadeRange[] = [
         types: pick([5, 6, 6]),
         empties: stage === 'master' || stage === 'peak' ? 1 : 2,
         minNecessity: necessityFor(stage),
-        pressure: pressureFor(stage),
       };
     },
   },
@@ -314,7 +298,6 @@ const RANGES: DecadeRange[] = [
         empties: stage === 'peak' || stage === 'master' ? 1 : 2,
         targetCount: withTarget ? 1 : 0,
         minNecessity: necessityFor(stage),
-        pressure: pressureFor(stage),
       };
     },
   },
@@ -337,7 +320,6 @@ const RANGES: DecadeRange[] = [
         chainLen: deep ? 3 : 2,
         targetCount: withTarget ? 1 : 0,
         minNecessity: necessityFor(stage),
-        pressure: pressureFor(stage),
       };
     },
   },
@@ -360,7 +342,6 @@ const RANGES: DecadeRange[] = [
         chainLen: mixed ? 3 : 2,
         targetCount: withTargets ? 2 : 0,
         minNecessity: necessityFor(stage),
-        pressure: pressureFor(stage),
       };
     },
   },
@@ -381,7 +362,6 @@ const RANGES: DecadeRange[] = [
           cap: C5_LEVELS.has(level) ? 5 : 4,
           empties: stage === 'master' || stage === 'peak' ? 1 : 2,
           minNecessity: necessityFor(stage),
-          pressure: pressureFor(stage),
         },
         rng,
       );
@@ -404,7 +384,6 @@ const RANGES: DecadeRange[] = [
           cap: C5_LEVELS.has(level) ? 5 : 4,
           empties: stage === 'peak' || stage === 'master' ? 1 : 2,
           minNecessity: necessityFor(stage),
-          pressure: pressureFor(stage),
         },
         rng,
       );
@@ -433,7 +412,6 @@ function rawCardFor(level: number): SlotCard {
     blotsPer: 1,
     chainLen: 0,
     minNecessity: 0,
-    pressure: 'none',
   };
 
   const range = RANGES.find((r) => level <= r.upTo) ?? RANGES[RANGES.length - 1];
@@ -473,13 +451,9 @@ function normalizeCard(card: SlotCard): SlotCard {
     if (c.second === 'key' || c.second === 'multilock') c.second = 'none';
     if (c.focus === 'chainN' && c.chainLen === 0) c.chainLen = 2;
     if (c.empties < 2) c.empties = 2;
-    // pure board-load: duration is the axis, a critical-window demand on a
-    // narrow 8-type board mostly produces rejects
-    if (c.pressure === 'window' || c.pressure === 'peak') c.pressure = 'tight';
   }
   // C5 + 8 types + combos is a forbidden stack (guideline 12.3)
   if (c.cap === 5 && c.types >= 8) c.types = 7;
-  if (c.cap === 5 && c.pressure === 'window') c.pressure = 'tight';
   if (c.cap === 5 && c.second !== 'none' && c.empties < 2) c.empties = 2;
   const width = (): number => {
     const locks = c.focus === 'multilock' || c.second === 'multilock' ? 2
@@ -804,74 +778,6 @@ function mechanicNecessity(m: Focus, b: BuildOut, cap: number, base: number): nu
   }
 }
 
-/* ---------------- pressure profile (guideline 3) ---------------- */
-
-export interface PressureStats {
-  minUDC: number;
-  windows: number;
-  longest: number;
-}
-
-/** UniversalDestinationColumns: normal columns able to accept at least one
- * currently exposed movable block (target-restricted empties are
- * specialized, not universal). */
-function udcOf(st: SolverState): number {
-  const exposed = new Set<number>();
-  for (let i = 0; i < st.cols.length; i++) {
-    if (i === st.locked || i === st.chainCol) continue;
-    const col = st.cols[i];
-    const top = col[col.length - 1];
-    if (top === undefined || top === SPECIAL.INK || top === SPECIAL.KEY) continue;
-    exposed.add(top);
-  }
-  if (exposed.size === 0) return 0;
-  let udc = 0;
-  for (let j = 0; j < st.cols.length; j++) {
-    if (j === st.locked || j === st.chainCol || st.taped.has(j)) continue;
-    const to = st.cols[j];
-    if (to.length >= st.cap) continue;
-    if (to.length === 0) {
-      if (!st.targets.has(j)) udc++;
-      continue;
-    }
-    const top = to[to.length - 1];
-    if (top === SPECIAL.INK || exposed.has(top)) udc++;
-  }
-  return udc;
-}
-
-/** Replays a solver path and derives the pressure shape. A state is "tight"
- * when UDC <= 1 and few safe alternatives remain; a Critical Window is a run
- * of >= 2 consecutive tight states (guideline 3.3, approximated with legal
- * move count standing in for SafeMoveCount). */
-function pressureStats(start: SolverState, path: SolverMove[]): PressureStats {
-  const st = cloneState(start);
-  let minUDC = Infinity;
-  let windows = 0;
-  let longest = 0;
-  let run = 0;
-  const trace: number[] = [];
-  for (const mv of path) {
-    const udc = udcOf(st);
-    const valid = legalMoves(st).length;
-    trace.push(udc);
-    minUDC = Math.min(minUDC, udc);
-    // tightness is universal-space scarcity; the legal-move bound is only a
-    // light sanity cap (raw legal count is a poor proxy for SafeMoveCount)
-    const tight = udc <= 1 && valid <= 8;
-    if (tight) {
-      run++;
-      longest = Math.max(longest, run);
-      if (run === 2) windows++;
-    } else {
-      run = 0;
-    }
-    applyMove(st, mv);
-  }
-  (globalThis as { __udcTrace?: (t: number[]) => void }).__udcTrace?.(trace);
-  return { minUDC: minUDC === Infinity ? 0 : minUDC, windows, longest };
-}
-
 
 /* ---------------- hardness (prototype: difficulty engine) ---------------- */
 
@@ -945,7 +851,6 @@ export interface LevelMeta {
   card: SlotCard;
   optimal: number;
   necessity: Partial<Record<Focus, number>>;
-  pressure: PressureStats;
   hardness?: Hardness;
   attempts: number;
   relaxed: boolean;
@@ -984,13 +889,13 @@ export function generateSortingLevelWithMeta(
       ? [{ card: { ...baseCard, empties: (baseCard.empties - 1) as 1 | 2 | 3 }, relaxed: false }]
       : [];
 
-  // relaxation ladder: [tight] -> strict card -> +1 empty (pressure gate off)
+  // relaxation ladder: [tight] -> strict card -> +1 empty
   // -> drop second mechanic -> downgrade multilock
   const ladder: { card: SlotCard; relaxed: boolean }[] = [
     ...tightRung,
     { card: baseCard, relaxed: false },
     {
-      card: { ...baseCard, empties: Math.min(3, baseCard.empties + 1) as 1 | 2 | 3, pressure: 'none' },
+      card: { ...baseCard, empties: Math.min(3, baseCard.empties + 1) as 1 | 2 | 3 },
       relaxed: true,
     },
     {
@@ -999,7 +904,6 @@ export function generateSortingLevelWithMeta(
         second: 'none',
         targetCount: baseCard.focus === 'target' ? baseCard.targetCount : 0,
         empties: Math.min(3, baseCard.empties + 1) as 1 | 2 | 3,
-        pressure: 'none',
       },
       relaxed: true,
     },
@@ -1010,7 +914,6 @@ export function generateSortingLevelWithMeta(
         second: 'none',
         targetCount: baseCard.focus === 'target' ? baseCard.targetCount : 0,
         empties: Math.min(3, baseCard.empties + 1) as 1 | 2 | 3,
-        pressure: 'none',
       },
       relaxed: true,
     },
@@ -1053,12 +956,6 @@ export function generateSortingLevelWithMeta(
         if (n < need) pass = false;
       }
 
-      let pressure: PressureStats = { minUDC: 0, windows: 0, longest: 0 };
-      if (card.pressure !== 'none') {
-        const path = solvePath(state, budget);
-        if (path) pressure = pressureStats(state, path);
-      }
-
       const config: SortingLevelConfig = {
         id,
         cap: card.cap,
@@ -1073,7 +970,7 @@ export function generateSortingLevelWithMeta(
         targetColumns: built.targets.length > 0 ? built.targets : undefined,
         tapedColumns: built.taped.length > 0 ? built.taped : undefined,
       };
-      const meta: LevelMeta = { card, optimal: base, necessity, pressure, attempts, relaxed };
+      const meta: LevelMeta = { card, optimal: base, necessity, attempts, relaxed };
 
       if (pass) {
         if (!opts.selectHardest) return { config, meta };
@@ -1125,7 +1022,6 @@ export function generateSortingLevelWithMeta(
       card: baseCard,
       optimal: 6,
       necessity: {},
-      pressure: { minUDC: 0, windows: 0, longest: 0 },
       attempts,
       relaxed: true,
     },

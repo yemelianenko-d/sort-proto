@@ -16,13 +16,14 @@ for (let i = 0; i < TOTAL; i++) {
   levels.push(config);
   metas.push(meta);
   const nec = Object.entries(meta.necessity).map(([k, v]) => `${k}:${v}`).join(' ');
-  const p = meta.pressure;
+  const h = meta.hardness;
+  const hard = h ? `h[br${h.avgBranch.toFixed(1)} t${h.tightStates} f${h.minFree}]` : '';
   const vault =
     (config.chainedColumnBlocks?.length ? `chv${config.chainedColumnBlocks.length}` : '') +
     (config.lockedColumnBlocks?.length ? `lkv${config.lockedColumnBlocks.length}` : '');
   const flags = [meta.relaxed ? 'RELAXED' : '', meta.attempts >= 320 ? 'FALLBACK' : ''].filter(Boolean).join(' ');
   console.log(
-    `${config.id} ${meta.card.stage.padEnd(6)} ${(meta.card.focus + (meta.card.second !== 'none' ? '+' + meta.card.second : '')).padEnd(16)} t${meta.card.types} c${config.cap} bu${meta.card.empties} tgt${meta.card.targetCount} ${vault.padEnd(6)} opt=${String(meta.optimal).padStart(2)} par=${config.par} p[udc${p.minUDC} w${p.windows} l${p.longest}] ${nec ? '[' + nec + '] ' : ''}${flags} (${Date.now() - t0}ms)`,
+    `${config.id} ${meta.card.stage.padEnd(6)} ${(meta.card.focus + (meta.card.second !== 'none' ? '+' + meta.card.second : '')).padEnd(16)} t${meta.card.types} c${config.cap} bu${meta.card.empties} tgt${meta.card.targetCount} ${vault.padEnd(6)} opt=${String(meta.optimal).padStart(2)} par=${config.par} ${hard} ${nec ? '[' + nec + '] ' : ''}${flags} (${Date.now() - t0}ms)`,
   );
 }
 
