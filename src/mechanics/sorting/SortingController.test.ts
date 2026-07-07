@@ -30,6 +30,10 @@ class StubView implements SortingViewContract {
     this.clears.push(columnIndex);
     onDone(); // synchronous for tests
   }
+  dones: number[] = [];
+  markColumnDone(column: number): void {
+    this.dones.push(column);
+  }
   shakeColumn(columnIndex: number): void {
     this.shakes.push(columnIndex);
   }
@@ -258,12 +262,12 @@ describe('SortingController', () => {
     expect(view.shakes).toContain(locked);
   });
 
-  it('drives clear through animateClear + commitClear and reports win', () => {
+  it('marks a completed column done (no-clear) and reports win', () => {
     const { model, view, events } = setup({ columns: [[0, 0], [0], []] });
     view.userTap(1);
-    view.userTap(0); // third "0" -> uniform full
-    expect(view.clears).toEqual([0]);
-    expect(model.columns[0]).toHaveLength(0); // committed after animation
+    view.userTap(0); // third "0" -> uniform full, stays as a done column
+    expect(view.dones).toEqual([0]);
+    expect(model.columns[0]).toHaveLength(model.capacity(0)); // stays full (done)
     expect(events.won).toBe(true);
   });
 

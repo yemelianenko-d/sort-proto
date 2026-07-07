@@ -85,11 +85,11 @@ describe('applyMove settlement', () => {
     expect(s2.cols[0]).toEqual([0]);
   });
 
-  it('auto-clears a completed uniform set', () => {
+  it('keeps a completed uniform set in place as a done column (no-clear rule)', () => {
     const st = state([[0, 0, 0], [0], []], { cap: 4 });
     const s2 = cloneState(st);
-    applyMove(s2, { from: 1, to: 0 }); // completes [0,0,0,0] -> clears
-    expect(s2.cols[0]).toEqual([]);
+    applyMove(s2, { from: 1, to: 0 }); // completes [0,0,0,0] -> stays done
+    expect(s2.cols[0]).toEqual([0, 0, 0, 0]);
   });
 
   it('removes a matching colored chain when its set completes', () => {
@@ -119,7 +119,15 @@ describe('searches agree and produce valid solutions', () => {
     expect(path).not.toBeNull();
     const replay = cloneState(st);
     for (const mv of path!) applyMove(replay, mv);
-    expect(replay.cols.every((c) => c.every((b) => b === SPECIAL.INK))).toBe(true);
+    // won when every column is empty, ink-only, or a completed done column
+    const cap = replay.cap;
+    const won = replay.cols.every(
+      (c) =>
+        c.length === 0 ||
+        c.every((b) => b === SPECIAL.INK) ||
+        (c.length === cap && c.every((b) => b === c[0])),
+    );
+    expect(won).toBe(true);
   });
 
   it('reports unsolvable when a required block is sealed forever', () => {

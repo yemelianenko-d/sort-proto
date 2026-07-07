@@ -53,6 +53,10 @@ function isUniformFull(col: ColorId[], cap: number): boolean {
 }
 
 /** Reveal-free settlement: consume keys, break tape, auto-clear full sets. */
+/** Settlement under the "done columns" rule: consume top keys only. A column
+ * that becomes uniform-full is NOT cleared — it stays as a completed "done"
+ * column (untouchable, space removed from play). Chain crediting happens in
+ * applyMove when a move completes a column. */
 function settle(st: SolverState, emptied: number | null): void {
   if (emptied !== null && st.taped.has(emptied) && st.cols[emptied].length === 0) {
     st.taped = new Set(st.taped);
@@ -63,30 +67,32 @@ function settle(st: SolverState, emptied: number | null): void {
     changed = false;
     for (let i = 0; i < st.cols.length; i++) {
       const col = st.cols[i];
-      const top = col[col.length - 1];
-      if (top === SPECIAL.KEY) {
+      if (col[col.length - 1] === SPECIAL.KEY) {
         st.cols[i] = col.slice(0, -1);
         if (st.locked >= 0 && --st.locks <= 0) st.locked = -1;
         changed = true;
-      } else if (i !== st.locked && i !== st.chainCol && isUniformFull(col, st.cap)) {
-        const setColor = col[0];
-        st.cols[i] = [];
-        if (st.taped.has(i)) {
-          st.taped = new Set(st.taped);
-          st.taped.delete(i);
-        }
-        if (st.chainCol >= 0) {
-          let ci = st.chains.indexOf(setColor);
-          if (ci === -1) ci = st.chains.indexOf(-1);
-          if (ci !== -1) {
-            st.chains = st.chains.slice();
-            st.chains.splice(ci, 1);
-            if (st.chains.length === 0) st.chainCol = -1;
-          }
-        }
-        changed = true;
       }
     }
+  }
+}
+
+/** A completed, uniform-full colored column: terminal and untouchable. */
+function isDone(col: ColorId[], cap: number): boolean {
+  return isUniformFull(col, cap);
+}
+
+/** Credits a just-completed column against the chain condition (called by
+ * applyMove after a move fills a column). The done column stays in place. */
+function creditCompletion(st: SolverState, col: number): void {
+  if (st.chainCol < 0 || col === st.chainCol) return;
+  if (!isDone(st.cols[col], st.cap)) return;
+  const setColor = st.cols[col][0];
+  let ci = st.chains.indexOf(setColor);
+  if (ci === -1) ci = st.chains.indexOf(-1);
+  if (ci !== -1) {
+    st.chains = st.chains.slice();
+    st.chains.splice(ci, 1);
+    if (st.chains.length === 0) st.chainCol = -1;
   }
 }
 
@@ -118,6 +124,7 @@ export function cloneState(st: SolverState): SolverState {
 function canMove(st: SolverState, i: number, j: number): boolean {
   if (i === j || j === st.locked || j === st.chainCol || st.taped.has(j)) return false;
   const from = st.cols[i];
+  if (isDone(from, st.cap)) return false; // completed columns are untouchable
   const grp = topGroup(from);
   if (grp === 0) return false;
   const color = from[from.length - 1];
@@ -157,10 +164,18 @@ export function applyMove(st: SolverState, mv: SolverMove): void {
   const n = Math.min(grp, st.cap - st.cols[mv.to].length);
   st.cols[mv.to] = st.cols[mv.to].concat(st.cols[mv.from].splice(st.cols[mv.from].length - n, n));
   settle(st, mv.from);
+  creditCompletion(st, mv.to); // a move that fills a column completes it
 }
 
+/** Won when every column is empty, ink-only, or a completed done column.
+ * A still-closed locked/chained column holding blocks is not resolved. */
 const isSolved = (st: SolverState): boolean =>
-  st.cols.every((c) => c.every((b) => b === SPECIAL.INK));
+  st.cols.every((c, i) => {
+    if (c.length === 0) return true;
+    if (c.every((b) => b === SPECIAL.INK)) return true;
+    if (i === st.locked || i === st.chainCol) return false;
+    return isDone(c, st.cap);
+  });
 
 /* ---------------- searches ---------------- */
 

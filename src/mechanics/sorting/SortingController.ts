@@ -169,18 +169,20 @@ export class SortingController {
 
     if (result.readyToClear !== null) {
       const column = result.readyToClear;
-      this.busy = true;
-      this.view.animateClear(column, () => {
-        const revealed = this.model.commitClear(column);
-        this.busy = false;
-        this.view.rebuild({ revealed, ghostChain });
-        if (ghostChain) {
-          // the completed set snaps the chain: spark flight + the chain breaks
-          this.view.animateChainBreak(column, () => this.view.rebuild());
-        }
-        this.callbacks.onStateChanged();
+      // no-clear rule: the completed set STAYS in place as a "done" column
+      // (space removed from play) instead of clearing to empty.
+      this.view.markColumnDone(column);
+      if (ghostChain) {
+        this.busy = true;
+        this.view.animateChainBreak(column, () => {
+          this.busy = false;
+          this.view.rebuild();
+          this.callbacks.onStateChanged();
+          this.afterChange();
+        });
+      } else {
         this.afterChange();
-      });
+      }
     } else {
       this.afterChange();
     }

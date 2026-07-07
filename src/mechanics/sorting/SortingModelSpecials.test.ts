@@ -18,10 +18,8 @@ describe('SortingModel specials', () => {
     expect(m.topGroup(0)).toBe(0); // ink can never be lifted
     expect(m.canDrop(0, 3)).toBe(false); // ...so it can never move anywhere
     expect(m.canDrop(2, 0)).toBe(true); // but any color may land on ink
-    m.move(2, 1);
-    expect(m.isWon()).toBe(false);
-    m.commitClear(1);
-    expect(m.isWon()).toBe(true); // only ink remains on the board
+    m.move(2, 1); // completes [0,0,0] -> stays as a done column (no-clear rule)
+    expect(m.isWon()).toBe(true); // ink-only + a done set + empties = won
   });
 
   it('a column with ink can host blocks but never clears in place', () => {
@@ -31,9 +29,7 @@ describe('SortingModel specials', () => {
     );
     expect(m.canDrop(1, 0)).toBe(false); // ink column is already at cap
     m.move(0, 2); // take the pair off the ink
-    m.move(1, 2); // third one joins the pair
-    expect(m.isWon()).toBe(false);
-    m.commitClear(2);
+    m.move(1, 2); // third one joins -> col2 completes as a done set
     expect(m.isWon()).toBe(true);
   });
 
@@ -92,13 +88,13 @@ describe('SortingModel specials', () => {
     const chainCol = m.columns.length - 1;
     expect(m.chainedColumn).toBe(chainCol);
     expect(m.canDrop(0, chainCol)).toBe(false); // closed while chained
-    const res = m.move(0, 1); // completes the 0-0 set
+    const res = m.move(0, 1); // completes the 0-0 set (stays as a done column)
     expect(res?.readyToClear).toBe(1);
     expect(res?.chainRemoved).toEqual({ value: -1, index: 0 });
     expect(res?.unchained).toBe(chainCol); // unlock happens at validation
     expect(m.chainedColumn).toBeNull();
-    m.commitClear(1);
-    expect(m.canDrop(2, chainCol)).toBe(true); // and the column is usable
+    // the opened chain column [1,1] is itself a completed set -> board is won
+    expect(m.isWon()).toBe(true);
   });
 
   it('a colored chain falls only to a set of its color', () => {
@@ -226,14 +222,14 @@ describe('SortingModel specials', () => {
 
   it('taped column is take-only until emptied, then the tape breaks', () => {
     const m = new SortingModel(
-      cfg({ columns: [[1], [1, 1], []], tapedColumns: [0] }),
+      cfg({ columns: [[1], [2, 1], []], tapedColumns: [0] }),
     );
     expect(m.canDrop(1, 0)).toBe(false); // cannot put under tape
-    expect(m.canDrop(0, 1)).toBe(true); // can take from under tape
-    const res = m.move(0, 1);
+    expect(m.canDrop(0, 1)).toBe(true); // can take from under tape (1 onto 1)
+    const res = m.move(0, 1); // col0 empties -> [2,1,1] (not completed)
     expect(res?.tapeBroken).toBe(0);
     expect(m.isTaped(0)).toBe(false);
-    expect(m.canDrop(1, 0)).toBe(true); // tape is gone
+    expect(m.canDrop(1, 0)).toBe(true); // tape is gone: the pair may move out
   });
 
   it('capacity is uniform across all columns, including the unlocked one', () => {

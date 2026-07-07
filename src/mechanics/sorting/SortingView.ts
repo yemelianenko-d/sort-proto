@@ -141,6 +141,7 @@ export class SortingView implements SortingViewContract {
 
       container.add(this.buildFrame(ci, selected === ci, targets.has(ci)));
       if (this.model.targetColor(ci) !== null) this.addTargetGhosts(container, ci);
+      if (this.isColumnDone(ci)) this.addDoneBadge(container, ci);
 
       const liftGroup = selected === ci && hideColumn !== ci ? this.model.topGroup(ci) : 0;
       // vault: blocks inside a still-closed locked/chained column are visible
@@ -494,6 +495,36 @@ export class SortingView implements SortingViewContract {
         onComplete: () => g.setAlpha(GAME_SETTINGS.targetColumn.ghostAlpha),
       });
     }
+  }
+
+  /** A completed set that stays in place under the no-clear rule: full,
+   * one non-special color, and an open (not locked/chained) column. */
+  private isColumnDone(ci: number): boolean {
+    const col = this.model.columns[ci];
+    if (!col || col.length !== this.model.capacity(ci)) return false;
+    if (ci === this.model.lockedColumn || ci === this.model.chainedColumn) return false;
+    const first = col[0].color;
+    if (first === SPECIAL.INK || first === SPECIAL.KEY) return false;
+    return col.every((b) => b.color === first && !b.hidden);
+  }
+
+  /** Small check emblem marking a completed column as done. */
+  private addDoneBadge(container: Phaser.GameObjects.Container, ci: number): void {
+    const h = this.layout.colHeights[ci];
+    const badge = this.scene.add
+      .text(0, -h / 2 - 14, '✓', {
+        fontFamily: FONTS.display,
+        fontSize: '20px',
+        color: '#3bb04e',
+      })
+      .setOrigin(0.5, 0.5);
+    container.add(badge);
+  }
+
+  /** Called when a move completes a column; the set stays as a done column,
+   * so just re-render to show its badge. */
+  markColumnDone(_column: number): void {
+    this.rebuild();
   }
 
   /** The taped column just emptied: the tape peels from one end, curls and

@@ -1041,3 +1041,82 @@ export function generateSortingLevelWithMeta(
 export function generateSortingLevel(index: number): SortingLevelConfig {
   return generateSortingLevelWithMeta(index).config;
 }
+
+/* ---------------- experimental: trap-density analysis ---------------- */
+
+export interface TrapStats {
+  safeRatio: number; // fraction of legal moves that keep the puzzle solvable
+  knifeEdge: number; // states with >=3 legal moves but <=1 safe move
+  decisions: number; // states with >=3 legal moves
+}
+
+/** Measures how punishing a layout is along a solution prefix: at each state,
+ * how many legal moves stay solvable. Low safeRatio / high knifeEdge = the
+ * player must plan ahead or deadlock. Prefix-bounded to stay affordable. */
+export function trapStatsOf(start: SolverState, prefix = 16): TrapStats {
+  const path = solvePath(start, 120000);
+  if (!path) return { safeRatio: 1, knifeEdge: 0, decisions: 0 };
+  const st = cloneState(start);
+  let sumLegal = 0;
+  let sumSafe = 0;
+  let decisions = 0;
+  let knifeEdge = 0;
+  const steps = Math.min(prefix, path.length);
+  for (let i = 0; i < steps; i++) {
+    const legal = legalMoves(st);
+    if (legal.length > 0) {
+      let safe = 0;
+      for (const m of legal) {
+        const nx = cloneState(st);
+        applyMove(nx, m);
+        if (solve(nx, 40000) >= 0) safe++;
+      }
+      sumLegal += legal.length;
+      sumSafe += safe;
+      if (legal.length >= 3) {
+        decisions++;
+        if (safe <= 1) knifeEdge++;
+      }
+    }
+    applyMove(st, path[i]);
+  }
+  return { safeRatio: sumLegal ? sumSafe / sumLegal : 1, knifeEdge, decisions };
+}
+
+/** Experiment: build `k` candidate layouts for a level and report the spread
+ * of trap difficulty, to see whether knife-edge boards exist in the candidate
+ * pool at all (selection viable) or whether construction must change. */
+export function sampleTrapSpread(index: number, k = 20): {
+  best: TrapStats;
+  worstRatio: number;
+  medianRatio: number;
+  maxKnife: number;
+  solvable: number;
+} {
+  const level = index + 1;
+  const card = cardFor(level);
+  const ratios: number[] = [];
+  let best: TrapStats = { safeRatio: 1, knifeEdge: 0, decisions: 0 };
+  let maxKnife = 0;
+  let solvable = 0;
+  for (let a = 1; a <= k * 4 && ratios.length < k; a++) {
+    const rng = mulberry32(index * 7919 + a * 104729 + 29);
+    const built = buildLayout(card, rng);
+    if (!built) continue;
+    const state = stateOf(built, card.cap);
+    if (solve(state, 80000) <= 0) continue;
+    solvable++;
+    const t = trapStatsOf(state);
+    ratios.push(t.safeRatio);
+    if (t.safeRatio < best.safeRatio) best = t;
+    maxKnife = Math.max(maxKnife, t.knifeEdge);
+  }
+  ratios.sort((x, y) => x - y);
+  return {
+    best,
+    worstRatio: ratios[ratios.length - 1] ?? 1,
+    medianRatio: ratios[ratios.length >> 1] ?? 1,
+    maxKnife,
+    solvable,
+  };
+}

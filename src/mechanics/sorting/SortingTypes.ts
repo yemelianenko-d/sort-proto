@@ -103,6 +103,8 @@ export interface SortingViewContract {
     ghostChain?: { value: number; index: number };
   }): void;
   animateClear(columnIndex: number, onDone: () => void): void;
+  /** A completed set stays in place (no-clear rule); mark it done. */
+  markColumnDone(column: number): void;
   shakeColumn(columnIndex: number): void;
   /** Brief target-pattern brightening on a wrong-color attempt. */
   flashTargetHint(columnIndex: number): void;

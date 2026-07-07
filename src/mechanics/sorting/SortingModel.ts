@@ -32,8 +32,9 @@ interface Snapshot {
  *    validation time);
  *  - a target column, while empty, accepts only its designated color as the
  *    first block; once occupied it behaves like a normal column;
- *  - a full column of one color clears;
- *  - the level is won when only ink remains on the board.
+ *  - a full column of one color is COMPLETED: it stays in place as a
+ *    "done" column (untouchable, space removed from play), never clearing;
+ *  - the level is won when every column is empty, ink-only, or done.
  */
 export class SortingModel {
   readonly cap: number;
@@ -161,6 +162,7 @@ export class SortingModel {
   canDrop(from: number, to: number): boolean {
     if (from === to || to === this.lockedColumn || to === this.chainedColumn) return false;
     if (from === this.lockedColumn || from === this.chainedColumn) return false;
+    if (this.isUniformFull(from)) return false; // completed columns are untouchable
     if (this.taped.has(to)) return false;
     const src = this.columns[from];
     const dst = this.columns[to];
@@ -184,9 +186,15 @@ export class SortingModel {
     return out;
   }
 
-  /** Won when nothing but ink remains. */
+  /** Won when every column is empty, ink-only, or a completed (done) column.
+   * A still-closed locked/chained column holding blocks is not resolved. */
   isWon(): boolean {
-    return this.columns.every((c) => c.every((b) => b.color === SPECIAL.INK));
+    return this.columns.every((c, i) => {
+      if (c.length === 0) return true;
+      if (c.every((b) => b.color === SPECIAL.INK)) return true;
+      if (i === this.lockedColumn || i === this.chainedColumn) return false;
+      return this.isUniformFull(i);
+    });
   }
 
   /** True when no move exists (key not counted; caller may offer the key). */
