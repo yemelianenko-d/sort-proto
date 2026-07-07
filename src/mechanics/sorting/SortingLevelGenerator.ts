@@ -84,8 +84,6 @@ export interface SlotCard {
   blotsPer: 1 | 2;
   /** Blocks sealed inside the chain column (v3 canonical: >= 2). */
   chainLen: number;
-  /** Locked column carries blocks (key levels on plan/master/peak). */
-  vaultLock: boolean;
   /** Minimum necessity for the focus mechanic (0 disables the gate). */
   minNecessity: number;
   pressure: PressureGate;
@@ -168,7 +166,6 @@ function rawCardFor(level: number): SlotCard {
     blotCols: 0,
     blotsPer: 1,
     chainLen: 0,
-    vaultLock: false,
     minNecessity: 0,
     pressure: 'none',
   };
@@ -290,7 +287,6 @@ function rawCardFor(level: number): SlotCard {
       stage,
       types: pick([5, 6, 6]),
       empties: stage === 'master' || stage === 'peak' ? 1 : 2,
-      vaultLock: stage === 'plan' || stage === 'master' || stage === 'peak',
       minNecessity: necessityFor(stage),
       pressure: pressureFor(stage),
     };
@@ -311,7 +307,6 @@ function rawCardFor(level: number): SlotCard {
       cap: C5_LEVELS.has(level) ? 5 : 4,
       empties: stage === 'peak' || stage === 'master' ? 1 : 2,
       targetCount: withTarget ? 1 : 0,
-      vaultLock: true,
       minNecessity: necessityFor(stage),
       pressure: pressureFor(stage),
     };
@@ -407,7 +402,6 @@ function fillMechanicKnobs(card: SlotCard, rng: () => number): SlotCard {
     c.blotsPer = rng() < 0.5 ? 2 : 1;
   }
   if (has('chainN') || has('chainC')) c.chainLen = c.stage === 'peak' ? 3 : rng() < 0.5 ? 3 : 2;
-  if (has('key') || has('multilock')) c.vaultLock = true;
   return c;
 }
 
@@ -466,7 +460,6 @@ interface BuildOut {
   targets: { col: number; color: number }[];
   chains: number[];
   chainBlocks: ColorId[] | null;
-  lockBlocks: ColorId[] | null;
   locks: number;
   blotColIdx: number[];
 }
@@ -524,15 +517,8 @@ function buildLayout(card: SlotCard, rng: () => number): BuildOut | null {
     if (!chainBlocks) return null;
   }
 
-  // locked vault: blocks behind the key lock (plan/master/peak key levels)
-  let lockBlocks: ColorId[] | null = null;
-  if (locks > 0 && card.vaultLock) {
-    // keep colored-chain colors out of the locked vault too: the chain
-    // condition should be completable without waiting for a second mechanic
-    const forbidden = new Set(chains.filter((c) => c >= 0));
-    lockBlocks = extractVault(pool, Math.min(2 + ((rng() * 2) | 0), cap - 1), forbidden, rng);
-    if (!lockBlocks) return null;
-  }
+  // locked columns are ALWAYS empty reward space (blocks live only inside
+  // chain columns) — an access objective, not a sealed pool
 
   // blot columns: ink at the bottom of otherwise-normal playing columns
   const cols: ColorId[][] = [];
@@ -617,7 +603,7 @@ function buildLayout(card: SlotCard, rng: () => number): BuildOut | null {
   });
   if (startCompleted) return null;
 
-  return { cols, taped, targets, chains, chainBlocks, lockBlocks, locks, blotColIdx };
+  return { cols, taped, targets, chains, chainBlocks, locks, blotColIdx };
 }
 
 /* ---------------- solver state assembly & ablation variants ---------------- */
@@ -657,7 +643,7 @@ function stateOf(b: BuildOut, cap: number, opts: StateOpts = {}): SolverState {
   let locked = -1;
   let locks = 0;
   if (b.locks > 0) {
-    cols.push((b.lockBlocks ?? []).slice());
+    cols.push([]); // empty reward column
     locked = cols.length - 1;
     locks = b.locks;
     if (opts.forever) locks = 1_000_000;
@@ -709,16 +695,13 @@ function mechanicNecessity(m: Focus, b: BuildOut, cap: number, base: number): nu
     case 'multilock':
     case 'chainN':
     case 'chainC': {
-      const vaulted = m.startsWith('chain') ? (b.chainBlocks?.length ?? 0) > 0 : (b.lockBlocks?.length ?? 0) > 0;
-      let nec: number;
-      if (vaulted) {
-        // canonical v3: sealed blocks make the forever variant unsolvable
-        const forever = solve(stateOf(b, cap, { forever: true }), 20000);
-        nec = forever <= 0 ? 4 : necessityFromDelta(base, forever);
-      } else {
-        const forever = solve(stateOf(b, cap, { forever: true }), 30000);
-        nec = necessityFromDelta(base, forever);
-      }
+      // chain columns carry a vault (sealed blocks) -> forever-locked is
+      // unsolvable by construction (necessity 4). Key/lock columns are empty
+      // reward space, so their necessity is proven by ablation: if never
+      // opening the column still lets the level finish easily, the key is
+      // decorative and this layout is rejected (guideline 9.1).
+      const forever = solve(stateOf(b, cap, { forever: true }), 30000);
+      let nec = forever <= 0 ? 4 : necessityFromDelta(base, forever);
       if (m === 'chainC' && nec >= 2) {
         // the color condition must not be decorative (10.7): the neutral
         // variant should change the route at least a little
@@ -900,6 +883,7 @@ export function generateSortingLevelWithMeta(index: number): {
   ];
 
   let attempts = 0;
+  let best: { config: SortingLevelConfig; meta: LevelMeta; score: number } | null = null;
   for (const { card, relaxed } of ladder) {
     for (let a = 0; a < 90; a++) {
       attempts++;
@@ -914,26 +898,24 @@ export function generateSortingLevelWithMeta(index: number): {
 
       const necessity: Partial<Record<Focus, number>> = {};
       let pass = true;
+      let margin = 0; // how far every mechanic clears its gate (>= 0 passes)
       for (const m of [card.focus, card.second]) {
         if (m === 'none') continue;
         let need = m === card.focus ? card.minNecessity : Math.min(card.minNecessity, 2);
         // C5 is intrinsically roomy: a target reaching necessity 3 is rare,
-        // so demanding it forces the emergency fallback. Require "no
-        // decorative instance" (>= 2) there instead (guideline 7.5 / 12.1).
+        // so demanding it forces a weak level. Require "no decorative
+        // instance" (>= 2) there instead (guideline 7.5 / 12.1).
         if (m === 'target' && card.cap === 5) need = Math.min(need, 2);
+        // empty reward columns (keys/locks carry no vault now) realistically
+        // prove necessity 2, not 3; the per-lock demand is the buried-key
+        // placement rules, not an inflated global score.
+        if ((m === 'key' || m === 'multilock') && need > 2) need = 2;
         const n = mechanicNecessity(m, built, card.cap, base);
         necessity[m] = n;
-        if (n < need) {
-          pass = false;
-          break;
-        }
+        margin += n - need;
+        if (n < need) pass = false;
       }
-      if (!pass) continue;
 
-      // pressure profile is measured and recorded for the balance sheet, but
-      // it is ADVISORY, not a hard gate: DFS solver paths are too noisy to
-      // reject on reliably, and the necessity gates (vault chains/locks are
-      // necessity 4; targets pass per-instance ablation) carry the band.
       let pressure: PressureStats = { minUDC: 0, windows: 0, longest: 0 };
       if (card.pressure !== 'none') {
         const path = solvePath(state, budget);
@@ -949,18 +931,26 @@ export function generateSortingLevelWithMeta(index: number): {
         hiddenBelowTop: card.hidden,
         lockedColumn: built.locks > 0,
         lockedColumnLocks: built.locks > 1 ? built.locks : undefined,
-        lockedColumnBlocks: built.lockBlocks ?? undefined,
         chains: built.chains.length > 0 ? built.chains : undefined,
         chainedColumnBlocks: built.chainBlocks ?? undefined,
         targetColumns: built.targets.length > 0 ? built.targets : undefined,
         tapedColumns: built.taped.length > 0 ? built.taped : undefined,
       };
-      return {
-        config,
-        meta: { card, optimal: base, necessity, pressure, attempts, relaxed },
-      };
+      const meta: LevelMeta = { card, optimal: base, necessity, pressure, attempts, relaxed };
+
+      if (pass) return { config, meta };
+
+      // no layout cleared the gate yet — remember the strongest real one so we
+      // never fall back to a trivial board on a hard slot (score favors
+      // mechanics closest to their gate, then longer solutions)
+      const score = margin * 1000 + base;
+      if (!best || score > best.score) best = { config, meta: { ...meta, relaxed: true }, score };
     }
   }
+
+  // best real candidate found (mechanic present, just short of the ideal
+  // necessity) beats a trivial fallback
+  if (best) return { config: best.config, meta: best.meta };
 
   // emergency fallback: trivial but valid
   return {

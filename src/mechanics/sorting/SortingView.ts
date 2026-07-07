@@ -228,6 +228,25 @@ export class SortingView implements SortingViewContract {
       const j = (rnd() * (i + 1)) | 0;
       [slotOf[i], slotOf[j]] = [slotOf[j], slotOf[i]];
     }
+    // convention: the locked (key) column always sits on the right edge, so
+    // the player learns where the access objective lives. Find the rightmost
+    // board slot (max x, bottom row on tie) and force the locked column onto
+    // it, swapping whichever column currently holds it.
+    const locked = this.model.lockedColumn;
+    if (locked !== null && locked >= 0 && locked < n) {
+      let rightSlot = 0;
+      for (let s = 1; s < n; s++) {
+        const p = this.layout.positions[s];
+        const b = this.layout.positions[rightSlot];
+        if (p.x > b.x + 0.5 || (Math.abs(p.x - b.x) <= 0.5 && p.y > b.y)) rightSlot = s;
+      }
+      const cur = slotOf[locked];
+      if (cur !== rightSlot) {
+        const other = slotOf.indexOf(rightSlot);
+        slotOf[locked] = rightSlot;
+        slotOf[other] = cur;
+      }
+    }
     this.layout = {
       ...this.layout,
       positions: slotOf.map((s) => this.layout.positions[s]),
