@@ -32,7 +32,7 @@ export interface BlockStyle {
 
 /** Colour is always doubled by a pattern + glyph (colour-blind friendly). */
 export const BLOCK_STYLES: BlockStyle[] = [
-  { ink: 0xb23317, pattern: 'stripes', glyph: '✕' },
+  { ink: 0xb23317, pattern: 'stripes', glyph: '♥' },
   { ink: 0x1d5da8, pattern: 'dots', glyph: '○' },
   { ink: 0x2b7a3c, pattern: 'cross', glyph: '△' },
   { ink: 0xc26205, pattern: 'hlines', glyph: '☆' },
