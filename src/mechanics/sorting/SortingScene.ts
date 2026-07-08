@@ -282,7 +282,7 @@ export class SortingScene extends Phaser.Scene {
     }
 
     if (id === 'chains') {
-      // зібраний набір -> іскра -> ланцюг на колонці
+      // зібраний набір кольору -> іскра -> печатка того ж кольору спадає
       if (hasTexture(this, 'block_0')) {
         for (let k = 0; k < 3; k++) {
           node.add(this.add.image(-56, 26 - k * 21, 'block_0').setDisplaySize(19, 19));
@@ -291,19 +291,22 @@ export class SortingScene extends Phaser.Scene {
       arrow(-38, 30, 0, 24);
       node.add(g);
       if (hasTexture(this, 'col_frame')) {
-        node.add(this.add.image(58, 6, 'col_frame').setDisplaySize(32, 78));
+        node.add(this.add.image(58, 8, 'col_frame').setDisplaySize(34, 82));
       }
-      if (hasTexture(this, 'deco_chain')) {
-        const frame = this.textures.getFrame('deco_chain');
-        node.add(
-          this.add
-            .image(58, -18, 'deco_chain')
-            .setScale(44 / frame.width)
-            .setAngle(-3)
-            .setTint(COLORS.pencil),
-        );
+      // seal emblem: gray ribbon + medallion carrying the target-colour block
+      if (hasTexture(this, 'deco_seal')) {
+        const frame = this.textures.getFrame('deco_seal');
+        const sc = 44 / frame.width; // medallion sits at the texture centre (128,128)
+        node.add(this.add.image(58, -14, 'deco_seal').setScale(sc));
+        const socket = this.add.graphics();
+        socket.fillStyle(0xf1ede3, 0.95);
+        socket.fillCircle(58, -14, 56 * sc); // measured cream-centre radius
+        node.add(socket);
+        if (hasTexture(this, 'block_0')) {
+          node.add(this.add.image(58, -14, 'block_0').setDisplaySize(16, 16));
+        }
       }
-      return { node, height: 96 };
+      return { node, height: 100 };
     }
 
     if (id === 'multilock') {
