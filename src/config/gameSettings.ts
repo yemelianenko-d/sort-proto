@@ -68,5 +68,7 @@ export const GAME_SETTINGS = {
     shakeDurationMs: 45,
     sparkDurationMs: 550,
     sparkCount: 8,
+    /** Done-column ribbon unfurl (nine-slice height grows top->bottom). */
+    ribbonUnrollMs: 420,
   },
 } as const;

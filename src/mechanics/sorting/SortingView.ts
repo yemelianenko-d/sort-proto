@@ -603,16 +603,34 @@ export class SortingView implements SortingViewContract {
    * settles with a little overshoot). */
   markColumnDone(column: number): void {
     this.rebuild();
-    const tape = this.doneTapes.get(column);
-    if (!tape) return;
-    const finalAngle = tape.angle;
-    const finalY = tape.y;
-    tape.setScale(1.2);
-    tape.setAngle(finalAngle - 9);
-    tape.setAlpha(0.45);
-    tape.y = finalY - 7;
+    const marker = this.doneTapes.get(column);
+    if (!marker) return;
+
+    // Ribbon: unroll it downward — grow the nine-slice height from the top so it
+    // unfurls to full length (constant thickness, ends exactly on the resting
+    // ribbon, no snap). The top + check/tail caps stay put; the middle grows.
+    if (hasTexture(this.scene, ASSET_KEYS.doneRibbon)) {
+      const ribbon = marker.getAt(0) as Phaser.GameObjects.NineSlice;
+      const fullH = ribbon.height;
+      ribbon.height = Math.min(fullH, 118); // start: just the top + check & tail
+      this.scene.tweens.add({
+        targets: ribbon,
+        height: fullH,
+        duration: GAME_SETTINGS.animation.ribbonUnrollMs,
+        ease: 'Cubic.easeOut',
+      });
+      return;
+    }
+
+    // Washi-tape fallback: the original "slaps on" animation.
+    const finalAngle = marker.angle;
+    const finalY = marker.y;
+    marker.setScale(1.2);
+    marker.setAngle(finalAngle - 9);
+    marker.setAlpha(0.45);
+    marker.y = finalY - 7;
     this.scene.tweens.add({
-      targets: tape,
+      targets: marker,
       scaleX: 1,
       scaleY: 1,
       angle: finalAngle,
