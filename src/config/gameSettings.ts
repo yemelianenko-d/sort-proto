@@ -16,6 +16,9 @@ export const GAME_SETTINGS = {
     dragThresholdPx: 8,
   },
   hint: {
+    /** Idle nudge for beginners: pulse a valid move source. Disabled — the
+     * idle column pulse read as an unwanted "vibration". */
+    enabled: false,
     /** Idle nudge for beginners: pulse a valid move source. */
     idleDelayMs: 4500,
     /** Nudge only on the first levels (0-based inclusive index). */

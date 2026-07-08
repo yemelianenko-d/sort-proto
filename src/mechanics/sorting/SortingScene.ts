@@ -389,6 +389,7 @@ export class SortingScene extends Phaser.Scene {
   /** Beginner idle hint: after a pause on the first levels, pulse a source. */
   private scheduleNudge(): void {
     this.cancelNudge();
+    if (!GAME_SETTINGS.hint.enabled) return;
     if (this.levelIndex > GAME_SETTINGS.hint.maxLevelIndex) return;
     if (this.model.moves > 0 || this.popupOpen) return;
     this.nudgeTimer = this.time.delayedCall(GAME_SETTINGS.hint.idleDelayMs, () => {
