@@ -1064,16 +1064,25 @@ export class SortingView implements SortingViewContract {
     const pos = this.layout.positions[ci];
     const hasEmblem = hasTexture(this.scene, ASSET_KEYS.seal);
     const frame = hasEmblem ? this.scene.textures.getFrame(ASSET_KEYS.seal) : null;
-    // emblem sized a touch wider than the column so the ribbon ends overhang
-    const scale = frame ? (this.layout.colWidth * 1.06) / frame.width : 1;
-    const bandH = frame ? frame.height * scale : 26;
-    const step = bandH * 0.82; // seals stack down the closed column
-    const y0 = 30;
+    // emblem sized a touch wider than the column; 2px narrower horizontally
+    // keep the ribbon nearly full-width (looks good); just short of the frame
+    // so the fishtail ends don't merge with it. Uniform scale keeps it round.
+    const wDisp = this.layout.colWidth * 0.96 + 2;
+    const scale = frame ? wDisp / frame.width : 1;
+    // texture is 256² (POT, so mipmaps kill the shimmer); the drawn emblem
+    // inside it is 163 tall with the medallion (cream r=56) centred at 128,128.
+    const artH = 163;
+    const bandH = frame ? artH * scale : 26;
+    const step = bandH * 0.95; // seals stack down the closed column, clear gap
+    const y0 = 42;
+    const medR = 56; // measured cream-centre radius in the emblem texture (px)
+    const sockR = frame ? medR * scale : bandH * 0.4;
+    const bd = frame ? sockR * 1.35 : bandH * 0.5; // block fits inside the cream
     chains.forEach((chain, k) => {
       const y = y0 + k * step;
-      const tilt = k % 2 === 0 ? -3 : 3;
-      const band = this.scene.add.container(cx, y).setAngle(tilt);
+      const band = this.scene.add.container(cx, y); // straight, no tilt
       if (frame) {
+        // render the emblem as-authored: light gray ribbon, black ink outline
         band.add(this.scene.add.image(0, 0, ASSET_KEYS.seal).setScale(scale));
       } else {
         // fallback: a gray ribbon bar
@@ -1082,9 +1091,16 @@ export class SortingView implements SortingViewContract {
         g.fillRoundedRect(-this.layout.colWidth / 2 - 4, -5, this.layout.colWidth + 8, 10, 5);
         band.add(g);
       }
-      // the block whose completed set removes this seal, in the medallion
+      // light (not white) socket matching the medallion cream, behind the block
+      const socket = this.scene.add.graphics();
+      socket.fillStyle(0xf1ede3, 0.95);
+      socket.fillCircle(0, 0, sockR);
+      band.add(socket);
+      // the block whose completed set removes this seal, centred in the medallion
       const emblem = this.buildBlock(chain.value >= 0 ? chain.value : 0);
-      emblem.setScale((bandH * 0.5) / this.layout.cell);
+      emblem.setScale(bd / this.layout.cell);
+      // deepen just the block's colour a touch so it reads richer on the cream
+      emblem.postFX.addColorMatrix().saturate(0.35);
       band.add(emblem);
       container.add(band);
       this.chainSprites.push(band);
