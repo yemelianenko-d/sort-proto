@@ -534,6 +534,24 @@ export class SortingView implements SortingViewContract {
   private addDoneTape(container: Phaser.GameObjects.Container, _ci: number): Phaser.GameObjects.Container {
     const w = this.layout.colWidth;
     const cell = this.layout.cell;
+
+    // Bookmark ribbon: a vertical ribbon draped down the centre of the finished
+    // column, its notched tail hanging just below the bottom edge. Overlaid on
+    // top (semi-transparent hatch lets the blocks read through). Falls back to
+    // the washi tape below when the asset is absent.
+    if (hasTexture(this.scene, ASSET_KEYS.doneRibbon)) {
+      const colH = this.layout.colHeights[_ci];
+      const marker = this.scene.add.container(w * 0.5, 0);
+      const img = this.scene.add.image(0, 0, ASSET_KEYS.doneRibbon).setOrigin(0.5, 0);
+      const frame = this.scene.textures.getFrame(ASSET_KEYS.doneRibbon);
+      img.setScale((colH * 1.05) / frame.height); // just past the bottom so the tail peeks under
+      marker.add(img);
+      marker.setDepth(80);
+      container.add(marker);
+      this.doneTapes.set(_ci, marker);
+      return marker;
+    }
+
     const tape = this.scene.add.container(w * 0.5, 3); // straddles the top edge
     tape.setAngle(-5);
 

@@ -142,6 +142,10 @@
       "url": "assets/images/deco_tape.png"
     },
     {
+      "key": "deco_ribbon",
+      "url": "assets/images/deco_ribbon.png"
+    },
+    {
       "key": "ui_panel_note",
       "url": "assets/images/ui_panel_note.png"
     },
