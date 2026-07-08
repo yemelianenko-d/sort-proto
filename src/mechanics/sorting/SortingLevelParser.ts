@@ -107,26 +107,27 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
     throw new Error(`${at} (${id}): key blocks require "lockedColumn": true.`);
   }
 
-  // trapped blocks inside the locked / chained columns
-  const vault = (field: 'lockedColumnBlocks' | 'chainedColumnBlocks'): number[] | undefined => {
-    const raw = lvl[field];
-    if (raw === undefined) return undefined;
+  // trapped blocks inside a locked / sealed column (the "vault"). Counts
+  // toward the colour arithmetic and may not already form a completed set.
+  const checkVaultBlocks = (raw: unknown, label: string): number[] => {
     if (!Array.isArray(raw) || raw.length < 1 || raw.length > capN) {
-      throw new Error(`${at} (${id}): "${field}" must hold 1..cap blocks.`);
+      throw new Error(`${at} (${id}): ${label} must hold 1..cap blocks.`);
     }
     raw.forEach((c) => {
       if (!Number.isInteger(c) || (c as number) < 0 || (c as number) >= BLOCK_STYLES.length) {
-        throw new Error(`${at} (${id}): "${field}": ${String(c)} must be a color id.`);
+        throw new Error(`${at} (${id}): ${label}: ${String(c)} must be a color id.`);
       }
       colorCounts.set(c as number, (colorCounts.get(c as number) ?? 0) + 1);
     });
     if (raw.length === capN && raw.every((c) => c === raw[0])) {
-      throw new Error(`${at} (${id}): "${field}" must not start as a completed set.`);
+      throw new Error(`${at} (${id}): ${label} must not start as a completed set.`);
     }
     return raw as number[];
   };
-  const lockedColumnBlocks = vault('lockedColumnBlocks');
-  const chainedColumnBlocks = vault('chainedColumnBlocks');
+  const lockedColumnBlocks =
+    lvl.lockedColumnBlocks !== undefined
+      ? checkVaultBlocks(lvl.lockedColumnBlocks, '"lockedColumnBlocks"')
+      : undefined;
   if (lockedColumnBlocks && lvl.lockedColumn !== true) {
     throw new Error(`${at} (${id}): "lockedColumnBlocks" requires "lockedColumn": true.`);
   }
@@ -134,9 +135,6 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
     throw new Error(
       `${at} (${id}): "lockedColumnBlocks" requires key blocks in the pile (booster-only locks stay empty).`,
     );
-  }
-  if (chainedColumnBlocks && lvl.chains === undefined) {
-    throw new Error(`${at} (${id}): "chainedColumnBlocks" requires "chains".`);
   }
 
   // multi-key lock
@@ -155,24 +153,42 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
     throw new Error(`${at} (${id}): more key blocks (${keys}) than locks to open.`);
   }
 
-  // sealed column: each seal is colour-bound (>=0). Neutral seals were removed.
-  let chains: number[] | undefined;
-  if (lvl.chains !== undefined) {
-    if (!Array.isArray(lvl.chains) || lvl.chains.length < 1 || lvl.chains.length > 3) {
-      throw new Error(`${at} (${id}): "chains" must be an array of 1..3 entries.`);
+  // sealed columns (up to 2): Phase-2 array form, or the legacy single-column
+  // fields. Each seal is colour-bound (>=0); neutral seals were removed.
+  const parseSealed = (e: unknown, label: string): { chains: number[]; blocks: number[] } => {
+    const o = (e ?? {}) as { chains?: unknown; blocks?: unknown };
+    if (!Array.isArray(o.chains) || o.chains.length < 1 || o.chains.length > 3) {
+      throw new Error(`${at} (${id}): ${label}.chains must be an array of 1..3 entries.`);
     }
-    lvl.chains.forEach((c) => {
+    o.chains.forEach((c) => {
       const v = c as number;
       if (!Number.isInteger(v) || v < 0 || v >= BLOCK_STYLES.length) {
-        throw new Error(`${at} (${id}): seal value ${String(c)} must be a color id (0..${BLOCK_STYLES.length - 1}).`);
+        throw new Error(
+          `${at} (${id}): ${label} seal ${String(c)} must be a color id (0..${BLOCK_STYLES.length - 1}).`,
+        );
       }
+    });
+    return { chains: o.chains as number[], blocks: checkVaultBlocks(o.blocks, `${label}.blocks`) };
+  };
+  let sealedColumns: { chains: number[]; blocks: number[] }[] | undefined;
+  if (lvl.sealedColumns !== undefined) {
+    if (!Array.isArray(lvl.sealedColumns) || lvl.sealedColumns.length < 1 || lvl.sealedColumns.length > 2) {
+      throw new Error(`${at} (${id}): "sealedColumns" must be an array of 1..2 entries.`);
+    }
+    sealedColumns = lvl.sealedColumns.map((e, k) => parseSealed(e, `sealedColumns[${k}]`));
+  } else if (lvl.chains !== undefined || lvl.chainedColumnBlocks !== undefined) {
+    sealedColumns = [parseSealed({ chains: lvl.chains, blocks: lvl.chainedColumnBlocks }, 'sealed column')];
+  }
+  // seal colours must have a matching block SOMEWHERE (else they can never
+  // fall); checked after all vault blocks are counted.
+  for (const s of sealedColumns ?? []) {
+    for (const v of s.chains) {
       if (!colorCounts.has(v)) {
         throw new Error(
           `${at} (${id}): seal colour ${v} has no matching block on the level (it could never fall).`,
         );
       }
-    });
-    chains = lvl.chains as number[];
+    }
   }
 
   // target columns: empty at start, valid color, unique, not taped
@@ -244,8 +260,7 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
     hiddenBelowTop: lvl.hiddenBelowTop === true,
     lockedColumnLocks,
     lockedColumnBlocks,
-    chains,
-    chainedColumnBlocks,
+    sealedColumns,
     targetColumns,
     lockedColumn: lvl.lockedColumn === true,
     tapedColumns: taped,

@@ -17,8 +17,8 @@ function state(cols: number[][], over: Partial<SolverState> = {}): SolverState {
     cap: over.cap ?? 4,
     locked: over.locked ?? -1,
     locks: over.locks ?? 0,
-    chainCol: over.chainCol ?? -1,
-    chains: over.chains ?? [],
+    chainCols: over.chainCols ?? [],
+    chainSeals: over.chainSeals ?? [],
     taped: over.taped ?? new Set<number>(),
     targets: over.targets ?? new Map<number, number>(),
   };
@@ -26,7 +26,7 @@ function state(cols: number[][], over: Partial<SolverState> = {}): SolverState {
 
 describe('legalMoves (single source of truth)', () => {
   it('never sources from or targets a locked or chained column', () => {
-    const st = state([[0], [1], [], []], { locked: 2, chainCol: 3 });
+    const st = state([[0], [1], [], []], { locked: 2, chainCols: [3], chainSeals: [[0]] });
     for (const mv of legalMoves(st)) {
       expect(mv.from).not.toBe(2);
       expect(mv.from).not.toBe(3);
@@ -92,16 +92,16 @@ describe('applyMove settlement', () => {
     expect(s2.cols[0]).toEqual([0, 0, 0, 0]);
   });
 
-  it('removes a matching colored chain when its set completes', () => {
-    const st = state([[2, 2, 2], [2], [3, 3, 3, 3].slice(0, 0)], {
+  it('removes a matching colored seal when its set completes', () => {
+    const st = state([[2, 2, 2], [2], []], {
       cap: 4,
-      chainCol: 2,
-      chains: [2],
+      chainCols: [2],
+      chainSeals: [[2]],
     });
     const s2 = cloneState(st);
     applyMove(s2, { from: 1, to: 0 }); // completes the color-2 set
-    expect(s2.chains).not.toContain(2);
-    expect(s2.chainCol).toBe(-1);
+    expect(s2.chainSeals.flat()).not.toContain(2);
+    expect(s2.chainCols).toEqual([]); // the sealed column opened
   });
 });
 
@@ -135,8 +135,8 @@ describe('searches agree and produce valid solutions', () => {
     // which never opens (a sentinel chain no set can satisfy)
     const st = state([[1, 1, 1], [0, 0, 0, 0].slice(0, 3), []], {
       cap: 4,
-      chainCol: 2,
-      chains: [-2], // no completed set removes it -> locked forever
+      chainCols: [2],
+      chainSeals: [[-2]], // no completed set removes it -> locked forever
     });
     st.cols[2] = [1]; // the 4th "1" is trapped
     expect(solve(st, 20000)).toBeLessThanOrEqual(0);

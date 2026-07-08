@@ -21,8 +21,10 @@ export interface SolverState {
   cap: number;
   locked: number; // -1 = none
   locks: number; // keys still needed for `locked`
-  chainCol: number; // -1 = none
-  chains: number[]; // remaining seals: >=0 colour; -1 = neutral (generation ablation only)
+  chainCols: number[]; // sealed column indices (empty = none)
+  // parallel to chainCols: remaining seals per sealed column
+  // (>=0 colour; -1 = neutral, a generation-only ablation)
+  chainSeals: number[][];
   taped: Set<number>;
   targets: Map<number, number>; // empty column -> required first color
 }
@@ -84,26 +86,46 @@ function isDone(col: ColorId[], cap: number): boolean {
 /** Credits a just-completed column against the chain condition (called by
  * applyMove after a move fills a column). The done column stays in place. */
 function creditCompletion(st: SolverState, col: number): void {
-  if (st.chainCol < 0 || col === st.chainCol) return;
+  if (st.chainCols.length === 0 || st.chainCols.includes(col)) return;
   if (!isDone(st.cols[col], st.cap)) return;
   const setColor = st.cols[col][0];
-  let ci = st.chains.indexOf(setColor); // colour-bound seal: same colour
-  // -1 seals fall to ANY set — a GENERATION-ONLY ablation used to score colour
-  // necessity (neutralChains). The game itself has no neutral seals.
-  if (ci === -1) ci = st.chains.indexOf(-1);
-  if (ci !== -1) {
-    st.chains = st.chains.slice();
-    st.chains.splice(ci, 1);
-    if (st.chains.length === 0) st.chainCol = -1;
+  // pick the lowest-index sealed column carrying a matching seal. -1 seals fall
+  // to ANY set — a GENERATION-ONLY ablation used to score colour necessity
+  // (neutralChains). The game itself has no neutral seals.
+  let bestE = -1;
+  let bestIdx = -1;
+  for (let e = 0; e < st.chainCols.length; e++) {
+    let idx = st.chainSeals[e].indexOf(setColor);
+    if (idx === -1) idx = st.chainSeals[e].indexOf(-1);
+    if (idx !== -1 && (bestE === -1 || st.chainCols[e] < st.chainCols[bestE])) {
+      bestE = e;
+      bestIdx = idx;
+    }
+  }
+  if (bestE === -1) return;
+  st.chainSeals = st.chainSeals.map((s) => s.slice());
+  st.chainSeals[bestE].splice(bestIdx, 1);
+  if (st.chainSeals[bestE].length === 0) {
+    st.chainCols = st.chainCols.slice();
+    st.chainSeals = st.chainSeals.slice();
+    st.chainCols.splice(bestE, 1);
+    st.chainSeals.splice(bestE, 1);
   }
 }
 
 function stateKey(st: SolverState): string {
+  const sealKey = st.chainCols
+    .map((c, e) => `${c}:${st.chainSeals[e].join('.')}`)
+    .sort()
+    .join(';');
   return (
     st.cols
-      .map((c, i) => `${st.taped.has(i) ? 't' : ''}${i === st.locked ? 'L' : ''}${i === st.chainCol ? 'S' : ''}:${c.join(',')}`)
+      .map(
+        (c, i) =>
+          `${st.taped.has(i) ? 't' : ''}${i === st.locked ? 'L' : ''}${st.chainCols.includes(i) ? 'S' : ''}:${c.join(',')}`,
+      )
       .sort()
-      .join('|') + `#${st.locks}/${st.chains.join(',')}`
+      .join('|') + `#${st.locks}/${sealKey}`
   );
 }
 
@@ -115,8 +137,8 @@ export function cloneState(st: SolverState): SolverState {
     cap: st.cap,
     locked: st.locked,
     locks: st.locks,
-    chainCol: st.chainCol,
-    chains: st.chains.slice(),
+    chainCols: st.chainCols.slice(),
+    chainSeals: st.chainSeals.map((s) => s.slice()),
     taped: new Set(st.taped),
     targets: st.targets,
   };
@@ -124,7 +146,7 @@ export function cloneState(st: SolverState): SolverState {
 
 /** Whether the top group of `i` may legally move onto column `j`. */
 function canMove(st: SolverState, i: number, j: number): boolean {
-  if (i === j || j === st.locked || j === st.chainCol || st.taped.has(j)) return false;
+  if (i === j || j === st.locked || st.chainCols.includes(j) || st.taped.has(j)) return false;
   const from = st.cols[i];
   if (isDone(from, st.cap)) return false; // completed columns are untouchable
   const grp = topGroup(from);
@@ -149,7 +171,7 @@ export function legalMoves(st: SolverState): SolverMove[] {
   const out: SolverMove[] = [];
   for (const wantEmpty of [false, true]) {
     for (let i = 0; i < st.cols.length; i++) {
-      if (i === st.locked || i === st.chainCol) continue; // closed: untouchable
+      if (i === st.locked || st.chainCols.includes(i)) continue; // closed: untouchable
       if (topGroup(st.cols[i]) === 0) continue;
       for (let j = 0; j < st.cols.length; j++) {
         if ((st.cols[j].length === 0) !== wantEmpty) continue;
@@ -175,7 +197,7 @@ const isSolved = (st: SolverState): boolean =>
   st.cols.every((c, i) => {
     if (c.length === 0) return true;
     if (c.every((b) => b === SPECIAL.INK)) return true;
-    if (i === st.locked || i === st.chainCol) return false;
+    if (i === st.locked || st.chainCols.includes(i)) return false;
     return isDone(c, st.cap);
   });
 

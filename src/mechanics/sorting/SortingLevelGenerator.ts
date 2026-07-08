@@ -81,8 +81,10 @@ export interface SlotCard {
   /** Columns carrying bottom ink blots and blots per such column. */
   blotCols: number;
   blotsPer: 1 | 2;
-  /** Blocks sealed inside the chain column (v3 canonical: >= 2). */
+  /** Blocks sealed inside each sealed column (v3 canonical: >= 2). */
   chainLen: number;
+  /** Number of separate sealed columns (0 none, 1, or 2 in hard stages). */
+  sealColumns: number;
   /** Minimum necessity for the focus mechanic (0 disables the gate). */
   minNecessity: number;
 }
@@ -224,6 +226,7 @@ function rawCardFor(level: number): SlotCard {
     blotCols: 0,
     blotsPer: 1,
     chainLen: 0,
+    sealColumns: 0,
     minNecessity: relief ? 0 : necessityFor(stage),
   };
   return fillMechanicKnobs(card, rng);
@@ -239,7 +242,12 @@ function fillMechanicKnobs(card: SlotCard, rng: () => number): SlotCard {
     c.blotCols = c.stage === 'peak' || c.stage === 'master' ? 2 : 1;
     c.blotsPer = rng() < 0.5 ? 2 : 1;
   }
-  if (has('chainC')) c.chainLen = c.stage === 'peak' ? 3 : rng() < 0.5 ? 3 : 2;
+  if (has('chainC')) {
+    c.chainLen = c.stage === 'peak' ? 3 : rng() < 0.5 ? 3 : 2;
+    // Phase 2: a second sealed column on the hardest boards (width permitting;
+    // normalizeCard trims it back if the board would overflow)
+    c.sealColumns = (c.stage === 'master' || c.stage === 'peak') && rng() < 0.5 ? 2 : 1;
+  }
   return c;
 }
 
@@ -259,24 +267,27 @@ function normalizeCard(card: SlotCard): SlotCard {
     if (c.focus === 'chainC' && c.chainLen === 0) c.chainLen = 2;
     if (c.empties < 2) c.empties = 2;
   }
+  // keep sealColumns consistent with the chainC family
+  if (c.focus === 'chainC' || c.second === 'chainC') c.sealColumns = Math.max(1, c.sealColumns);
+  else c.sealColumns = 0;
   // C5 + 8 types + combos is a forbidden stack (guideline 12.3)
   if (c.cap === 5 && c.types >= 8) c.types = 7;
   if (c.cap === 5 && c.second !== 'none' && c.empties < 2) c.empties = 2;
   const width = (): number => {
     const locks = c.focus === 'multilock' || c.second === 'multilock' ? 2
       : c.focus === 'key' || c.second === 'key' ? 1 : 0;
-    const hasChain = c.chainLen > 0 || c.focus === 'chainC' || c.second === 'chainC';
-    // key slack + locked column; chain column; blots displace pool blocks
-    // into roughly one extra filled column; vault blocks free some room back
+    // key slack + locked column; one column per sealed column; blots displace
+    // pool blocks into ~one extra filled column; vault blocks free some room
     return (
       c.types +
       (locks > 0 ? 2 : 0) +
-      (hasChain ? 1 : 0) +
+      c.sealColumns +
       (c.blotCols > 0 ? 1 : 0) +
       c.empties +
       c.targetCount
     );
   };
+  while (width() > 11 && c.sealColumns > 1) c.sealColumns -= 1;
   while (width() > 11 && c.types > 4) c.types -= 1;
   while (width() > 11 && c.targetCount > 1) c.targetCount = (c.targetCount - 1) as 1 | 2 | 3;
   if (width() > 11 && c.blotCols > 0) c.blotCols = 0;
@@ -292,8 +303,8 @@ interface BuildOut {
   cols: ColorId[][];
   taped: number[];
   targets: { col: number; color: number }[];
-  chains: number[];
-  chainBlocks: ColorId[] | null;
+  /** Up to 2 sealed columns, each with its seal colours + vault blocks. */
+  sealed: { chains: number[]; blocks: ColorId[] }[];
   locks: number;
   blotColIdx: number[];
 }
@@ -335,25 +346,31 @@ function buildLayout(card: SlotCard, rng: () => number): BuildOut | null {
   for (let k = 0; k < locks; k++) pool.push(SPECIAL.KEY);
   shuffle(pool, rng);
 
-  // coloured seals + the seal vault (the sealed column holds blocks). Every
-  // seal is colour-bound: a set of that colour removes it.
-  const chains: number[] = [];
+  // sealed columns (up to 2). Each holds a vault of blocks and carries one or
+  // two colour-bound seals: a completed set of that colour removes it. Seal
+  // colours are distinct across columns; the deadlock gate keeps a seal's
+  // colour out of its own sealed column.
+  const sealed: { chains: number[]; blocks: ColorId[] }[] = [];
   if (wantsMech(card, 'chainC')) {
-    chains.push((rng() * colors) | 0);
-    // tighter slots may carry a SECOND, different-coloured seal on one column
-    if ((card.stage === 'master' || card.stage === 'peak') && rng() < 0.4) {
-      let c2 = (rng() * colors) | 0;
-      if (c2 === chains[0]) c2 = (c2 + 1) % colors;
-      chains.push(c2);
-    }
-  }
-  let chainBlocks: ColorId[] | null = null;
-  if (chains.length > 0) {
+    const nCols = Math.max(1, card.sealColumns || 1);
+    const usedColors = new Set<number>();
     const len = Math.min(Math.max(2, card.chainLen || 2), cap - 1);
-    // deadlock gate: a seal's colour never sits inside its own sealed column
-    const forbidden = new Set(chains);
-    chainBlocks = extractVault(pool, len, forbidden, rng);
-    if (!chainBlocks) return null;
+    for (let s = 0; s < nCols; s++) {
+      const seals: number[] = [];
+      let c0 = (rng() * colors) | 0;
+      for (let t = 0; t < colors && usedColors.has(c0); t++) c0 = (c0 + 1) % colors;
+      seals.push(c0);
+      usedColors.add(c0);
+      // a single sealed column may carry a SECOND seal on the hardest boards
+      if (nCols === 1 && (card.stage === 'master' || card.stage === 'peak') && rng() < 0.4) {
+        let c2 = (rng() * colors) | 0;
+        if (c2 === seals[0]) c2 = (c2 + 1) % colors;
+        seals.push(c2);
+      }
+      const blocks = extractVault(pool, len, new Set(seals), rng);
+      if (!blocks) return null;
+      sealed.push({ chains: seals, blocks });
+    }
   }
 
   // locked columns are ALWAYS empty reward space (blocks live only inside
@@ -449,7 +466,7 @@ function buildLayout(card: SlotCard, rng: () => number): BuildOut | null {
   });
   if (startCompleted) return null;
 
-  return { cols, taped, targets, chains, chainBlocks, locks, blotColIdx };
+  return { cols, taped, targets, sealed, locks, blotColIdx };
 }
 
 /* ---------------- solver state assembly & ablation variants ---------------- */
@@ -498,25 +515,23 @@ function stateOf(b: BuildOut, cap: number, opts: StateOpts = {}): SolverState {
       locks = 0;
     }
   }
-  let chainCol = -1;
-  let chains: number[] = [];
-  if (b.chains.length > 0) {
-    cols.push((b.chainBlocks ?? []).slice());
-    chainCol = cols.length - 1;
-    chains = opts.neutralChains ? b.chains.map(() => -1) : b.chains.slice();
-    if (opts.forever) chains = [-2]; // sentinel no set ever removes
-    if (opts.openFromStart) {
-      chainCol = -1;
-      chains = [];
-    }
+  const chainCols: number[] = [];
+  const chainSeals: number[][] = [];
+  for (const s of b.sealed) {
+    cols.push(s.blocks.slice()); // the vault column is pushed either way
+    if (opts.openFromStart) continue; // present but open (a normal column)
+    chainCols.push(cols.length - 1);
+    let seals = opts.neutralChains ? s.chains.map(() => -1) : s.chains.slice();
+    if (opts.forever) seals = [-2]; // sentinel: no set ever removes it
+    chainSeals.push(seals);
   }
   return {
     cols,
     cap,
     locked,
     locks,
-    chainCol,
-    chains,
+    chainCols,
+    chainSeals,
     taped: new Set(opts.tapeOff ? [] : b.taped),
     targets,
   };
@@ -605,7 +620,7 @@ function mechanicNecessity(m: Focus, b: BuildOut, cap: number, base: number): nu
 function freeUniversal(st: SolverState): number {
   let f = 0;
   for (let j = 0; j < st.cols.length; j++) {
-    if (j === st.locked || j === st.chainCol || st.taped.has(j)) continue;
+    if (j === st.locked || st.chainCols.includes(j) || st.taped.has(j)) continue;
     if (st.cols[j].length === 0 && !st.targets.has(j)) f++;
   }
   return f;
@@ -806,8 +821,7 @@ export function generateSortingLevelWithMeta(
         hiddenBelowTop: card.hidden,
         lockedColumn: built.locks > 0,
         lockedColumnLocks: built.locks > 1 ? built.locks : undefined,
-        chains: built.chains.length > 0 ? built.chains : undefined,
-        chainedColumnBlocks: built.chainBlocks ?? undefined,
+        sealedColumns: built.sealed.length > 0 ? built.sealed : undefined,
         targetColumns: built.targets.length > 0 ? built.targets : undefined,
         tapedColumns: built.taped.length > 0 ? built.taped : undefined,
       };

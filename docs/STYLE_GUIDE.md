@@ -129,20 +129,46 @@
 Тип блока читається трьома незалежними каналами одночасно: **колір +
 патерн-штриховка + символ**. Рівень має розв'язуватись навіть у чорно-білому.
 
-| # | Колір (tint) | Контур/чорнило | Патерн | Символ |
-|---|---|---|---|---|
-| 0 | ![b0](../public/assets/images/block_0.png) `#f07f7b` | `#b23317` | stripes (діагональ) | ♥ |
-| 1 | ![b1](../public/assets/images/block_1.png) `#5685f9` | `#1d5da8` | dots | ○ |
-| 2 | ![b2](../public/assets/images/block_2.png) `#3bb04e` | `#2b7a3c` | cross (сітка) | △ |
-| 3 | ![b3](../public/assets/images/block_3.png) `#f8b575` | `#c26205` | hlines | ☆ |
-| 4 | ![b4](../public/assets/images/block_4.png) `#9b62cb` | `#6836b0` | vlines | ♡ |
-| 5 | ![b5](../public/assets/images/block_5.png) `#ee6396` | `#a51f5e` | stripes | ◇ |
-| 6 | ![b6](../public/assets/images/block_6.png) `#3cb6ba` | `#0e8578` | dots | ✱ |
-| 7 | ![b7](../public/assets/images/block_7.png) `#4a4a4a` | `#4a4a4a` | solid | ◻ |
+**Канонічна специфікація (ціль).** Кожен із 8 типів = **центральний символ
++ власний патерн + власний відтінок**. Символ роблять **усім** блокам (не
+половині) — це прибирає нерівну ієрархію «іконкові vs безликі патернові».
+Форми обираються максимально різними за силуетом, щоб розрізнялись у ч/б.
 
-Штриховки малюються `fillPattern()` кольоровим олівцем з alpha ~0.55 —
-не заливка, а *штрихування*. Символ рендериться шрифтом Caveat поверх, з
-білою обводкою 4px (щоб читався на штриховці).
+| # | Родина відтінку | Символ | Патерн-штриховка |
+|---|---|---|---|
+| 0 | червоний | ♥ серце | діагональ ╱ |
+| 1 | синій | △ трикутник | крапки |
+| 2 | зелений | ◆ ромб | сітка (cross) |
+| 3 | помаранчевий | ○ коло | горизонталі |
+| 4 | фіолетовий | ✱ квіточка | вертикалі |
+| 5 | коричневий (темніший — щоб не зливався з помаранчевим `3`) | ⬡ шестикутник | зворотна діагональ ╲ |
+| 6 | бірюзовий | ☆ зірка | дрібні крапки |
+| 7 | малиновий/рожевий (чіткіше й холодніше за червоний `0`) | ◼ квадрат | хвилі ≈ |
+
+Рендер символу: у темнішому відтінку кольору блока, з тонким білим ореолом
+~4px, щоб читався поверх штриховки. Штриховка — `fillPattern()` кольоровим
+олівцем, alpha ~0.55 (штрих, не суцільна заливка). У фолбеку символ
+рендериться шрифтом Caveat.
+
+> **Поточний стан арту (звірено з файлами):** доставлені `block_N.png`
+> частково відхиляються від таблиці вище — блоки `1, 2, 4, 5, 7` мають
+> **лише патерн без центрального символу**, а теплі відтінки тісні
+> (`0` лососево-червоний ≈ `7` рожевий; `3` помаранчевий ≈ `5` коричневий).
+> Перемальовуються під цю специфікацію (промти — `docs/art-prompts.md`).
+> Після оновлення арту → `node tools/art/sample-block-tints.mjs` і оновити
+> `BLOCK_TINTS`. Фактичні насемпльовані tint'и зараз: `0 #f07f7b`,
+> `1 #5685f9`, `2 #3bb04e`, `3 #f8b575`, `4 #9b62cb`, `5 #9a6e4c`,
+> `6 #3cb6ba`, `7 #ee6396`.
+
+Поточний доставлений арт:
+![b0](../public/assets/images/block_0.png)
+![b1](../public/assets/images/block_1.png)
+![b2](../public/assets/images/block_2.png)
+![b3](../public/assets/images/block_3.png)
+![b4](../public/assets/images/block_4.png)
+![b5](../public/assets/images/block_5.png)
+![b6](../public/assets/images/block_6.png)
+![b7](../public/assets/images/block_7.png)
 
 ### 3.3 Спецблоки
 
@@ -265,7 +291,7 @@ offline-ready). Джерело — `FONTS` у `gameConfig.ts`.
 | Чорнильна пляма | Розлите чорнило | Мертвий слот, не чіпається | `block_ink` / темна плитка |
 | Ключ-блок | Золотий ключ у завалі | Відкопай — сам відімкне | `block_key` / крем+`icon_key` |
 | Замкнена колонка | Навісний замок(и) | Простір під замком, треба ключ | `icon_lock` ×N / 🔒 |
-| Заклеєна колонка | Washi-скотч / клапан | Можна лише брати; спорожни — відклеїться | `done_flap`→`deco_tape` / смужка |
+| Заклеєна колонка | Washi-скотч / клапан | Можна лише брати; спорожни — відклеїться | `tape_flap`→`deco_tape` / смужка |
 | Target-колонка | Крейдяне прев'ю кольору | Першим сюди — тільки цей колір | (процедурно: привиди+стрілка) |
 | Ланцюги/печатки | Воскова печатка з блоком | Набір цього кольору знімає печатку | `deco_seal` / сіра стрічка |
 | Готова колонка | Закладка-стрічка | Ця колонка зібрана, інертна | `deco_ribbon` / washi «Готово ✓» |
@@ -279,7 +305,7 @@ offline-ready). Джерело — `FONTS` у `gameConfig.ts`.
 ![lock](../public/assets/images/icon_lock.png)
 ![key](../public/assets/images/icon_key.png)
 ![tape](../public/assets/images/deco_tape.png)
-![flap](../public/assets/images/done_flap.png)
+![flap](../public/assets/images/tape_flap.png)
 ![seal](../public/assets/images/deco_seal.png)
 ![ribbon](../public/assets/images/deco_ribbon.png)
 ![chain](../public/assets/images/deco_chain.png)
@@ -308,7 +334,7 @@ offline-ready). Джерело — `FONTS` у `gameConfig.ts`.
 | Кольорова ціль | Обводка під колір блока + крейдяне прев'ю | база + `col_frame_tint`, тінт = `BLOCK_TINTS[color]` |
 | Замкнена | N замків по центру + бирка «відкрити» | `col_frame` + `icon_lock`×N |
 | У ланцюгах | Сірі печатки з блоками-«ключами» | `col_frame` + `deco_seal` |
-| Заклеєна | Клапан/скотч зверху | `col_frame` + `done_flap`/`deco_tape` |
+| Заклеєна | Клапан/скотч зверху | `col_frame` + `tape_flap`/`deco_tape` |
 | Готова | Закладка-стрічка по центру | `col_frame` + `deco_ribbon` |
 
 **Важливе рішення про контур (не ламати):** вибрана й кольорова колонки
@@ -459,7 +485,7 @@ tint-оверлей сидить рівно на геометрії рамки.
 `setDisplaySize` під контекст (бустери ~віконні, у бирках 15px, у польоті
 26px). Набір: `icon_back`, `icon_restart`, `icon_settings`, `icon_play`,
 `icon_undo`, `icon_lens`, `icon_key`, `icon_lock`, `icon_lock_gray`,
-`icon_lock_col`, `icon_star_full`, `icon_star_empty`.
+`icon_star_full`, `icon_star_empty`.
 
 ![back](../public/assets/images/icon_back.png)
 ![restart](../public/assets/images/icon_restart.png)
@@ -560,9 +586,8 @@ DPR = 3 (iPhone Pro Max) — вище fill-rate не вартий.
 - **Блоки:** `block_0`…`block_7`, `block_hidden`, `block_key`, `block_ink`.
 - **Колонки:** `col_frame`, `col_frame_selected`, `col_frame_target`,
   `col_frame_tint`.
-- **Механіки-предмети:** `icon_lock`, `icon_lock_gray`, `icon_lock_col`,
-  `icon_key`, `deco_tape`, `done_flap`, `deco_seal`, `deco_ribbon`,
-  `deco_chain`.
+- **Механіки-предмети:** `icon_lock`, `icon_lock_gray`, `icon_key`,
+  `deco_tape`, `tape_flap`, `deco_seal`, `deco_ribbon`, `deco_chain`.
 - **UI:** `ui_button`, `ui_button_primary`, `ui_button_success`,
   `ui_button_danger`, `ui_button_light`, `ui_button_square`, `ui_panel`,
   `ui_panel_note`, `ui_shadow`.

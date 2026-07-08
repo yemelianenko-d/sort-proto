@@ -342,8 +342,8 @@
       "url": "assets/images/ui_button_danger.png"
     },
     {
-      "key": "done_flap",
-      "url": "assets/images/done_flap.png"
+      "key": "tape_flap",
+      "url": "assets/images/tape_flap.png"
     }
   ],
   "atlases": [],

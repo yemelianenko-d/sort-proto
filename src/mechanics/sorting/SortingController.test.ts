@@ -136,7 +136,7 @@ describe('SortingController', () => {
     });
     view.userTap(0);
     view.userTap(1); // completes the 0-0 set -> the colour-0 seal snaps
-    expect(model.chainedColumn).toBeNull();
+    expect(model.sealedColumns).toEqual([]);
     expect(view.chainBreaks).toEqual([1]); // spark flies from the cleared column
   });
 

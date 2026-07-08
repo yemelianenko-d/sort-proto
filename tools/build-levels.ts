@@ -23,8 +23,9 @@ for (let i = 0; i < TOTAL; i++) {
   const h = meta.hardness;
   const hard = h ? `h[br${h.avgBranch.toFixed(1)} t${h.tightStates} f${h.minFree}]` : '';
   const trap = meta.trap ? `sr${Math.round(meta.trap.safeRatio * 100)} ke${meta.trap.knifeEdge}` : '';
+  const sealBlocks = (config.sealedColumns ?? []).reduce((a, s) => a + s.blocks.length, 0);
   const vault =
-    (config.chainedColumnBlocks?.length ? `chv${config.chainedColumnBlocks.length}` : '') +
+    (config.sealedColumns?.length ? `s${config.sealedColumns.length}v${sealBlocks}` : '') +
     (config.lockedColumnBlocks?.length ? `lkv${config.lockedColumnBlocks.length}` : '');
   const flags = [meta.relaxed ? 'RELAXED' : '', meta.attempts >= 320 ? 'FALLBACK' : ''].filter(Boolean).join(' ');
   console.log(

@@ -30,10 +30,12 @@ export class SortingView implements SortingViewContract {
   private tapeOverlays = new Map<number, Phaser.GameObjects.GameObject>();
   /** Done-column tape containers, kept so the completion can animate them. */
   private doneTapes = new Map<number, Phaser.GameObjects.Container>();
-  /** The just-removed chain kept visually hanging until its break plays. */
-  private ghostChain: { band: Phaser.GameObjects.Container | null; x: number; y: number; color: number } | null = null;
-  /** Chain sprites of the chained column (for the reject rattle). */
-  private chainSprites: Phaser.GameObjects.Container[] = [];
+  /** The just-removed seal kept visually hanging until its break plays. */
+  private ghostChain:
+    | { column: number; band: Phaser.GameObjects.Container | null; x: number; y: number; color: number }
+    | null = null;
+  /** Seal emblem bands per sealed column (for the reject rattle). */
+  private chainSprites = new Map<number, Phaser.GameObjects.Container[]>();
   private layout!: ColumnLayout;
   private area = { x: 0, y: 0, width: 0, height: 0 };
 
@@ -111,7 +113,7 @@ export class SortingView implements SortingViewContract {
       landedCount?: number;
       revealed?: number[];
       hideTopGroup?: number;
-      ghostChain?: { value: number; index: number };
+      ghostChain?: { column: number; value: number; index: number };
     } = {},
   ): void {
     this.clearPulse();
@@ -137,7 +139,8 @@ export class SortingView implements SortingViewContract {
     this.targetGhosts.clear();
     this.tapeOverlays.clear();
     this.doneTapes.clear();
-    this.chainSprites = [];
+    this.chainSprites.clear();
+    this.ghostChain = null;
     this.model.columns.forEach((column, ci) => {
       const pos = this.layout.positions[ci];
       const container = this.scene.add.container(this.area.x + pos.x, this.area.y + pos.y);
@@ -150,7 +153,7 @@ export class SortingView implements SortingViewContract {
       const liftGroup = selected === ci && hideColumn !== ci ? this.model.topGroup(ci) : 0;
       // vault: blocks inside a still-closed locked/chained column are visible
       // but disabled — faded so "you can see it, you can't touch it" reads
-      const vaulted = this.model.lockedColumn === ci || this.model.chainedColumn === ci;
+      const vaulted = this.model.lockedColumn === ci || this.model.isSealed(ci);
       const blocks: Phaser.GameObjects.Container[] = [];
       column.forEach((block, bi) => {
         const b = this.buildBlock(block.hidden ? -1 : block.color);
@@ -189,8 +192,9 @@ export class SortingView implements SortingViewContract {
       });
 
       if (this.model.lockedColumn === ci) this.addLockDecor(container, ci);
-      if (this.model.chainedColumn === ci || (opts.ghostChain && this.ghostChainColumn() === ci)) {
-        this.addChainDecor(container, ci, opts.ghostChain);
+      const ghost = opts.ghostChain && opts.ghostChain.column === ci ? opts.ghostChain : undefined;
+      if (this.model.isSealed(ci) || ghost) {
+        this.addChainDecor(container, ci, ghost);
       }
       if (this.model.isTaped(ci)) {
         const tape = this.buildTapeOverlay();
@@ -368,7 +372,7 @@ export class SortingView implements SortingViewContract {
   }
 
   /** Cover across the top of a sealed (take-only) column. The mechanic is
-   * unchanged — only the look: a folded paper flap (done_flap) if delivered,
+   * unchanged — only the look: a folded paper flap (tape_flap) if delivered,
    * else the washi tape, else a procedural strip. */
   private buildTapeOverlay(): Phaser.GameObjects.GameObject {
     const w = this.layout.colWidth;
@@ -518,7 +522,7 @@ export class SortingView implements SortingViewContract {
   private isColumnDone(ci: number): boolean {
     const col = this.model.columns[ci];
     if (!col || col.length !== this.model.capacity(ci)) return false;
-    if (ci === this.model.lockedColumn || ci === this.model.chainedColumn) return false;
+    if (ci === this.model.lockedColumn || this.model.isSealed(ci)) return false;
     const first = col[0].color;
     if (first === SPECIAL.INK || first === SPECIAL.KEY) return false;
     return col.every((b) => b.color === first && !b.hidden);
@@ -895,8 +899,7 @@ export class SortingView implements SortingViewContract {
 
   /** Rejected action on the chained column: the chains rattle briefly. */
   rattleChains(ci: number): void {
-    void ci; // one chained column per level; refs are collected at rebuild
-    for (const img of this.chainSprites) {
+    for (const img of this.chainSprites.get(ci) ?? []) {
       if (!img.active) continue;
       const base = img.angle;
       this.scene.tweens.add({
@@ -1039,12 +1042,6 @@ export class SortingView implements SortingViewContract {
     });
   }
 
-  /** The column that would carry the ghost chain (the chained column, or the
-   * last column when the removed chain was the final one and it just opened). */
-  private ghostChainColumn(): number | null {
-    return this.model.chainedColumn ?? this.model.columns.length - 1;
-  }
-
   /** Seals across the sealed column: each is a gray emblem ribbon carrying a
    * small block in the color of the set that removes it. Completing that set
    * removes the matching seal; the column opens when all seals are gone.
@@ -1053,11 +1050,11 @@ export class SortingView implements SortingViewContract {
   private addChainDecor(
     container: Phaser.GameObjects.Container,
     ci: number,
-    ghost?: { value: number; index: number },
+    ghost?: { column: number; value: number; index: number },
   ): void {
-    this.ghostChain = null;
+    const bands: Phaser.GameObjects.Container[] = [];
     const chains: { value: number; isGhost: boolean }[] = this.model
-      .chainsLeft()
+      .chainsLeft(ci)
       .map((value) => ({ value, isGhost: false }));
     if (ghost) chains.splice(Math.min(ghost.index, chains.length), 0, { value: ghost.value, isGhost: true });
     const cx = this.layout.colWidth / 2;
@@ -1103,9 +1100,10 @@ export class SortingView implements SortingViewContract {
       emblem.postFX.addColorMatrix().saturate(0.35);
       band.add(emblem);
       container.add(band);
-      this.chainSprites.push(band);
+      bands.push(band);
       if (chain.isGhost && pos) {
         this.ghostChain = {
+          column: ci,
           band,
           x: this.area.x + pos.x + cx,
           y: this.area.y + pos.y + y,
@@ -1113,6 +1111,7 @@ export class SortingView implements SortingViewContract {
         };
       }
     });
+    this.chainSprites.set(ci, bands);
   }
 
   private addLockDecor(container: Phaser.GameObjects.Container, ci: number): void {

@@ -39,9 +39,10 @@ export interface MoveResult {
   keysApplied: number[];
   /** The formerly locked column, if a key block just opened it. */
   keyUnlocked: number | null;
-  /** The seal removed by the set completed this move (value: its colour id;
-   * index: its position in the seal stack), or null. */
-  chainRemoved: { value: number; index: number } | null;
+  /** The seal removed by the set completed this move (column: the sealed
+   * column it hung on; value: its colour id; index: its position in that
+   * column's seal stack), or null. */
+  chainRemoved: { column: number; value: number; index: number } | null;
   /** The sealed column, if the last seal removed this move opened it. */
   unchained: number | null;
   /** Column whose tape broke after being emptied this move. */
@@ -63,12 +64,15 @@ export interface SortingLevelConfig {
    * until unlocked). Only for key-in-pile locks: forcing a booster spend
    * would be pay-to-win, so booster-only locks stay an empty bonus. */
   lockedColumnBlocks?: number[];
-  /** Extra sealed column. Each entry is one seal, a colour id: only that
-   * colour's completed set removes it. The column opens when no seals remain.
-   * (Neutral seals were removed — every seal is colour-bound.) */
+  /** Sealed columns (up to 2). Each holds a vault of `blocks` (visible,
+   * untouchable until it opens) and a stack of `chains` seals, each a colour
+   * id: only that colour's completed set removes it. A column opens when no
+   * seals remain. Every seal is colour-bound (neutral seals were removed). */
+  sealedColumns?: { chains: number[]; blocks: number[] }[];
+  /** @deprecated legacy single-sealed-column form; parsed as one entry of
+   * `sealedColumns`. Kept so pre-Phase-2 level files still load. */
   chains?: number[];
-  /** Color blocks trapped inside the chained column (visible, untouchable
-   * until every chain falls) — they make opening it genuinely necessary. */
+  /** @deprecated legacy vault for the single `chains` form. */
   chainedColumnBlocks?: number[];
   /** Empty columns that accept only the given color as their FIRST block. */
   targetColumns?: { col: number; color: number }[];
@@ -99,8 +103,9 @@ export interface SortingViewContract {
     revealed?: number[];
     /** Render the top group of this column invisible (it is being dragged). */
     hideTopGroup?: number;
-    /** Keep the just-removed chain visually hanging until its break plays. */
-    ghostChain?: { value: number; index: number };
+    /** Keep the just-removed seal visually hanging until its break plays
+     * (column: the sealed column it belongs to). */
+    ghostChain?: { column: number; value: number; index: number };
   }): void;
   animateClear(columnIndex: number, onDone: () => void): void;
   /** A completed set stays in place (no-clear rule); mark it done. */

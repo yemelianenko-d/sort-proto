@@ -5,8 +5,7 @@ interface Snapshot {
   columns: ColumnState[];
   lockedColumn: number | null;
   locksRemaining: number;
-  chainedColumn: number | null;
-  chains: number[];
+  seals: [number, number[]][];
   taped: number[];
   moves: number;
 }
@@ -42,12 +41,12 @@ export class SortingModel {
 
   columns: ColumnState[];
   lockedColumn: number | null = null;
-  chainedColumn: number | null = null;
   moves = 0;
 
   private locksRemaining = 0;
   private initialLocks = 0;
-  private chains: number[] = [];
+  /** Each still-closed sealed column -> its remaining seal colours. */
+  private sealsByCol = new Map<number, number[]>();
   private targets = new Map<number, number>();
   private taped = new Set<number>();
   private history: Snapshot[] = [];
@@ -80,12 +79,16 @@ export class SortingModel {
       this.initialLocks = Math.max(1, config.lockedColumnLocks ?? 1);
       this.locksRemaining = this.initialLocks;
     }
-    if ((config.chains ?? []).length > 0) {
-      this.columns.push(
-        (config.chainedColumnBlocks ?? []).map((color) => ({ id: nextId++, color, hidden: false })),
-      );
-      this.chainedColumn = this.columns.length - 1;
-      this.chains = [...(config.chains as number[])];
+    // Sealed columns: prefer the Phase-2 array form; fall back to the legacy
+    // single-column fields so pre-Phase-2 level files still load.
+    const sealed =
+      config.sealedColumns ??
+      ((config.chains ?? []).length > 0
+        ? [{ chains: config.chains as number[], blocks: config.chainedColumnBlocks ?? [] }]
+        : []);
+    for (const seal of sealed) {
+      this.columns.push(seal.blocks.map((color) => ({ id: nextId++, color, hidden: false })));
+      this.sealsByCol.set(this.columns.length - 1, [...seal.chains]);
     }
   }
 
@@ -105,9 +108,23 @@ export class SortingModel {
     return this.lockedColumn === null ? 0 : this.locksRemaining;
   }
 
-  /** Chains still hanging on the chained column (-1 neutral, >=0 color). */
-  chainsLeft(): number[] {
-    return this.chainedColumn === null ? [] : [...this.chains];
+  /** Currently-closed sealed columns (empty once every seal has fallen). */
+  get sealedColumns(): number[] {
+    return [...this.sealsByCol.keys()];
+  }
+
+  /** True while column `i` is still sealed (closed, untouchable). */
+  isSealed(i: number): boolean {
+    return this.sealsByCol.has(i);
+  }
+
+  /** Seals still hanging: on column `col` if given, else all seals across
+   * every sealed column (used to detect "any seals present"). */
+  chainsLeft(col?: number): number[] {
+    if (col !== undefined) return [...(this.sealsByCol.get(col) ?? [])];
+    const all: number[] = [];
+    for (const seals of this.sealsByCol.values()) all.push(...seals);
+    return all;
   }
 
   /** True when a drop from `from` onto `to` fails only due to the target color rule. */
@@ -159,8 +176,8 @@ export class SortingModel {
   }
 
   canDrop(from: number, to: number): boolean {
-    if (from === to || to === this.lockedColumn || to === this.chainedColumn) return false;
-    if (from === this.lockedColumn || from === this.chainedColumn) return false;
+    if (from === to || to === this.lockedColumn || this.isSealed(to)) return false;
+    if (from === this.lockedColumn || this.isSealed(from)) return false;
     if (this.isUniformFull(from)) return false; // completed columns are untouchable
     if (this.taped.has(to)) return false;
     const src = this.columns[from];
@@ -191,7 +208,7 @@ export class SortingModel {
     return this.columns.every((c, i) => {
       if (c.length === 0) return true;
       if (c.every((b) => b.color === SPECIAL.INK)) return true;
-      if (i === this.lockedColumn || i === this.chainedColumn) return false;
+      if (i === this.lockedColumn || this.isSealed(i)) return false;
       return this.isUniformFull(i);
     });
   }
@@ -224,19 +241,23 @@ export class SortingModel {
 
     const settled = this.settle(from);
     const readyToClear = this.isUniformFull(to) ? to : null;
-    let chainRemoved: { value: number; index: number } | null = null;
+    let chainRemoved: { column: number; value: number; index: number } | null = null;
     let unchained: number | null = null;
-    if (readyToClear !== null && this.chainedColumn !== null) {
+    if (readyToClear !== null && this.sealsByCol.size > 0) {
       const setColor = this.columns[readyToClear][0].color;
-      // Colored seals only: a completed set removes a seal of the SAME colour.
-      const idx = this.chains.indexOf(setColor);
-      if (idx !== -1) {
-        chainRemoved = { value: this.chains[idx], index: idx };
-        this.chains.splice(idx, 1);
-        if (this.chains.length === 0) {
-          unchained = this.chainedColumn;
-          this.chainedColumn = null;
+      // a completed set removes ONE matching-colour seal; scan sealed columns
+      // by ascending index so replay and tests stay deterministic
+      for (const col of [...this.sealsByCol.keys()].sort((a, b) => a - b)) {
+        const seals = this.sealsByCol.get(col) as number[];
+        const idx = seals.indexOf(setColor);
+        if (idx === -1) continue;
+        chainRemoved = { column: col, value: seals[idx], index: idx };
+        seals.splice(idx, 1);
+        if (seals.length === 0) {
+          this.sealsByCol.delete(col);
+          unchained = col;
         }
+        break;
       }
     }
     return { from, to, count, readyToClear, chainRemoved, unchained, ...settled };
@@ -256,8 +277,7 @@ export class SortingModel {
     this.columns = snap.columns;
     this.lockedColumn = snap.lockedColumn;
     this.locksRemaining = snap.locksRemaining;
-    this.chainedColumn = snap.chainedColumn;
-    this.chains = [...snap.chains];
+    this.sealsByCol = new Map(snap.seals.map(([col, seals]) => [col, [...seals]]));
     this.taped = new Set(snap.taped);
     this.moves = snap.moves;
     this.reapplyBoosterEffects();
@@ -376,7 +396,7 @@ export class SortingModel {
   /** A completed "done" column (no-clear rule): a full single-color, open
    * column. Done columns are terminal — untouchable, not selectable. */
   isComplete(index: number): boolean {
-    if (index === this.lockedColumn || index === this.chainedColumn) return false;
+    if (index === this.lockedColumn || this.isSealed(index)) return false;
     return this.isUniformFull(index);
   }
 
@@ -442,8 +462,7 @@ export class SortingModel {
       columns: this.columns.map((c) => c.map((b) => ({ ...b }))),
       lockedColumn: this.lockedColumn,
       locksRemaining: this.locksRemaining,
-      chainedColumn: this.chainedColumn,
-      chains: [...this.chains],
+      seals: [...this.sealsByCol.entries()].map(([col, seals]) => [col, [...seals]]),
       taped: [...this.taped],
       moves: this.moves,
     });

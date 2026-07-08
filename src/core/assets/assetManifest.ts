@@ -17,7 +17,7 @@ export const ASSET_KEYS = {
   columnFrameSelected: 'col_frame_selected',
   columnFrameTarget: 'col_frame_target',
   columnFrameTint: 'col_frame_tint',
-  tapeFlap: 'done_flap',
+  tapeFlap: 'tape_flap',
   doneRibbon: 'deco_ribbon',
   seal: 'deco_seal',
   uiButton: 'ui_button',

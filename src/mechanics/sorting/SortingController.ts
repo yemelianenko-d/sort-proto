@@ -61,9 +61,9 @@ export class SortingController {
 
   private onDragStart(index: number): boolean {
     if (this.busy) return false;
-    if (index === this.model.lockedColumn || index === this.model.chainedColumn) {
+    if (index === this.model.lockedColumn || this.model.isSealed(index)) {
       this.view.shakeColumn(index);
-      if (index === this.model.chainedColumn) this.view.rattleChains(index);
+      if (this.model.isSealed(index)) this.view.rattleChains(index);
       return false;
     }
     if (this.model.isComplete(index)) return false; // done columns are inert
@@ -90,15 +90,15 @@ export class SortingController {
     this.view.shakeColumn(to);
     if (this.model.isTargetMismatch(from, to)) this.view.flashTargetHint(to);
     if (this.model.isTaped(to)) this.view.wiggleTape(to);
-    if (to === this.model.chainedColumn) this.view.rattleChains(to);
+    if (this.model.isSealed(to)) this.view.rattleChains(to);
   }
 
   private onTap(index: number): void {
     if (this.busy || this.movedOnPress) return;
 
-    if (index === this.model.lockedColumn || index === this.model.chainedColumn) {
+    if (index === this.model.lockedColumn || this.model.isSealed(index)) {
       this.view.shakeColumn(index);
-      if (index === this.model.chainedColumn) this.view.rattleChains(index);
+      if (this.model.isSealed(index)) this.view.rattleChains(index);
       if (this.selected !== -1) this.select(-1);
       return;
     }

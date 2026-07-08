@@ -29,18 +29,16 @@ function stateFor(cfg: SortingLevelConfig, opts: {
 } = {}): SolverState {
   const cols = cfg.columns.map((c) => c.slice());
   let locked = -1;
-  let chainCol = -1;
   let locks = 0;
-  let chains = (cfg.chains ?? []).slice();
-  if (opts.coloredToNeutral) chains = chains.map(() => -1);
+  const chainCols: number[] = [];
+  const chainSeals: number[][] = [];
 
-  // vault blocks live INSIDE the locked / chained columns (v3): they must be
+  // vault blocks live INSIDE the locked / sealed columns (v3): they must be
   // loaded or the board loses copies and looks unsolvable. `openFromStart`
   // merges them onto the board as a normal column; `lockedForever` keeps the
   // column present but never openable (so a level that needs those blocks is
   // provably unsolvable — necessity 4).
   const lockVault = cfg.lockedColumnBlocks ?? [];
-  const chainVault = cfg.chainedColumnBlocks ?? [];
 
   if (cfg.lockedColumn) {
     cols.push(lockVault.slice());
@@ -54,16 +52,13 @@ function stateFor(cfg: SortingLevelConfig, opts: {
       locks = cfg.lockedColumnLocks ?? 1;
     }
   }
-  if (chains.length > 0) {
-    cols.push(chainVault.slice());
-    if (opts.openFromStart) {
-      // normal column
-    } else if (opts.lockedForever) {
-      chainCol = cols.length - 1;
-      chains = [-2]; // sentinel: no completed set ever removes it
-    } else {
-      chainCol = cols.length - 1;
-    }
+  for (const s of cfg.sealedColumns ?? []) {
+    cols.push(s.blocks.slice());
+    if (opts.openFromStart) continue; // normal column
+    chainCols.push(cols.length - 1);
+    let seals = opts.coloredToNeutral ? s.chains.map(() => -1) : s.chains.slice();
+    if (opts.lockedForever) seals = [-2]; // sentinel: no set ever removes it
+    chainSeals.push(seals);
   }
   const taped = opts.tapeToNormal ? new Set<number>() : new Set(cfg.tapedColumns ?? []);
   const targets = opts.targetToNormal
@@ -74,8 +69,8 @@ function stateFor(cfg: SortingLevelConfig, opts: {
     cap: cfg.cap,
     locked,
     locks,
-    chainCol,
-    chains: opts.openFromStart ? [] : chains,
+    chainCols,
+    chainSeals,
     taped,
     targets,
   };
@@ -147,7 +142,10 @@ function canonicalHash(cfg: SortingLevelConfig): string {
     cap: cfg.cap,
     cols: canonCols,
     locked: cfg.lockedColumn ? (cfg.lockedColumnLocks ?? 1) : 0,
-    chains: (cfg.chains ?? []).map((c) => (c < 0 ? -1 : (rename.get(c) ?? 99))).sort(),
+    chains: (cfg.sealedColumns ?? [])
+      .flatMap((s) => s.chains)
+      .map((c) => (c < 0 ? -1 : (rename.get(c) ?? 99)))
+      .sort(),
     taped: (cfg.tapedColumns ?? []).map((t) => order.indexOf(t)).sort(),
     targets: (cfg.targetColumns ?? [])
       .map((t) => ({ col: order.indexOf(t.col), color: rename.get(t.color) ?? 99 }))
@@ -193,10 +191,11 @@ function analyzeMechanics(cfg: SortingLevelConfig, base: number): MechReport[] {
     out.push({ mechanic: 'lockB', necessity: 0, detail: 'booster-only bonus space (by design)' });
   }
 
-  if ((cfg.chains ?? []).length > 0) {
+  const allSeals = (cfg.sealedColumns ?? []).flatMap((s) => s.chains);
+  if (allSeals.length > 0) {
     const forever = solveVariant({ lockedForever: true });
     const nec = necessityFromDelta(base, forever);
-    const colored = (cfg.chains ?? []).some((c) => c >= 0);
+    const colored = allSeals.some((c) => c >= 0);
     let detail = `forever=${forever} base=${base}`;
     let necessity = nec;
     if (colored) {
@@ -227,7 +226,7 @@ function analyzeMechanics(cfg: SortingLevelConfig, base: number): MechReport[] {
     const drop = (cfg.targetColumns as { col: number; color: number }[])[0].col;
     st.cols = st.cols.filter((_, i) => i !== drop);
     st.locked = st.locked > drop ? st.locked - 1 : st.locked;
-    st.chainCol = st.chainCol > drop ? st.chainCol - 1 : st.chainCol;
+    st.chainCols = st.chainCols.map((c) => (c > drop ? c - 1 : c));
     st.taped = new Set([...st.taped].map((t) => (t > drop ? t - 1 : t)));
     st.targets = new Map(
       [...st.targets.entries()].filter(([c]) => c !== drop).map(([c, v]) => [c > drop ? c - 1 : c, v]),

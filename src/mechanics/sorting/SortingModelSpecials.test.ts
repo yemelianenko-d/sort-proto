@@ -86,13 +86,13 @@ describe('SortingModel specials', () => {
       cfg({ cap: 2, columns: [[0], [0], [1, 1]], chains: [0] }),
     );
     const chainCol = m.columns.length - 1;
-    expect(m.chainedColumn).toBe(chainCol);
+    expect(m.isSealed(chainCol)).toBe(true);
     expect(m.canDrop(0, chainCol)).toBe(false); // closed while sealed
     const res = m.move(0, 1); // completes the 0-0 set (stays as a done column)
     expect(res?.readyToClear).toBe(1);
-    expect(res?.chainRemoved).toEqual({ value: 0, index: 0 });
+    expect(res?.chainRemoved).toEqual({ column: chainCol, value: 0, index: 0 });
     expect(res?.unchained).toBe(chainCol); // unlock happens at validation
-    expect(m.chainedColumn).toBeNull();
+    expect(m.isSealed(chainCol)).toBe(false);
     // col1 [0,0] and col2 [1,1] are both completed sets -> board is won
     expect(m.isWon()).toBe(true);
   });
@@ -103,13 +103,13 @@ describe('SortingModel specials', () => {
     );
     const chainCol = m.columns.length - 1;
     let res = m.move(0, 1); // set of colour 0: only the colour-0 seal falls
-    expect(res?.chainRemoved).toEqual({ value: 0, index: 1 });
-    expect(m.chainsLeft()).toEqual([1]);
+    expect(res?.chainRemoved).toEqual({ column: chainCol, value: 0, index: 1 });
+    expect(m.chainsLeft(chainCol)).toEqual([1]);
     m.commitClear(1);
     res = m.move(2, 3); // set of colour 1 takes its seal down -> opens
-    expect(res?.chainRemoved).toEqual({ value: 1, index: 0 });
+    expect(res?.chainRemoved).toEqual({ column: chainCol, value: 1, index: 0 });
     expect(res?.unchained).toBe(chainCol);
-    expect(m.chainedColumn).toBeNull();
+    expect(m.isSealed(chainCol)).toBe(false);
   });
 
   it('a double lock needs two keys; booster and key blocks both count', () => {
