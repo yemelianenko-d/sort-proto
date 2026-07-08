@@ -11,10 +11,13 @@ import type Phaser from 'phaser';
  * native density. Screen->logical conversion for raw pointer coordinates
  * is a plain division (the camera is centered, so worldPoint == pointer/DPR).
  *
- * Capped at 2.5: beyond that the fill-rate cost outweighs visible gains.
+ * Capped at 3: covers modern retina phones (iPhone Pro Max is DPR 3) so the
+ * canvas renders at native density instead of a lower-density buffer the OS
+ * then upscales (which reads as "мило" — soft and washed-out). Beyond 3 the
+ * fill-rate cost outweighs any visible gain.
  */
 export const DPR: number =
-  typeof window !== 'undefined' ? Math.min(Math.max(window.devicePixelRatio || 1, 1), 2.5) : 1;
+  typeof window !== 'undefined' ? Math.min(Math.max(window.devicePixelRatio || 1, 1), 3) : 1;
 
 /** Canvas size in logical (CSS) pixels — what layout code should use. */
 export function logicalSize(scene: Phaser.Scene): { w: number; h: number } {
