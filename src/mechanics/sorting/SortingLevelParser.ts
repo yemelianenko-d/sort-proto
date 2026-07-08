@@ -155,7 +155,7 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
     throw new Error(`${at} (${id}): more key blocks (${keys}) than locks to open.`);
   }
 
-  // chained column: -1 neutral chain, >=0 color-bound chain
+  // sealed column: each seal is colour-bound (>=0). Neutral seals were removed.
   let chains: number[] | undefined;
   if (lvl.chains !== undefined) {
     if (!Array.isArray(lvl.chains) || lvl.chains.length < 1 || lvl.chains.length > 3) {
@@ -163,12 +163,12 @@ function validateLevel(raw: unknown, index: number, seenIds: Set<string>): Sorti
     }
     lvl.chains.forEach((c) => {
       const v = c as number;
-      if (!Number.isInteger(v) || v < -1 || v >= BLOCK_STYLES.length) {
-        throw new Error(`${at} (${id}): chain value ${String(c)} must be -1 or a color id.`);
+      if (!Number.isInteger(v) || v < 0 || v >= BLOCK_STYLES.length) {
+        throw new Error(`${at} (${id}): seal value ${String(c)} must be a color id (0..${BLOCK_STYLES.length - 1}).`);
       }
-      if (v >= 0 && !colorCounts.has(v)) {
+      if (!colorCounts.has(v)) {
         throw new Error(
-          `${at} (${id}): colored chain ${v} has no matching color on the level (it could never fall).`,
+          `${at} (${id}): seal colour ${v} has no matching block on the level (it could never fall).`,
         );
       }
     });

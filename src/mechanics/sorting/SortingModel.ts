@@ -26,10 +26,9 @@ interface Snapshot {
  *  - a locked column may need several keys (each key removes one lock);
  *    once every lock is off, key blocks still on the board are dead weight
  *    and dissolve immediately (booster keys included);
- *  - a chained column carries chains: a neutral chain falls to any
- *    completed set, a colored one only to a set of its color; the column
- *    opens when the last chain falls (in the resolve sequence, at set
- *    validation time);
+ *  - a sealed column carries coloured seals (ribbons): each seal falls only to
+ *    a completed set of ITS colour; the column opens when the last seal falls
+ *    (in the resolve sequence, at set validation time);
  *  - a target column, while empty, accepts only its designated color as the
  *    first block; once occupied it behaves like a normal column;
  *  - a full column of one color is COMPLETED: it stays in place as a
@@ -229,8 +228,8 @@ export class SortingModel {
     let unchained: number | null = null;
     if (readyToClear !== null && this.chainedColumn !== null) {
       const setColor = this.columns[readyToClear][0].color;
-      let idx = this.chains.indexOf(setColor); // colored chain matches first
-      if (idx === -1) idx = this.chains.indexOf(-1); // else a neutral one falls
+      // Colored seals only: a completed set removes a seal of the SAME colour.
+      const idx = this.chains.indexOf(setColor);
       if (idx !== -1) {
         chainRemoved = { value: this.chains[idx], index: idx };
         this.chains.splice(idx, 1);

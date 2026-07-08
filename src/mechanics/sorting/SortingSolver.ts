@@ -22,7 +22,7 @@ export interface SolverState {
   locked: number; // -1 = none
   locks: number; // keys still needed for `locked`
   chainCol: number; // -1 = none
-  chains: number[]; // remaining chains: -1 neutral, >=0 color-bound
+  chains: number[]; // remaining seals: >=0 colour; -1 = neutral (generation ablation only)
   taped: Set<number>;
   targets: Map<number, number>; // empty column -> required first color
 }
@@ -87,7 +87,9 @@ function creditCompletion(st: SolverState, col: number): void {
   if (st.chainCol < 0 || col === st.chainCol) return;
   if (!isDone(st.cols[col], st.cap)) return;
   const setColor = st.cols[col][0];
-  let ci = st.chains.indexOf(setColor);
+  let ci = st.chains.indexOf(setColor); // colour-bound seal: same colour
+  // -1 seals fall to ANY set — a GENERATION-ONLY ablation used to score colour
+  // necessity (neutralChains). The game itself has no neutral seals.
   if (ci === -1) ci = st.chains.indexOf(-1);
   if (ci !== -1) {
     st.chains = st.chains.slice();

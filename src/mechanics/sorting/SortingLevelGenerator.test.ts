@@ -35,12 +35,10 @@ describe('generateSortingLevel (guideline slot map)', () => {
     expect(cardFor(14).focus).toBe('target');
     expect(cardFor(20).focus).toBe('tape');
     expect(cardFor(26).focus).toBe('key');
-    expect(cardFor(32).focus).toBe('chainN');
+    expect(cardFor(32).focus).toBe('chainC');
     expect(cardFor(38).focus).toBe('multilock');
-    expect(cardFor(44).focus).toBe('chainC');
-    // chain columns always carry blocks (v3 canonical)
+    // sealed columns always carry blocks (the vault)
     expect(cardFor(32).chainLen).toBeGreaterThanOrEqual(2);
-    expect(cardFor(44).chainLen).toBeGreaterThanOrEqual(2);
   });
 
   it('introduces mechanics with the right structure', { timeout: 120000 }, () => {
@@ -53,17 +51,15 @@ describe('generateSortingLevel (guideline slot map)', () => {
     const taped = generateSortingLevel(19); // tape intro (level 20)
     expect(taped.tapedColumns?.length).toBeGreaterThan(0);
 
-    const chained = generateSortingLevel(31); // neutral chain intro (level 32)
-    expect(chained.chains).toContain(-1);
-    // the chain column holds real blocks now, not empty bonus space
-    expect(chained.chainedColumnBlocks?.length ?? 0).toBeGreaterThanOrEqual(2);
+    const sealed = generateSortingLevel(31); // coloured-seal intro (level 32)
+    expect(sealed.chains?.every((c) => c >= 0)).toBe(true); // colour-bound only
+    expect(sealed.chains?.length ?? 0).toBeGreaterThanOrEqual(1);
+    // the sealed column holds real blocks (the vault), not empty bonus space
+    expect(sealed.chainedColumnBlocks?.length ?? 0).toBeGreaterThanOrEqual(2);
 
     const keyLevel = generateSortingLevel(25); // key intro (level 26)
     expect(keyLevel.lockedColumn).toBe(true);
     expect(keyLevel.columns.flat()).toContain(SPECIAL.KEY);
-
-    const colored = generateSortingLevel(43); // colored chain intro (level 44)
-    expect(colored.chains?.some((c) => c >= 0)).toBe(true);
 
     const multi = generateSortingLevel(37); // multi-lock intro (level 38)
     expect(multi.lockedColumnLocks).toBe(2);
@@ -124,9 +120,7 @@ describe('generateSortingLevel (guideline slot map)', () => {
       // vault blocks live inside the locked/chained columns, not extra ones
       const locks = card.focus === 'multilock' || card.second === 'multilock' ? 2
         : card.focus === 'key' || card.second === 'key' ? 1 : 0;
-      const hasChain = card.chainLen > 0
-        || ['chainN', 'chainC'].includes(card.focus)
-        || ['chainN', 'chainC'].includes(card.second);
+      const hasChain = card.chainLen > 0 || card.focus === 'chainC' || card.second === 'chainC';
       const width = card.types
         + (locks > 0 ? 2 : 0)
         + (hasChain ? 1 : 0)

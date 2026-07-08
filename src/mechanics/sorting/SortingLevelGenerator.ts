@@ -18,10 +18,10 @@ import {
  *  - difficulty is PRESSURE OVER TIME, not mechanic presence: accepted
  *    the generator scores each candidate layout for hardness (branching
  *    factor + tight-state runs + spare space) and keeps the hardest;
- *  - Chain Columns always CONTAIN BLOCKS of the level pool (the vault):
- *    locked-forever ablation is unsolvable by construction (Necessity 4);
- *    colored-chain deadlock gate: the required color never sits inside its
- *    own chain column;
+ *  - Sealed Columns always CONTAIN BLOCKS of the level pool (the vault):
+ *    locked-forever ablation is unsolvable by construction (Necessity 4).
+ *    Every seal is COLOUR-BOUND (neutral seals removed); the deadlock gate
+ *    keeps a seal's colour out of its own sealed column; 1-2 seals per column;
  *  - locked (key) columns carry blocks on plan/master/peak slots too;
  *  - Target Columns come in 1..3 instances of DIFFERENT colors; every
  *    instance passes its own ablation (restriction-off and column-removed),
@@ -30,7 +30,7 @@ import {
  *    columns, 1-2 per column, 1-2 columns) with per-blot ablation;
  *  - curve "C" (braided + smooth): two independent schedules — stageFor gives
  *    the local wave texture under a progress ceiling (no early spikes), and
- *    MECH_INTRO debuts each mechanic early (blot L8 ... chainC L44) at zero
+ *    MECH_INTRO debuts each mechanic early (blot L8 ... seal L32) at zero
  *    pressure; base difficulty rises with the LEVEL, not with the mechanic
  *    being introduced, so there is no per-intro sawtooth. Combinations layer
  *    in from ~L56 via curated CROSS_PAIRS. C5 only after level 92 (12 slots),
@@ -62,7 +62,7 @@ function shuffle<T>(arr: T[], rng: () => number): T[] {
 
 /* ---------------- slot map ---------------- */
 
-export type Focus = 'none' | 'target' | 'tape' | 'chainN' | 'chainC' | 'key' | 'multilock' | 'blot';
+export type Focus = 'none' | 'target' | 'tape' | 'chainC' | 'key' | 'multilock' | 'blot';
 export type Stage = 'show' | 'use' | 'plan' | 'master' | 'relief' | 'peak' | 'build';
 
 export interface SlotCard {
@@ -103,9 +103,8 @@ const MECH_INTRO: readonly { at: number; focus: Focus }[] = [
   { at: 14, focus: 'target' },
   { at: 20, focus: 'tape' },
   { at: 26, focus: 'key' },
-  { at: 32, focus: 'chainN' },
+  { at: 32, focus: 'chainC' },
   { at: 38, focus: 'multilock' },
-  { at: 44, focus: 'chainC' },
 ];
 
 /** Mechanics unlocked (already introduced) by a given level. */
@@ -154,10 +153,10 @@ const T8_LEVELS = new Set([126, 132, 137, 143, 146, 148, 150]);
 
 const CROSS_PAIRS: [Focus, Focus][] = [
   ['target', 'chainC'],
-  ['key', 'chainN'],
+  ['key', 'chainC'],
   ['tape', 'target'],
   ['multilock', 'blot'],
-  ['chainN', 'target'],
+  ['blot', 'chainC'],
   ['tape', 'chainC'],
   ['key', 'blot'],
 ];
@@ -185,7 +184,7 @@ function rawCardFor(level: number): SlotCard {
       focus = pick(unlocked);
       // Combinations layer in as the player masters the growing set. Prefer a
       // curated cross-pair (sensible combos), else any other unlocked mechanic.
-      const comboChance = level < 56 ? 0 : level < 90 ? 0.25 : level < 120 ? 0.45 : 0.6;
+      const comboChance = level < 52 ? 0 : level < 90 ? 0.35 : level < 120 ? 0.55 : 0.7;
       if (unlocked.length >= 2 && rng() < comboChance) {
         const partners = CROSS_PAIRS.filter(
           ([a, b]) => (a === focus && unlocked.includes(b)) || (b === focus && unlocked.includes(a)),
@@ -240,7 +239,7 @@ function fillMechanicKnobs(card: SlotCard, rng: () => number): SlotCard {
     c.blotCols = c.stage === 'peak' || c.stage === 'master' ? 2 : 1;
     c.blotsPer = rng() < 0.5 ? 2 : 1;
   }
-  if (has('chainN') || has('chainC')) c.chainLen = c.stage === 'peak' ? 3 : rng() < 0.5 ? 3 : 2;
+  if (has('chainC')) c.chainLen = c.stage === 'peak' ? 3 : rng() < 0.5 ? 3 : 2;
   return c;
 }
 
@@ -255,9 +254,9 @@ function normalizeCard(card: SlotCard): SlotCard {
   // T8 boards: pure board load — keep the mechanic narrow
   if (T8_LEVELS.has(c.level)) {
     c.types = 8;
-    if (c.focus === 'key' || c.focus === 'multilock') c.focus = 'chainN';
+    if (c.focus === 'key' || c.focus === 'multilock') c.focus = 'chainC';
     if (c.second === 'key' || c.second === 'multilock') c.second = 'none';
-    if (c.focus === 'chainN' && c.chainLen === 0) c.chainLen = 2;
+    if (c.focus === 'chainC' && c.chainLen === 0) c.chainLen = 2;
     if (c.empties < 2) c.empties = 2;
   }
   // C5 + 8 types + combos is a forbidden stack (guideline 12.3)
@@ -266,7 +265,7 @@ function normalizeCard(card: SlotCard): SlotCard {
   const width = (): number => {
     const locks = c.focus === 'multilock' || c.second === 'multilock' ? 2
       : c.focus === 'key' || c.second === 'key' ? 1 : 0;
-    const hasChain = c.chainLen > 0 || c.focus === 'chainN' || c.focus === 'chainC' || c.second === 'chainN' || c.second === 'chainC';
+    const hasChain = c.chainLen > 0 || c.focus === 'chainC' || c.second === 'chainC';
     // key slack + locked column; chain column; blots displace pool blocks
     // into roughly one extra filled column; vault blocks free some room back
     return (
@@ -336,18 +335,23 @@ function buildLayout(card: SlotCard, rng: () => number): BuildOut | null {
   for (let k = 0; k < locks; k++) pool.push(SPECIAL.KEY);
   shuffle(pool, rng);
 
-  // chains + the chain vault (v3 canonical: the chain column holds blocks)
-  let chains: number[] = [];
-  if (wantsMech(card, 'chainN')) chains.push(-1);
-  if (wantsMech(card, 'chainC')) chains.push((rng() * colors) | 0);
-  if (card.stage === 'master' && chains.length === 1 && chains[0] === -1 && rng() < 0.4) {
-    chains = [-1, -1];
+  // coloured seals + the seal vault (the sealed column holds blocks). Every
+  // seal is colour-bound: a set of that colour removes it.
+  const chains: number[] = [];
+  if (wantsMech(card, 'chainC')) {
+    chains.push((rng() * colors) | 0);
+    // tighter slots may carry a SECOND, different-coloured seal on one column
+    if ((card.stage === 'master' || card.stage === 'peak') && rng() < 0.4) {
+      let c2 = (rng() * colors) | 0;
+      if (c2 === chains[0]) c2 = (c2 + 1) % colors;
+      chains.push(c2);
+    }
   }
   let chainBlocks: ColorId[] | null = null;
   if (chains.length > 0) {
     const len = Math.min(Math.max(2, card.chainLen || 2), cap - 1);
-    // deadlock gate: colored-chain colors never sit inside their own column
-    const forbidden = new Set(chains.filter((c) => c >= 0));
+    // deadlock gate: a seal's colour never sits inside its own sealed column
+    const forbidden = new Set(chains);
     chainBlocks = extractVault(pool, len, forbidden, rng);
     if (!chainBlocks) return null;
   }
@@ -535,7 +539,6 @@ function mechanicNecessity(m: Focus, b: BuildOut, cap: number, base: number): nu
   switch (m) {
     case 'key':
     case 'multilock':
-    case 'chainN':
     case 'chainC': {
       // chain columns carry a vault (sealed blocks) -> forever-locked is
       // unsolvable by construction (necessity 4). Key/lock columns are empty
@@ -681,9 +684,11 @@ export interface LevelMeta {
  * (safeRatio) should drop to ~0.5-0.6 on the hardest slots instead of the
  * 0.7-0.8 a purely structural pick tends to produce. */
 function trapTargetFor(stage: Stage): number | null {
-  if (stage === 'peak') return 0.6;
-  if (stage === 'master') return 0.62;
-  if (stage === 'plan') return 0.72;
+  // Nudged tighter for a touch more challenge on the graded stages (the pick
+  // hunts denser boards); the curve shape is unchanged, only the trap density.
+  if (stage === 'peak') return 0.56;
+  if (stage === 'master') return 0.58;
+  if (stage === 'plan') return 0.7;
   return null;
 }
 

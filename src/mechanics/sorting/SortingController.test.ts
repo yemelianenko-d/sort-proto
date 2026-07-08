@@ -128,14 +128,14 @@ describe('SortingController', () => {
     // EventBus is a module singleton; tests only add fresh listeners.
   });
 
-  it('completing a set on a chained level triggers the chain-break animation', () => {
+  it('completing a set on a sealed level triggers the seal-break animation', () => {
     const { model, view } = setup({
       cap: 2,
       columns: [[0], [0], [1, 1]],
-      chains: [-1],
+      chains: [0],
     });
     view.userTap(0);
-    view.userTap(1); // completes the 0-0 set -> the neutral chain snaps
+    view.userTap(1); // completes the 0-0 set -> the colour-0 seal snaps
     expect(model.chainedColumn).toBeNull();
     expect(view.chainBreaks).toEqual([1]); // spark flies from the cleared column
   });
@@ -180,11 +180,11 @@ describe('SortingController', () => {
     expect(controller.selectedColumn).toBe(1);
   });
 
-  it('a drop into the chained column shakes it and rattles the chains', () => {
+  it('a drop into the sealed column shakes it and rattles the seals', () => {
     const { model, view } = setup({
       cap: 2,
       columns: [[0], [0], [1, 1]],
-      chains: [-1],
+      chains: [1],
     });
     const chainCol = model.columns.length - 1;
     view.userTap(2); // pick the 1-1 pair

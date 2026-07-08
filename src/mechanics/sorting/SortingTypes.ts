@@ -39,10 +39,10 @@ export interface MoveResult {
   keysApplied: number[];
   /** The formerly locked column, if a key block just opened it. */
   keyUnlocked: number | null;
-  /** The chain removed by the set completed this move (value: -1 neutral,
-   * >=0 color; index: its position in the chain stack), or null. */
+  /** The seal removed by the set completed this move (value: its colour id;
+   * index: its position in the seal stack), or null. */
   chainRemoved: { value: number; index: number } | null;
-  /** The chained column, if the last chain removed this move opened it. */
+  /** The sealed column, if the last seal removed this move opened it. */
   unchained: number | null;
   /** Column whose tape broke after being emptied this move. */
   tapeBroken: number | null;
@@ -63,9 +63,9 @@ export interface SortingLevelConfig {
    * until unlocked). Only for key-in-pile locks: forcing a booster spend
    * would be pay-to-win, so booster-only locks stay an empty bonus. */
   lockedColumnBlocks?: number[];
-  /** Extra column wrapped in chains. Each entry is one chain: -1 is neutral
-   * (any completed set removes it), a color id means only that color's set
-   * removes it. The column opens when no chains remain. */
+  /** Extra sealed column. Each entry is one seal, a colour id: only that
+   * colour's completed set removes it. The column opens when no seals remain.
+   * (Neutral seals were removed — every seal is colour-bound.) */
   chains?: number[];
   /** Color blocks trapped inside the chained column (visible, untouchable
    * until every chain falls) — they make opening it genuinely necessary. */

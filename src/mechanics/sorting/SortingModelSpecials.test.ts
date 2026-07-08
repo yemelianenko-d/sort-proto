@@ -50,16 +50,16 @@ describe('SortingModel specials', () => {
     expect(m.canDrop(3, 2)).toBe(true); // the designated color may return
   });
 
-  it('blocks behind chains are visible but untouchable until unchained', () => {
+  it('blocks behind a seal are visible but untouchable until unsealed', () => {
     const m = new SortingModel(
-      cfg({ cap: 2, columns: [[0], [0], [1]], chains: [-1], chainedColumnBlocks: [1] }),
+      cfg({ cap: 2, columns: [[0], [0], [1]], chains: [0], chainedColumnBlocks: [1] }),
     );
     const chainCol = m.columns.length - 1;
     expect(m.columns[chainCol].map((b) => b.color)).toEqual([1]);
     expect(m.columns[chainCol][0].hidden).toBe(false); // stakes are visible
-    expect(m.canDrop(chainCol, 2)).toBe(false); // cannot lift out while chained
+    expect(m.canDrop(chainCol, 2)).toBe(false); // cannot lift out while sealed
     expect(m.isWon()).toBe(false);
-    const res = m.move(0, 1); // any set drops the neutral chain
+    const res = m.move(0, 1); // a colour-0 set drops the colour-0 seal
     expect(res?.unchained).toBe(chainCol);
     m.commitClear(1);
     expect(m.canDrop(chainCol, 2)).toBe(true); // freed: the block can leave
@@ -81,32 +81,32 @@ describe('SortingModel specials', () => {
     expect(m.canDrop(lockCol, 4)).toBe(true); // freed: onto the empty column
   });
 
-  it('a neutral chain falls to any completed set; the column opens chain-free', () => {
+  it('a coloured seal falls to a set of its colour; the column opens seal-free', () => {
     const m = new SortingModel(
-      cfg({ cap: 2, columns: [[0], [0], [1, 1]], chains: [-1] }),
+      cfg({ cap: 2, columns: [[0], [0], [1, 1]], chains: [0] }),
     );
     const chainCol = m.columns.length - 1;
     expect(m.chainedColumn).toBe(chainCol);
-    expect(m.canDrop(0, chainCol)).toBe(false); // closed while chained
+    expect(m.canDrop(0, chainCol)).toBe(false); // closed while sealed
     const res = m.move(0, 1); // completes the 0-0 set (stays as a done column)
     expect(res?.readyToClear).toBe(1);
-    expect(res?.chainRemoved).toEqual({ value: -1, index: 0 });
+    expect(res?.chainRemoved).toEqual({ value: 0, index: 0 });
     expect(res?.unchained).toBe(chainCol); // unlock happens at validation
     expect(m.chainedColumn).toBeNull();
-    // the opened chain column [1,1] is itself a completed set -> board is won
+    // col1 [0,0] and col2 [1,1] are both completed sets -> board is won
     expect(m.isWon()).toBe(true);
   });
 
-  it('a colored chain falls only to a set of its color', () => {
+  it('each coloured seal falls only to a set of its colour', () => {
     const m = new SortingModel(
-      cfg({ cap: 2, columns: [[0], [0], [1], [1], []], chains: [1, -1] }),
+      cfg({ cap: 2, columns: [[0], [0], [1], [1], []], chains: [1, 0] }),
     );
     const chainCol = m.columns.length - 1;
-    let res = m.move(0, 1); // set of color 0: the colored chain 1 stays
-    expect(res?.chainRemoved).toEqual({ value: -1, index: 1 }); // ...the neutral one falls instead
+    let res = m.move(0, 1); // set of colour 0: only the colour-0 seal falls
+    expect(res?.chainRemoved).toEqual({ value: 0, index: 1 });
     expect(m.chainsLeft()).toEqual([1]);
     m.commitClear(1);
-    res = m.move(2, 3); // set of color 1 takes its chain down
+    res = m.move(2, 3); // set of colour 1 takes its seal down -> opens
     expect(res?.chainRemoved).toEqual({ value: 1, index: 0 });
     expect(res?.unchained).toBe(chainCol);
     expect(m.chainedColumn).toBeNull();
