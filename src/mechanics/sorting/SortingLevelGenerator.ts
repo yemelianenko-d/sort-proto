@@ -28,12 +28,13 @@ import {
  *    plus an anti-auto-sort guard (not all target colors exposed on top);
  *  - Ink Blot is a first-class focus mechanic (bottom blots inside playing
  *    columns, 1-2 per column, 1-2 columns) with per-blot ablation;
- *  - macro map per section 13: 1-12 core, 13-25 planning, 26-40 blots,
- *    41-55 targets, 56-70 multi-target + tape intro, 71-85 tape mastery +
- *    key intro, 86-100 key/multi-lock mastery, 101-115 neutral chain vaults,
- *    116-130 colored/mixed chains, 131-142 cross-mechanic, 143-150 peaks;
- *  - wave rhythm per 13.2 (M M MH H relief M MH H MH peak), C5 only after
- *    level 92 (12 slots), 8-type boards are rare late peaks (7 slots).
+ *  - curve "C" (braided + smooth): two independent schedules — stageFor gives
+ *    the local wave texture under a progress ceiling (no early spikes), and
+ *    MECH_INTRO debuts each mechanic early (blot L8 ... chainC L44) at zero
+ *    pressure; base difficulty rises with the LEVEL, not with the mechanic
+ *    being introduced, so there is no per-intro sawtooth. Combinations layer
+ *    in from ~L56 via curated CROSS_PAIRS. C5 only after level 92 (12 slots),
+ *    8-type boards are rare late peaks (7 slots).
  *
  * Deterministic per index. Invariant: every color has exactly `cap` copies
  * (counting vault blocks) and all columns share one nominal capacity.
@@ -86,31 +87,53 @@ export interface SlotCard {
   minNecessity: number;
 }
 
-/** Wave role by position inside a 10-slot wave, per guideline 13.2:
- * M M MH H relief M MH H MH peak. */
-function waveStage(pos10: number): Stage {
-  switch (pos10) {
-    case 1:
-      return 'build';
-    case 2:
-      return 'use';
-    case 3:
-      return 'plan';
-    case 4:
-      return 'master';
-    case 5:
-      return 'relief';
-    case 6:
-      return 'use';
-    case 7:
-      return 'plan';
-    case 8:
-      return 'master';
-    case 9:
-      return 'plan';
-    default:
-      return 'peak';
-  }
+/* ---------------- Curve C: braided mechanics + smooth climb ----------------
+ * Two independent schedules replace the old per-mechanic macro bands:
+ *  - stageFor(level): local wave texture with a PROGRESS CEILING, so early
+ *    waves stay gentle and pressure only unlocks as the player climbs (no
+ *    early spikes -> fixes "hard levels appear abruptly").
+ *  - MECH_INTRO: each mechanic debuts early (first ~L8, all by ~L44) at zero
+ *    pressure, then recurs; combinations layer in from ~L56. Base board
+ *    difficulty rises with the LEVEL, not with which mechanic is introduced,
+ *    removing the old sawtooth (easy reset on every new mechanic). */
+
+/** First appearance of each mechanic - early and braided. */
+const MECH_INTRO: readonly { at: number; focus: Focus }[] = [
+  { at: 8, focus: 'blot' },
+  { at: 14, focus: 'target' },
+  { at: 20, focus: 'tape' },
+  { at: 26, focus: 'key' },
+  { at: 32, focus: 'chainN' },
+  { at: 38, focus: 'multilock' },
+  { at: 44, focus: 'chainC' },
+];
+
+/** Mechanics unlocked (already introduced) by a given level. */
+function introducedBy(level: number): Focus[] {
+  return MECH_INTRO.filter((m) => level >= m.at).map((m) => m.focus);
+}
+
+const STAGE_ORDER: Stage[] = ['show', 'build', 'use', 'relief', 'plan', 'master', 'peak'];
+
+/** Local wave texture with a progress ceiling on pressure. */
+function stageFor(level: number): Stage {
+  const pos = ((level - 1) % 10) + 1; // 1..10 within a 10-level wave
+  let s: Stage;
+  if (pos === 1) s = 'build';
+  else if (pos <= 3) s = 'use';
+  else if (pos === 5) s = 'relief';
+  else if (pos === 4 || pos === 6) s = 'plan';
+  else if (pos === 7 || pos === 9) s = 'master';
+  else s = 'peak'; // 8, 10
+  // Pressure ceiling: unlocks gradually so the climb has no early spikes.
+  let ceil: Stage = 'peak';
+  if (level <= 12) ceil = 'use';
+  else if (level <= 26) ceil = 'plan';
+  else if (level <= 55) ceil = 'master';
+  if (s !== 'relief' && STAGE_ORDER.indexOf(s) > STAGE_ORDER.indexOf(ceil)) s = ceil;
+  // Strong finale: no breather in the last stretch.
+  if (level >= 141 && (s === 'build' || s === 'use' || s === 'relief')) s = 'master';
+  return s;
 }
 
 
@@ -143,286 +166,68 @@ export function cardFor(level: number): SlotCard {
   return normalizeCard(rawCardFor(level));
 }
 
-/** One macro-map range (guideline section 13). `build` receives the shared
- * context and returns the slot card; `startAt` anchors the 10-slot wave. */
-interface RangeCtx {
-  level: number;
-  stage: Stage;
-  relief: boolean;
-  base: SlotCard;
-  rng: () => number;
-  pick: <T>(arr: T[]) => T;
-}
-interface DecadeRange {
-  upTo: number;
-  startAt: number;
-  build: (c: RangeCtx) => SlotCard;
-}
-
-/** The 150-level macro map as data. Editing the curve = editing this table;
- * the dispatch and the shared card scaffolding live in rawCardFor. */
-const RANGES: DecadeRange[] = [
-  // 1-12: core onboarding — tiny boards, high clarity, no mechanics
-  {
-    upTo: 12,
-    startAt: 1,
-    build: ({ level, base }) => ({
-      ...base,
-      stage: level <= 4 ? 'show' : 'use',
-      types: level <= 6 ? 3 : 4,
-      cap: level <= 9 ? 3 : 4,
-      hidden: level >= 7,
-      empties: 2,
-    }),
-  },
-  // 13-25: core planning — first pressure windows, no special mechanics
-  {
-    upTo: 25,
-    startAt: 13,
-    build: ({ level, stage, base }) => ({
-      ...base,
-      stage,
-      types: stage === 'relief' ? 4 : level <= 19 ? 4 : 5,
-      cap: level <= 16 ? 3 : 4,
-      empties: stage === 'master' || stage === 'peak' ? 1 : 2,
-    }),
-  },
-  // 26-40: topology / partial buffers — Ink Blot intro
-  {
-    upTo: 40,
-    startAt: 26,
-    build: ({ level, stage, relief, base, pick }) => {
-      const deep = stage === 'plan' || stage === 'master' || stage === 'peak';
-      return {
-        ...base,
-        focus: relief ? 'none' : 'blot',
-        stage,
-        types: relief ? 4 : level <= 30 ? 4 : deep ? pick([5, 6]) : 5,
-        empties: stage === 'master' || stage === 'peak' ? 1 : 2,
-        blotCols: relief ? 0 : deep ? 2 : 1,
-        blotsPer: relief ? 1 : stage === 'show' || stage === 'build' ? 1 : pick([1, 2]),
-        minNecessity: relief ? 0 : necessityFor(stage),
-      };
-    },
-  },
-  // 41-55: specialized storage — Target intro, then first 2 different targets
-  {
-    upTo: 55,
-    startAt: 41,
-    build: ({ level, stage, relief, base, pick }) => {
-      const two = level >= 48 && !relief;
-      return {
-        ...base,
-        focus: relief ? 'none' : 'target',
-        stage,
-        types: relief ? 4 : two ? pick([5, 6]) : 5,
-        empties: stage === 'master' || stage === 'peak' ? 1 : 2,
-        targetCount: relief ? 0 : two ? 2 : 1,
-        minNecessity: relief ? 0 : necessityFor(stage),
-      };
-    },
-  },
-  // 56-70: multi-target mastery + delayed buffer (Tape intro from 64)
-  {
-    upTo: 70,
-    startAt: 56,
-    build: ({ level, stage, relief, base, rng, pick }) => {
-      if (relief) return { ...base, stage, types: 5, empties: 2 };
-      if (level < 64) {
-        const three = (stage === 'plan' || stage === 'master' || stage === 'peak') && rng() < 0.6;
-        return {
-          ...base,
-          focus: 'target',
-          stage,
-          types: three ? pick([6, 6, 7]) : pick([5, 6]),
-          empties: stage === 'master' || stage === 'peak' ? 1 : 2,
-          targetCount: three ? 3 : 2,
-          minNecessity: necessityFor(stage),
-        };
-      }
-      const withTarget = stage === 'master' || stage === 'peak';
-      return {
-        ...base,
-        focus: 'tape',
-        second: withTarget ? 'target' : 'none',
-        stage,
-        types: pick([5, 6]),
-        empties: stage === 'master' || stage === 'peak' ? 1 : 2,
-        targetCount: withTarget ? 1 : 0,
-        minNecessity: necessityFor(stage),
-      };
-    },
-  },
-  // 71-85: tape mastery / access objectives (Key intro from 78)
-  {
-    upTo: 85,
-    startAt: 71,
-    build: ({ level, stage, relief, base, rng, pick }) => {
-      if (relief) return { ...base, stage, types: 5, empties: 2 };
-      if (level < 78) {
-        const withBlot = (stage === 'plan' || stage === 'master') && rng() < 0.5;
-        return {
-          ...base,
-          focus: 'tape',
-          second: withBlot ? 'blot' : 'none',
-          stage,
-          types: pick([5, 6, 6]),
-          empties: stage === 'master' || stage === 'peak' ? 1 : 2,
-          blotCols: withBlot ? 1 : 0,
-          blotsPer: 1,
-          minNecessity: necessityFor(stage),
-        };
-      }
-      return {
-        ...base,
-        focus: 'key',
-        stage,
-        types: pick([5, 6, 6]),
-        empties: stage === 'master' || stage === 'peak' ? 1 : 2,
-        minNecessity: necessityFor(stage),
-      };
-    },
-  },
-  // 86-100: key branches — Key mastery, Multi-Lock, selective target combos
-  {
-    upTo: 100,
-    startAt: 86,
-    build: ({ level, stage, relief, base, rng, pick }) => {
-      if (relief) return { ...base, stage, types: 5, empties: 2 };
-      const multi = stage === 'master' || stage === 'peak';
-      const withTarget = stage === 'plan' && rng() < 0.5;
-      return {
-        ...base,
-        focus: multi ? 'multilock' : 'key',
-        second: withTarget ? 'target' : 'none',
-        stage,
-        types: T8_LEVELS.has(level) ? 8 : pick([6, 6, 7]),
-        cap: C5_LEVELS.has(level) ? 5 : 4,
-        empties: stage === 'peak' || stage === 'master' ? 1 : 2,
-        targetCount: withTarget ? 1 : 0,
-        minNecessity: necessityFor(stage),
-      };
-    },
-  },
-  // 101-115: delayed block pool — Neutral Chain Columns with blocks inside
-  {
-    upTo: 115,
-    startAt: 101,
-    build: ({ level, stage, relief, base, pick }) => {
-      if (relief) return { ...base, stage, types: 5, empties: 2 };
-      const deep = stage === 'plan' || stage === 'master' || stage === 'peak';
-      const withTarget = level >= 110 && stage === 'plan';
-      return {
-        ...base,
-        focus: 'chainN',
-        second: withTarget ? 'target' : 'none',
-        stage,
-        types: T8_LEVELS.has(level) ? 8 : deep ? pick([6, 7]) : pick([5, 6]),
-        cap: C5_LEVELS.has(level) ? 5 : 4,
-        empties: stage === 'master' || stage === 'peak' ? 1 : 2,
-        chainLen: deep ? 3 : 2,
-        targetCount: withTarget ? 1 : 0,
-        minNecessity: necessityFor(stage),
-      };
-    },
-  },
-  // 116-130: mandatory set order — colored / mixed chains, multi-target combos
-  {
-    upTo: 130,
-    startAt: 116,
-    build: ({ level, stage, relief, base, rng, pick }) => {
-      if (relief) return { ...base, stage, types: 5, empties: 2 };
-      const mixed = stage === 'master' || stage === 'peak';
-      const withTargets = stage === 'plan' && rng() < 0.5;
-      return {
-        ...base,
-        focus: 'chainC',
-        second: withTargets ? 'target' : 'none',
-        stage,
-        types: T8_LEVELS.has(level) ? 8 : pick([6, 6, 7]),
-        cap: C5_LEVELS.has(level) ? 5 : 4,
-        empties: stage === 'master' || stage === 'peak' ? 1 : 2,
-        chainLen: mixed ? 3 : 2,
-        targetCount: withTargets ? 2 : 0,
-        minNecessity: necessityFor(stage),
-      };
-    },
-  },
-  // 131-142: cross-mechanic mastery — two families
-  {
-    upTo: 142,
-    startAt: 131,
-    build: ({ level, stage, relief, base, rng, pick }) => {
-      if (relief) return { ...base, stage, types: 5, empties: 2 };
-      const [a, b] = pick(CROSS_PAIRS);
-      return fillMechanicKnobs(
-        {
-          ...base,
-          focus: a,
-          second: b,
-          stage,
-          types: T8_LEVELS.has(level) ? 8 : pick([6, 6, 7]),
-          cap: C5_LEVELS.has(level) ? 5 : 4,
-          empties: stage === 'master' || stage === 'peak' ? 1 : 2,
-          minNecessity: necessityFor(stage),
-        },
-        rng,
-      );
-    },
-  },
-  // 143-150: expert peaks
-  {
-    upTo: 150,
-    startAt: 143,
-    build: ({ level, stage, relief, base, rng, pick }) => {
-      if (relief) return { ...base, stage, types: 5, empties: 2 };
-      const [a, b] = pick(CROSS_PAIRS);
-      return fillMechanicKnobs(
-        {
-          ...base,
-          focus: a,
-          second: b,
-          stage,
-          types: T8_LEVELS.has(level) ? 8 : pick([7, 7, 8]),
-          cap: C5_LEVELS.has(level) ? 5 : 4,
-          empties: stage === 'peak' || stage === 'master' ? 1 : 2,
-          minNecessity: necessityFor(stage),
-        },
-        rng,
-      );
-    },
-  },
-];
-
-/** Expert-peaks (143-150) use a hand-authored stage sequence, not the wave. */
-const PEAK_STAGES: Stage[] = ['plan', 'master', 'peak', 'relief', 'plan', 'master', 'peak', 'peak'];
-
 function rawCardFor(level: number): SlotCard {
   const rng = mulberry32(level * 2654435761 + 17);
   const pick = <T>(arr: T[]): T => arr[(rng() * arr.length) | 0];
 
-  const base: SlotCard = {
+  let stage = stageFor(level);
+  const introHere = MECH_INTRO.find((m) => m.at === level);
+  if (introHere) stage = 'build'; // every mechanic debuts at zero pressure
+  const relief = stage === 'relief';
+  const unlocked = introducedBy(level);
+
+  let focus: Focus = 'none';
+  let second: Focus = 'none';
+  if (!relief) {
+    if (introHere) {
+      focus = introHere.focus;
+    } else if (unlocked.length > 0) {
+      focus = pick(unlocked);
+      // Combinations layer in as the player masters the growing set. Prefer a
+      // curated cross-pair (sensible combos), else any other unlocked mechanic.
+      const comboChance = level < 56 ? 0 : level < 90 ? 0.25 : level < 120 ? 0.45 : 0.6;
+      if (unlocked.length >= 2 && rng() < comboChance) {
+        const partners = CROSS_PAIRS.filter(
+          ([a, b]) => (a === focus && unlocked.includes(b)) || (b === focus && unlocked.includes(a)),
+        ).map(([a, b]) => (a === focus ? b : a));
+        const poolC = partners.length > 0 ? partners : unlocked.filter((m) => m !== focus);
+        second = pick(poolC);
+      }
+    }
+  }
+
+  // Base board difficulty rises with the level, independent of the mechanic
+  // schedule - this keeps the curve smooth (no per-intro reset).
+  let types: number;
+  if (level <= 6) types = 3;
+  else if (level <= 14) types = 4;
+  else if (level <= 30) types = 5;
+  else if (level <= 60) types = pick([5, 6]);
+  else if (level <= 100) types = pick([6, 6, 7]);
+  else types = pick([6, 7, 7]);
+  if (T8_LEVELS.has(level)) types = 8;
+
+  let cap = level <= 9 ? 3 : 4;
+  if (C5_LEVELS.has(level)) cap = 5;
+
+  const empties: 1 | 2 = stage === 'master' || stage === 'peak' ? 1 : 2;
+
+  const card: SlotCard = {
     level,
-    focus: 'none',
-    second: 'none',
-    stage: 'use',
-    types: 4,
-    cap: 4,
-    empties: 2,
-    hidden: true,
+    focus,
+    second,
+    stage,
+    types,
+    cap,
+    empties,
+    hidden: level >= 5,
     targetCount: 0,
     blotCols: 0,
     blotsPer: 1,
     chainLen: 0,
-    minNecessity: 0,
+    minNecessity: relief ? 0 : necessityFor(stage),
   };
-
-  const range = RANGES.find((r) => level <= r.upTo) ?? RANGES[RANGES.length - 1];
-  const stage =
-    range.startAt === 143
-      ? PEAK_STAGES[level - 143]
-      : waveStage(((level - range.startAt) % 10) + 1);
-  return range.build({ level, stage, relief: stage === 'relief', base, rng, pick });
+  return fillMechanicKnobs(card, rng);
 }
 
 /** Sets the per-mechanic knobs (targets, blots, chain length, vault) that a

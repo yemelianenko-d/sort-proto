@@ -29,47 +29,49 @@ describe('generateSortingLevel (guideline slot map)', () => {
     expect(seventh.hiddenBelowTop).toBe(true);
   });
 
-  it('assigns focus mechanics to the v3 roadmap decades', () => {
-    // cardFor is cheap (no solve); verify the macro map from section 13
-    expect(cardFor(33).focus).toBe('blot'); // 26-40 blot intro
-    expect(cardFor(46).focus).toBe('target'); // 41-55 target intro
-    expect(cardFor(68).focus).toBe('tape'); // 56-70 tape intro
-    expect(cardFor(81).focus).toBe('key'); // 71-85 key intro
-    expect(cardFor(93).focus).toBe('multilock'); // 86-100 multi-lock mastery
-    expect(cardFor(106).focus).toBe('chainN'); // 101-115 neutral chain vaults
-    expect(cardFor(122).focus).toBe('chainC'); // 116-130 colored/mixed chains
+  it('introduces each mechanic on the Curve C schedule (forced first appearance)', () => {
+    // cardFor is cheap (no solve); each mechanic debuts at its MECH_INTRO level.
+    expect(cardFor(8).focus).toBe('blot');
+    expect(cardFor(14).focus).toBe('target');
+    expect(cardFor(20).focus).toBe('tape');
+    expect(cardFor(26).focus).toBe('key');
+    expect(cardFor(32).focus).toBe('chainN');
+    expect(cardFor(38).focus).toBe('multilock');
+    expect(cardFor(44).focus).toBe('chainC');
     // chain columns always carry blocks (v3 canonical)
-    expect(cardFor(106).chainLen).toBeGreaterThanOrEqual(2);
-    expect(cardFor(122).chainLen).toBeGreaterThanOrEqual(2);
+    expect(cardFor(32).chainLen).toBeGreaterThanOrEqual(2);
+    expect(cardFor(44).chainLen).toBeGreaterThanOrEqual(2);
   });
 
   it('introduces mechanics with the right structure', { timeout: 120000 }, () => {
-    const target = generateSortingLevel(45); // Target: 41-55
+    // Use the deterministic intro levels (forced focus) — indices are 0-based
+    // (level = index + 1), so target intro (level 14) is index 13, etc.
+    const target = generateSortingLevel(13); // target intro (level 14)
     expect(target.targetColumns?.length).toBeGreaterThanOrEqual(1);
     expect(target.columns[target.targetColumns![0].col]).toHaveLength(0);
 
-    const taped = generateSortingLevel(67); // Tape: 56-70
+    const taped = generateSortingLevel(19); // tape intro (level 20)
     expect(taped.tapedColumns?.length).toBeGreaterThan(0);
 
-    const chained = generateSortingLevel(105); // Neutral Chain vault: 101-115
+    const chained = generateSortingLevel(31); // neutral chain intro (level 32)
     expect(chained.chains).toContain(-1);
     // the chain column holds real blocks now, not empty bonus space
     expect(chained.chainedColumnBlocks?.length ?? 0).toBeGreaterThanOrEqual(2);
 
-    const keyLevel = generateSortingLevel(80); // Key/Lock: 71-85
+    const keyLevel = generateSortingLevel(25); // key intro (level 26)
     expect(keyLevel.lockedColumn).toBe(true);
     expect(keyLevel.columns.flat()).toContain(SPECIAL.KEY);
 
-    const colored = generateSortingLevel(121); // Colored Chain: 116-130
+    const colored = generateSortingLevel(43); // colored chain intro (level 44)
     expect(colored.chains?.some((c) => c >= 0)).toBe(true);
 
-    const multi = generateSortingLevel(92); // Multi-Lock: 86-100
+    const multi = generateSortingLevel(37); // multi-lock intro (level 38)
     expect(multi.lockedColumnLocks).toBe(2);
     expect(multi.columns.flat().filter((c) => c === SPECIAL.KEY)).toHaveLength(2);
   });
 
   it('keys are never on top of a pile and double keys sit in distinct columns', { timeout: 60000 }, () => {
-    const multi = generateSortingLevel(92);
+    const multi = generateSortingLevel(37); // multi-lock intro (level 38)
     const keyCols: number[] = [];
     multi.columns.forEach((col, ci) => {
       col.forEach((c, si) => {
