@@ -48,6 +48,10 @@ export const GAME_SETTINGS = {
   layoutSizes: {
     hudHeight: 92,
     boosterBarHeight: 84,
+    // Landscape on phones is height-starved: slimmer top/bottom bars hand the
+    // scarce vertical space back to the board so cells grow toward maxCell.
+    hudHeightLandscape: 52,
+    boosterBarHeightLandscape: 64,
   },
   targetColumn: {
     /** Chalk preview opacity inside an empty target column. */

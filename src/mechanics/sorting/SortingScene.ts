@@ -411,7 +411,12 @@ export class SortingScene extends Phaser.Scene {
 
   private layout(w: number, h: number): void {
     const safe = this.game_.platform.device.safeArea();
-    const { hudHeight, boosterBarHeight } = GAME_SETTINGS.layoutSizes;
+    const sizes = GAME_SETTINGS.layoutSizes;
+    // Landscape is height-starved — use the slim bars so the board keeps the
+    // vertical space (portrait stays exactly as tuned).
+    const landscape = w > h;
+    const hudHeight = landscape ? sizes.hudHeightLandscape : sizes.hudHeight;
+    const boosterBarHeight = landscape ? sizes.boosterBarHeightLandscape : sizes.boosterBarHeight;
     this.paper.resize(w, h);
 
     const top = safe.top + 8;
