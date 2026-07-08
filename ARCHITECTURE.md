@@ -75,5 +75,6 @@ Payments, Storage, Device) новим класом, наприклад
 1. `npm run build` → статичний `dist/` (base `./`, без router).
 2. `npm i @capacitor/core && npm i -D @capacitor/cli`
 3. `npx cap add ios && npx cap add android` (заготовка: `capacitor.config.json`, webDir=dist)
-4. Самозахостити шрифти (зараз Google Fonts CDN).
+4. Шрифти вже self-hosted (`@fontsource/caveat`, `@fontsource/neucha` —
+   bundled woff2, offline-ready; імпортуються в `bootstrap.ts`).
 5. За потреби — native-реалізації PlatformService (storage → Preferences тощо).
