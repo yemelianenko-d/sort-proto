@@ -159,7 +159,7 @@ export class SortingView implements SortingViewContract {
         const { x, y } = this.blockLocalPos(bi, ci);
         b.setPosition(x, y);
         if (liftGroup > 0 && bi >= column.length - liftGroup) {
-          b.y -= 9;
+          b.y -= 12;
           b.setScale(1.03);
         }
         if (opts.landedColumn === ci && bi >= column.length - (opts.landedCount ?? 0)) {
@@ -287,8 +287,12 @@ export class SortingView implements SortingViewContract {
     isTarget: boolean,
   ): Phaser.GameObjects.GameObject {
     const targetInk = this.model.targetColor(columnIndex);
+    // A colored target column always keeps its own colored frame — even when it
+    // is a valid drop target for the current selection. Swapping to the generic
+    // col_frame_target there made its outline visibly thinner then thicker again
+    // on select/deselect (the two green frames have different stroke widths).
     const wantsColorFrame =
-      !isSelected && !isTarget && targetInk !== null && hasTexture(this.scene, ASSET_KEYS.columnFrameTint);
+      !isSelected && targetInk !== null && hasTexture(this.scene, ASSET_KEYS.columnFrameTint);
     const w = this.layout.colWidth;
     const h = this.layout.colHeights[columnIndex];
     const mk = (key: string): Phaser.GameObjects.NineSlice => {
@@ -483,11 +487,10 @@ export class SortingView implements SortingViewContract {
     // Компактна: висота 14px < міжрядного зазору (26px), тож на мобільних
     // розкладках у 2-3 ряди вона не налазить на колонки верхнього ряду.
     const cx = this.layout.colWidth / 2;
-    // трохи темніший за сприйнятий колір арту, щоб штрих читався на папері
-    const t = BLOCK_TINTS[color];
-    const dark = (((t >> 16) & 255) * 0.8 << 16) | ((((t >> 8) & 255) * 0.8) << 8) | (((t & 255) * 0.8) | 0);
+    // Match the block art colour exactly: BLOCK_TINTS is sampled from the block
+    // art, so the arrow reads as the same colour as the blocks that go here.
     const ar = this.scene.add.graphics();
-    ar.lineStyle(3, dark, 0.95);
+    ar.lineStyle(3, BLOCK_TINTS[color], 1);
     ar.lineBetween(cx, -18, cx, -4);
     ar.lineBetween(cx, -4, cx - 5, -11);
     ar.lineBetween(cx, -4, cx + 5, -11);
