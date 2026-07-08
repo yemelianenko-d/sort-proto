@@ -2,7 +2,11 @@
  * validates, writes JSON, and prints the balance report (necessity per
  * mechanic, distributions vs guideline targets, DI-ish curve stats). */
 import { writeFileSync } from 'node:fs';
-import { generateSortingLevelWithMeta, type LevelMeta } from '../src/mechanics/sorting/SortingLevelGenerator';
+import {
+  generateSortingLevelWithMeta,
+  necessityFor,
+  type LevelMeta,
+} from '../src/mechanics/sorting/SortingLevelGenerator';
 import { parseSortingLevels } from '../src/mechanics/sorting/SortingLevelParser';
 import type { SortingLevelConfig } from '../src/mechanics/sorting/SortingTypes';
 
@@ -54,17 +58,24 @@ console.log(
   `mechs  0:${mechN.get(0) ?? 0}/40 1:${mechN.get(1) ?? 0}/70 2:${mechN.get(2) ?? 0}/40 (target/chain families count as one)`,
 );
 
-console.log('\n=== necessity gates ===');
+// Stage-aware gate: a mechanic fails only if it falls below the necessity its
+// STAGE was designed to require (necessityFor). Intro ('build') and breather
+// ('relief') stages target 0, so a gentle mechanic there is intended — not a
+// failure. Previously this flagged any necessity <= 1 regardless of stage,
+// producing false "FAILURES" on intro levels (e.g. 66/71 tape, 81 key).
+console.log('\n=== necessity gates (per-stage target) ===');
 let fails = 0;
 metas.forEach((m, i) => {
+  const target = necessityFor(m.card.stage);
+  if (target === 0) return; // gentle stage — nothing to gate
   for (const [mech, n] of Object.entries(m.necessity)) {
-    if ((n as number) <= 1) {
+    if ((n as number) < target) {
       fails++;
-      console.log(`${levels[i].id}: ${mech}:${n} — below gate`);
+      console.log(`${levels[i].id} (${m.card.stage}): ${mech}:${n} < ${target} — below gate`);
     }
   }
 });
-console.log(fails === 0 ? 'all mechanic levels pass (necessity >= 2)' : `${fails} FAILURES`);
+console.log(fails === 0 ? 'all graded levels meet their stage necessity target' : `${fails} FAILURES`);
 
 console.log('\n=== trap density per decade (avg safeRatio on trap-targeted slots) ===');
 for (let d = 0; d < TOTAL; d += 10) {

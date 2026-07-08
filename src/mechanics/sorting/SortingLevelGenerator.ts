@@ -114,7 +114,10 @@ function waveStage(pos10: number): Stage {
 }
 
 
-function necessityFor(stage: Stage): number {
+/** Designed minimum necessity per stage — the generator's own target and the
+ * baker's necessity gate share this single source of truth. Intro ('build')
+ * and breather ('relief') stages are gentle by design → 0. */
+export function necessityFor(stage: Stage): number {
   if (stage === 'relief' || stage === 'build') return 0;
   if (stage === 'plan') return 2;
   if (stage === 'master' || stage === 'peak') return 3;
