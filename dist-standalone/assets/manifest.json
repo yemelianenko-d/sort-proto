@@ -142,6 +142,10 @@
       "url": "assets/images/deco_tape.png"
     },
     {
+      "key": "deco_clip",
+      "url": "assets/images/deco_clip.png"
+    },
+    {
       "key": "ui_panel_note",
       "url": "assets/images/ui_panel_note.png"
     },

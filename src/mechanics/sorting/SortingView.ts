@@ -31,9 +31,9 @@ export class SortingView implements SortingViewContract {
   /** Done-column tape containers, kept so the completion can animate them. */
   private doneTapes = new Map<number, Phaser.GameObjects.Container>();
   /** The just-removed chain kept visually hanging until its break plays. */
-  private ghostChain: { sprite: Phaser.GameObjects.Image | null; x: number; y: number } | null = null;
+  private ghostChain: { band: Phaser.GameObjects.Container | null; x: number; y: number; color: number } | null = null;
   /** Chain sprites of the chained column (for the reject rattle). */
-  private chainSprites: Phaser.GameObjects.Image[] = [];
+  private chainSprites: Phaser.GameObjects.Container[] = [];
   private layout!: ColumnLayout;
   private area = { x: 0, y: 0, width: 0, height: 0 };
 
@@ -910,8 +910,9 @@ export class SortingView implements SortingViewContract {
     }
   }
 
-  /** The completed set snaps the chain: a spark flies from the cleared
-   * column, the ghost chain breaks in two halves that fall apart. */
+  /** The completed set breaks the seal: a colored spark flies from the cleared
+   * column to the ghost emblem, which then pops off — a quick swell, tilt and
+   * drop as it fades away. */
   animateChainBreak(fromColumn: number, onDone: () => void): void {
     const ghost = this.ghostChain;
     const fromPos = this.layout.positions[fromColumn];
@@ -923,9 +924,9 @@ export class SortingView implements SortingViewContract {
     const sx = this.area.x + fromPos.x + this.layout.colWidth / 2;
     const sy = this.area.y + fromPos.y + this.layout.colHeights[fromColumn] / 2;
 
-    const tint = ghost.sprite?.tintTopLeft ?? COLORS.pencil;
+    const tint = BLOCK_TINTS[ghost.color] ?? COLORS.pencil;
     const spark = this.scene.add.graphics().setDepth(40);
-    spark.fillStyle(ghost.sprite && ghost.sprite.isTinted ? tint : COLORS.pencil, 1);
+    spark.fillStyle(tint, 1);
     spark.fillCircle(0, 0, 5);
     spark.setPosition(sx, sy);
     this.root.add(spark);
@@ -938,50 +939,35 @@ export class SortingView implements SortingViewContract {
       ease: 'Sine.easeInOut',
       onComplete: () => {
         spark.destroy();
-        const src = ghost.sprite;
-        if (!src) {
+        const band = ghost.band;
+        if (!band || !band.active) {
           onDone();
           return;
         }
-        // split the chain sprite into two cropped halves that snap apart
-        const texKey = src.texture.key;
-        const frame = this.scene.textures.getFrame(texKey);
-        const mk = (left: boolean) => {
-          const img = this.scene.add
-            .image(ghost.x, ghost.y, texKey)
-            .setScale(src.scaleX, src.scaleY)
-            .setAngle(src.angle)
-            .setDepth(41);
-          img.setCrop(left ? 0 : frame.width / 2, 0, frame.width / 2, frame.height);
-          if (src.isTinted) img.setTint(src.tintTopLeft);
-          this.root.add(img);
-          return img;
-        };
-        const leftHalf = mk(true);
-        const rightHalf = mk(false);
-        src.setVisible(false);
-        const dur = 340;
+        const baseScale = band.scaleX;
+        const baseAngle = band.angle;
         this.scene.tweens.add({
-          targets: leftHalf,
-          x: ghost.x - 16,
-          y: ghost.y + 30,
-          angle: src.angle - 24,
-          alpha: 0,
-          duration: dur,
-          ease: 'Cubic.easeIn',
-          onComplete: () => leftHalf.destroy(),
-        });
-        this.scene.tweens.add({
-          targets: rightHalf,
-          x: ghost.x + 16,
-          y: ghost.y + 30,
-          angle: src.angle + 24,
-          alpha: 0,
-          duration: dur,
-          ease: 'Cubic.easeIn',
+          targets: band,
+          scaleX: baseScale * 1.16,
+          scaleY: baseScale * 1.16,
+          angle: baseAngle + 8,
+          duration: 120,
+          ease: 'Back.easeOut',
           onComplete: () => {
-            rightHalf.destroy();
-            onDone();
+            this.scene.tweens.add({
+              targets: band,
+              y: band.y + 34,
+              angle: baseAngle + 26,
+              alpha: 0,
+              scaleX: baseScale * 0.9,
+              scaleY: baseScale * 0.9,
+              duration: 300,
+              ease: 'Cubic.easeIn',
+              onComplete: () => {
+                band.destroy();
+                onDone();
+              },
+            });
           },
         });
       },
@@ -1059,10 +1045,11 @@ export class SortingView implements SortingViewContract {
     return this.model.chainedColumn ?? this.model.columns.length - 1;
   }
 
-  /** Chains across the chained column: neutral gray, colored ones tinted.
-   * One completed set removes one chain (its color first, else a neutral).
-   * A ghost entry (the just-removed chain) renders at its original index and
-   * is remembered for the break animation. */
+  /** Seals across the sealed column: each is a gray emblem ribbon carrying a
+   * small block in the color of the set that removes it. Completing that set
+   * removes the matching seal; the column opens when all seals are gone.
+   * A ghost entry (the just-removed seal) renders at its original index and is
+   * remembered for the break animation. */
   private addChainDecor(
     container: Phaser.GameObjects.Container,
     ci: number,
@@ -1075,35 +1062,41 @@ export class SortingView implements SortingViewContract {
     if (ghost) chains.splice(Math.min(ghost.index, chains.length), 0, { value: ghost.value, isGhost: true });
     const cx = this.layout.colWidth / 2;
     const pos = this.layout.positions[ci];
-    if (hasTexture(this.scene, 'deco_chain')) {
-      // the texture is white line art: tint IS the chain color
-      const frame = this.scene.textures.getFrame('deco_chain');
-      chains.forEach((chain, k) => {
-        const y = 30 + k * 26;
-        const img = this.scene.add
-          .image(cx, y, 'deco_chain')
-          .setScale((this.layout.colWidth * 1.18) / frame.width)
-          .setAngle(k % 2 === 0 ? -3 : 3)
-          .setTint(chain.value >= 0 ? BLOCK_TINTS[chain.value] : COLORS.pencil);
-        container.add(img);
-        this.chainSprites.push(img);
-        if (chain.isGhost && pos) {
-          this.ghostChain = { sprite: img, x: this.area.x + pos.x + cx, y: this.area.y + pos.y + y };
-        }
-      });
-      return;
-    }
-    // fallback: hand-drawn bars in the chain colors
-    const g = this.scene.add.graphics();
+    const hasEmblem = hasTexture(this.scene, ASSET_KEYS.seal);
+    const frame = hasEmblem ? this.scene.textures.getFrame(ASSET_KEYS.seal) : null;
+    // emblem sized a touch wider than the column so the ribbon ends overhang
+    const scale = frame ? (this.layout.colWidth * 1.06) / frame.width : 1;
+    const bandH = frame ? frame.height * scale : 26;
+    const step = bandH * 0.82; // seals stack down the closed column
+    const y0 = 30;
     chains.forEach((chain, k) => {
-      const color = chain.value >= 0 ? BLOCK_TINTS[chain.value] : COLORS.pencil;
-      g.fillStyle(color, 0.85);
-      g.fillRoundedRect(-4, 24 + k * 26, this.layout.colWidth + 8, 10, 5);
+      const y = y0 + k * step;
+      const tilt = k % 2 === 0 ? -3 : 3;
+      const band = this.scene.add.container(cx, y).setAngle(tilt);
+      if (frame) {
+        band.add(this.scene.add.image(0, 0, ASSET_KEYS.seal).setScale(scale));
+      } else {
+        // fallback: a gray ribbon bar
+        const g = this.scene.add.graphics();
+        g.fillStyle(COLORS.pencil, 0.85);
+        g.fillRoundedRect(-this.layout.colWidth / 2 - 4, -5, this.layout.colWidth + 8, 10, 5);
+        band.add(g);
+      }
+      // the block whose completed set removes this seal, in the medallion
+      const emblem = this.buildBlock(chain.value >= 0 ? chain.value : 0);
+      emblem.setScale((bandH * 0.5) / this.layout.cell);
+      band.add(emblem);
+      container.add(band);
+      this.chainSprites.push(band);
       if (chain.isGhost && pos) {
-        this.ghostChain = { sprite: null, x: this.area.x + pos.x + cx, y: this.area.y + pos.y + 29 + k * 26 };
+        this.ghostChain = {
+          band,
+          x: this.area.x + pos.x + cx,
+          y: this.area.y + pos.y + y,
+          color: chain.value >= 0 ? chain.value : 0,
+        };
       }
     });
-    container.add(g);
   }
 
   private addLockDecor(container: Phaser.GameObjects.Container, ci: number): void {

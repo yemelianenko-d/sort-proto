@@ -146,6 +146,10 @@
       "url": "assets/images/deco_ribbon.png"
     },
     {
+      "key": "deco_seal",
+      "url": "assets/images/deco_seal.png"
+    },
+    {
       "key": "ui_panel_note",
       "url": "assets/images/ui_panel_note.png"
     },
