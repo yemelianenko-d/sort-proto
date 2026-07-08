@@ -418,9 +418,10 @@ export class SortingScene extends Phaser.Scene {
     this.backBtn.setPosition(safe.left + 30, top + 20);
     this.restartBtn.setPosition(w - safe.right - 30, top + 20);
     this.fullscreenBtn?.setPosition(w - safe.right - 82, top + 20);
-    // moves counter drops under the top-right buttons (they share the corner,
-    // so keeping it on the button row clipped the label — see bug report)
-    this.hudMoves.setPosition(w - safe.right - 12, top + 46);
+    // moves counter sits on the button row, just left of the left-most top-right
+    // button (fullscreen if present, else restart). Right-aligned + mid-anchored.
+    const leftmostBtnEdge = this.fullscreenBtn ? w - safe.right - 104 : w - safe.right - 52;
+    this.hudMoves.setPosition(leftmostBtnEdge - 12, top + 20);
 
 
     const bottomY = h - safe.bottom - boosterBarHeight / 2;
@@ -473,7 +474,7 @@ export class SortingScene extends Phaser.Scene {
         color: COLORS.inkCss,
         padding: { x: 8, y: 6 },
       })
-      .setOrigin(1, 0);
+      .setOrigin(1, 0.5);
 
     this.backBtn = new Button(this, 0, 0, {
       width: 44,
