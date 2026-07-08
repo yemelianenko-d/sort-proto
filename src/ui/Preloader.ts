@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { applyHiDpiCamera, logicalSize } from '../core/utils/hidpi';
-import { COLORS, FONTS, SCENE_KEYS } from '../app/gameConfig';
+import { COLORS, FONTS, SCENE_KEYS, readAppFlags } from '../app/gameConfig';
 import { UI_TEXTS } from '../config/uiTexts';
 import { GAME_SETTINGS } from '../config/gameSettings';
 import { drawPaper } from './sketch';
@@ -70,7 +70,17 @@ export class PreloadScene extends Phaser.Scene {
         mechanic_id: 'sorting',
         levels_count: game.levels.count,
       });
-      this.scene.start(SCENE_KEYS.lobby);
+      // Dev shortcut: `?level=N` boots straight into that level (1-based,
+      // clamped to the available range) so a specific level can be opened
+      // deterministically without clicking through the lobby.
+      const jump = readAppFlags().level;
+      if (jump !== null) {
+        this.scene.start(SCENE_KEYS.sorting, {
+          levelIndex: Math.min(jump - 1, game.levels.count - 1),
+        });
+      } else {
+        this.scene.start(SCENE_KEYS.lobby);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : UI_TEXTS.error.unknown;
       eventBus.emit('error_occurred', { stage: 'preload', message });

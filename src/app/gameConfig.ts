@@ -65,11 +65,16 @@ export const SCENE_KEYS = {
 
 export interface AppFlags {
   debug: boolean;
+  /** Dev shortcut `?level=N` (1-based): boot straight into that level instead
+   * of the lobby. null when absent or malformed. Bounds-checked at use site. */
+  level: number | null;
 }
 
 export function readAppFlags(): AppFlags {
   const params = new URLSearchParams(window.location.search);
-  return { debug: params.get('debug') === 'true' };
+  const raw = params.get('level');
+  const n = raw !== null && /^\d+$/.test(raw) ? parseInt(raw, 10) : NaN;
+  return { debug: params.get('debug') === 'true', level: n >= 1 ? n : null };
 }
 
 export const LEVELS_URL = 'levels/sorting_levels.json';
