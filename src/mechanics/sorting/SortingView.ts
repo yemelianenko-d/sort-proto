@@ -297,29 +297,29 @@ export class SortingView implements SortingViewContract {
     };
 
     if (hasTexture(this.scene, ASSET_KEYS.columnFrame)) {
-      // Selected: keep the base panel (white fill, same geometry) and lay an
-      // ORANGE OUTLINE over it from the tintable frame — tinting the base
-      // itself would flood the whole column orange. Outline matches the blue
-      // frame exactly (both are the base frame geometry).
-      if (isSelected) {
+      // Selected AND colored-target columns keep the base panel (crisp outline +
+      // opaque white fill) and lay a tinted OUTLINE over it from the tintable
+      // frame. Using the tint frame ALONE (as the colored target did) left a
+      // faint, see-through, hard-edged border — paper/doodles showed through and
+      // the jagged bake read as "pixelated". Tinting the base itself would flood
+      // the whole column. The outline sits exactly on the base's frame geometry.
+      const baseWithOutline = (tint: number): Phaser.GameObjects.Container => {
         const cont = this.scene.add.container(0, 0);
         cont.add(mk(ASSET_KEYS.columnFrame));
         if (hasTexture(this.scene, ASSET_KEYS.columnFrameTint)) {
           const outline = mk(ASSET_KEYS.columnFrameTint);
-          outline.setTint(0xf6a94a);
+          outline.setTint(tint);
           cont.add(outline);
         }
         return cont;
-      }
+      };
+      if (isSelected) return baseWithOutline(0xf6a94a);
+      if (wantsColorFrame) return baseWithOutline(BLOCK_TINTS[targetInk!]);
+
       const useTargetTex = isTarget && hasTexture(this.scene, ASSET_KEYS.columnFrameTarget);
-      const key = useTargetTex
-        ? ASSET_KEYS.columnFrameTarget
-        : wantsColorFrame
-          ? ASSET_KEYS.columnFrameTint
-          : ASSET_KEYS.columnFrame;
+      const key = useTargetTex ? ASSET_KEYS.columnFrameTarget : ASSET_KEYS.columnFrame;
       const slice = mk(key);
-      if (wantsColorFrame) slice.setTint(BLOCK_TINTS[targetInk!]);
-      else if (isTarget && !useTargetTex) slice.setTint(0xc4ecc9); // target fallback
+      if (isTarget && !useTargetTex) slice.setTint(0xc4ecc9); // target fallback
       return slice;
     }
     const g = this.scene.add.graphics();
