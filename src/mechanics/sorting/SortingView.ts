@@ -30,10 +30,9 @@ export class SortingView implements SortingViewContract {
   private tapeOverlays = new Map<number, Phaser.GameObjects.GameObject>();
   /** Done-column tape containers, kept so the completion can animate them. */
   private doneTapes = new Map<number, Phaser.GameObjects.Container>();
-  /** The just-removed seal kept visually hanging until its break plays. */
-  private ghostChain:
-    | { column: number; band: Phaser.GameObjects.Container | null; x: number; y: number; color: number }
-    | null = null;
+  /** Data for the just-removed seal so the break animation can rebuild it
+   * fresh (never a live object that a rebuild could destroy mid-tween). */
+  private ghostChain: { column: number; index: number; value: number } | null = null;
   /** Seal emblem bands per sealed column (for the reject rattle). */
   private chainSprites = new Map<number, Phaser.GameObjects.Container[]>();
   private layout!: ColumnLayout;
@@ -140,7 +139,9 @@ export class SortingView implements SortingViewContract {
     this.tapeOverlays.clear();
     this.doneTapes.clear();
     this.chainSprites.clear();
-    this.ghostChain = null;
+    // A break move's rebuild records the ghost; later bare rebuilds (e.g. from
+    // markColumnDone) must NOT wipe it, or the break animation is lost.
+    if (opts.ghostChain) this.ghostChain = { ...opts.ghostChain };
     this.model.columns.forEach((column, ci) => {
       const pos = this.layout.positions[ci];
       const container = this.scene.add.container(this.area.x + pos.x, this.area.y + pos.y);
@@ -192,10 +193,7 @@ export class SortingView implements SortingViewContract {
       });
 
       if (this.model.lockedColumn === ci) this.addLockDecor(container, ci);
-      const ghost = opts.ghostChain && opts.ghostChain.column === ci ? opts.ghostChain : undefined;
-      if (this.model.isSealed(ci) || ghost) {
-        this.addChainDecor(container, ci, ghost);
-      }
+      if (this.model.isSealed(ci)) this.addChainDecor(container, ci);
       if (this.model.isTaped(ci)) {
         const tape = this.buildTapeOverlay();
         container.add(tape);
@@ -918,62 +916,78 @@ export class SortingView implements SortingViewContract {
    * drop as it fades away. */
   animateChainBreak(fromColumn: number, onDone: () => void): void {
     const ghost = this.ghostChain;
+    this.ghostChain = null;
+    const colPos = ghost ? this.layout.positions[ghost.column] : undefined;
     const fromPos = this.layout.positions[fromColumn];
-    if (!ghost || !fromPos) {
+    if (!ghost || !colPos || !fromPos) {
       onDone();
       return;
     }
-    this.ghostChain = null;
+    // onDone MUST run exactly once, even if a tween is dropped (e.g. a rebuild
+    // destroys a target, or the game loop pauses): a hard timer backstops it so
+    // the controller's `busy` flag can never stick and freeze the game.
+    let done = false;
+    const finish = (): void => {
+      if (done) return;
+      done = true;
+      onDone();
+    };
+
+    const { cx, y0, step } = this.sealBandGeom();
+    const gx = this.area.x + colPos.x + cx;
+    const gy = this.area.y + colPos.y + y0 + ghost.index * step;
     const sx = this.area.x + fromPos.x + this.layout.colWidth / 2;
     const sy = this.area.y + fromPos.y + this.layout.colHeights[fromColumn] / 2;
 
-    const tint = BLOCK_TINTS[ghost.color] ?? COLORS.pencil;
+    const tint = BLOCK_TINTS[ghost.value] ?? COLORS.pencil;
     const spark = this.scene.add.graphics().setDepth(40);
     spark.fillStyle(tint, 1);
     spark.fillCircle(0, 0, 5);
     spark.setPosition(sx, sy);
     this.root.add(spark);
 
+    // a FRESH emblem at the seal's slot (never a live object a rebuild owns)
+    const band = this.buildSealBand(ghost.value).setPosition(gx, gy).setDepth(41);
+    this.root.add(band);
+
     this.scene.tweens.add({
       targets: spark,
-      x: ghost.x,
-      y: ghost.y,
+      x: gx,
+      y: gy,
       duration: 230,
       ease: 'Sine.easeInOut',
       onComplete: () => {
         spark.destroy();
-        const band = ghost.band;
-        if (!band || !band.active) {
-          onDone();
-          return;
-        }
-        const baseScale = band.scaleX;
-        const baseAngle = band.angle;
         this.scene.tweens.add({
           targets: band,
-          scaleX: baseScale * 1.16,
-          scaleY: baseScale * 1.16,
-          angle: baseAngle + 8,
+          scaleX: 1.16,
+          scaleY: 1.16,
+          angle: 8,
           duration: 120,
           ease: 'Back.easeOut',
           onComplete: () => {
             this.scene.tweens.add({
               targets: band,
-              y: band.y + 34,
-              angle: baseAngle + 26,
+              y: gy + 34,
+              angle: 26,
               alpha: 0,
-              scaleX: baseScale * 0.9,
-              scaleY: baseScale * 0.9,
+              scaleX: 0.9,
+              scaleY: 0.9,
               duration: 300,
               ease: 'Cubic.easeIn',
               onComplete: () => {
                 band.destroy();
-                onDone();
+                finish();
               },
             });
           },
         });
       },
+    });
+    // backstop: clear busy shortly after the animation's nominal length
+    this.scene.time.delayedCall(820, () => {
+      if (!done) band.destroy();
+      finish();
     });
   }
 
@@ -1042,74 +1056,59 @@ export class SortingView implements SortingViewContract {
     });
   }
 
-  /** Seals across the sealed column: each is a gray emblem ribbon carrying a
-   * small block in the color of the set that removes it. Completing that set
-   * removes the matching seal; the column opens when all seals are gone.
-   * A ghost entry (the just-removed seal) renders at its original index and is
-   * remembered for the break animation. */
-  private addChainDecor(
-    container: Phaser.GameObjects.Container,
-    ci: number,
-    ghost?: { column: number; value: number; index: number },
-  ): void {
-    const bands: Phaser.GameObjects.Container[] = [];
-    const chains: { value: number; isGhost: boolean }[] = this.model
-      .chainsLeft(ci)
-      .map((value) => ({ value, isGhost: false }));
-    if (ghost) chains.splice(Math.min(ghost.index, chains.length), 0, { value: ghost.value, isGhost: true });
-    const cx = this.layout.colWidth / 2;
-    const pos = this.layout.positions[ci];
-    const hasEmblem = hasTexture(this.scene, ASSET_KEYS.seal);
-    const frame = hasEmblem ? this.scene.textures.getFrame(ASSET_KEYS.seal) : null;
-    // emblem sized a touch wider than the column; 2px narrower horizontally
-    // keep the ribbon nearly full-width (looks good); just short of the frame
-    // so the fishtail ends don't merge with it. Uniform scale keeps it round.
+  /** Vertical geometry of the seal stack (shared by decor + break animation).
+   * Emblem is nearly full-width but short of the frame so the fishtail ends
+   * don't merge with it; uniform scale keeps the medallion round. */
+  private sealBandGeom(): { cx: number; y0: number; step: number } {
     const wDisp = this.layout.colWidth * 0.96 + 2;
+    const frame = hasTexture(this.scene, ASSET_KEYS.seal)
+      ? this.scene.textures.getFrame(ASSET_KEYS.seal)
+      : null;
+    const bandH = frame ? 163 * (wDisp / frame.width) : 26; // art is 163 tall in the 256² texture
+    return { cx: this.layout.colWidth / 2, y0: 42, step: bandH * 0.95 };
+  }
+
+  /** Builds one seal emblem band (at local 0,0): gray ribbon + light medallion
+   * socket + the target-colour block. Used for decor and the break ghost. */
+  private buildSealBand(value: number): Phaser.GameObjects.Container {
+    const wDisp = this.layout.colWidth * 0.96 + 2;
+    const frame = hasTexture(this.scene, ASSET_KEYS.seal)
+      ? this.scene.textures.getFrame(ASSET_KEYS.seal)
+      : null;
     const scale = frame ? wDisp / frame.width : 1;
-    // texture is 256² (POT, so mipmaps kill the shimmer); the drawn emblem
-    // inside it is 163 tall with the medallion (cream r=56) centred at 128,128.
-    const artH = 163;
-    const bandH = frame ? artH * scale : 26;
-    const step = bandH * 0.95; // seals stack down the closed column, clear gap
-    const y0 = 42;
-    const medR = 56; // measured cream-centre radius in the emblem texture (px)
-    const sockR = frame ? medR * scale : bandH * 0.4;
+    const bandH = frame ? 163 * scale : 26;
+    const sockR = frame ? 56 * scale : bandH * 0.4; // measured cream-centre radius
     const bd = frame ? sockR * 1.35 : bandH * 0.5; // block fits inside the cream
-    chains.forEach((chain, k) => {
-      const y = y0 + k * step;
-      const band = this.scene.add.container(cx, y); // straight, no tilt
-      if (frame) {
-        // render the emblem as-authored: light gray ribbon, black ink outline
-        band.add(this.scene.add.image(0, 0, ASSET_KEYS.seal).setScale(scale));
-      } else {
-        // fallback: a gray ribbon bar
-        const g = this.scene.add.graphics();
-        g.fillStyle(COLORS.pencil, 0.85);
-        g.fillRoundedRect(-this.layout.colWidth / 2 - 4, -5, this.layout.colWidth + 8, 10, 5);
-        band.add(g);
-      }
-      // light (not white) socket matching the medallion cream, behind the block
-      const socket = this.scene.add.graphics();
-      socket.fillStyle(0xf1ede3, 0.95);
-      socket.fillCircle(0, 0, sockR);
-      band.add(socket);
-      // the block whose completed set removes this seal, centred in the medallion
-      const emblem = this.buildBlock(chain.value >= 0 ? chain.value : 0);
-      emblem.setScale(bd / this.layout.cell);
-      // deepen just the block's colour a touch so it reads richer on the cream
-      emblem.postFX.addColorMatrix().saturate(0.35);
-      band.add(emblem);
+    const band = this.scene.add.container(0, 0);
+    if (frame) {
+      band.add(this.scene.add.image(0, 0, ASSET_KEYS.seal).setScale(scale));
+    } else {
+      const g = this.scene.add.graphics();
+      g.fillStyle(COLORS.pencil, 0.85);
+      g.fillRoundedRect(-this.layout.colWidth / 2 - 4, -5, this.layout.colWidth + 8, 10, 5);
+      band.add(g);
+    }
+    const socket = this.scene.add.graphics();
+    socket.fillStyle(0xf1ede3, 0.95);
+    socket.fillCircle(0, 0, sockR);
+    band.add(socket);
+    const emblem = this.buildBlock(value >= 0 ? value : 0);
+    emblem.setScale(bd / this.layout.cell);
+    emblem.postFX.addColorMatrix().saturate(0.35); // deepen the block's colour a touch
+    band.add(emblem);
+    return band;
+  }
+
+  /** Seals across a sealed column: a gray emblem ribbon per seal, each carrying
+   * a block in the colour of the set that removes it; the column opens when the
+   * last seal falls. Stacks straight down the closed column. */
+  private addChainDecor(container: Phaser.GameObjects.Container, ci: number): void {
+    const { cx, y0, step } = this.sealBandGeom();
+    const bands: Phaser.GameObjects.Container[] = [];
+    this.model.chainsLeft(ci).forEach((value, k) => {
+      const band = this.buildSealBand(value).setPosition(cx, y0 + k * step);
       container.add(band);
       bands.push(band);
-      if (chain.isGhost && pos) {
-        this.ghostChain = {
-          column: ci,
-          band,
-          x: this.area.x + pos.x + cx,
-          y: this.area.y + pos.y + y,
-          color: chain.value >= 0 ? chain.value : 0,
-        };
-      }
     });
     this.chainSprites.set(ci, bands);
   }
