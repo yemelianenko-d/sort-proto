@@ -12,8 +12,12 @@ export const GAME_SETTINGS = {
     initialUndos: 3,
   },
   input: {
-    /** Pointer travel (px) that turns a press into a drag. */
-    dragThresholdPx: 8,
+    /** Pointer travel (logical px) that turns a press into a drag. Sized for
+     * touch: a finger "tap" rolls a few px, so a low threshold turned taps
+     * into drags that released on the same column and silently deselected the
+     * block. Drag is only a convenience (tap-to-pick + tap-to-place also
+     * works), so bias toward keeping small movements as taps. */
+    dragThresholdPx: 16,
   },
   hint: {
     /** Idle nudge for beginners: pulse a valid move source. Disabled — the
