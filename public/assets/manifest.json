@@ -340,10 +340,6 @@
     {
       "key": "tape_flap",
       "url": "assets/images/tape_flap.png"
-    },
-    {
-      "key": "tape_flap_open",
-      "url": "assets/images/tape_flap_open.png"
     }
   ],
   "atlases": [],
