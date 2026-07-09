@@ -1,0 +1,26 @@
+# Ownership map for the Puzzle Hub monorepo.
+#
+# Rule of the road: a mechanic folder is PRIVATE to its owner; the SHARED layer
+# requires review from the shared-layer steward so a change can't silently break
+# another mechanic. Shared code is additive-only for mechanic owners — add
+# options/components, don't change existing behaviour. See docs/MECHANIC_SDK.md.
+
+# --- Shared layer: design system, core, composition root, docs ---
+/src/app/                @yemelianenko-d
+/src/core/               @yemelianenko-d
+/src/ui/                 @yemelianenko-d
+/src/config/             @yemelianenko-d
+/src/platform/           @yemelianenko-d
+/src/scenes/             @yemelianenko-d
+/public/assets/shared/   @yemelianenko-d
+/docs/                   @yemelianenko-d
+/ARCHITECTURE.md         @yemelianenko-d
+/CLAUDE.md               @yemelianenko-d
+/.github/                @yemelianenko-d
+
+# --- Mechanics: each folder owned by its specialist ---
+/src/mechanics/sorting/            @yemelianenko-d
+/public/assets/mechanics/sorting/  @yemelianenko-d
+# New mechanic — assign to its owner when it lands:
+# /src/mechanics/blocks/            @<blocks-owner>
+# /public/assets/mechanics/blocks/  @<blocks-owner>

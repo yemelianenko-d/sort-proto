@@ -4,6 +4,7 @@
  * this is the "mechanics module contract" for the future puzzle hub.
  */
 export { SortingScene } from './SortingScene';
+export { sortingModule } from './sortingModule';
 export { SortingModel } from './SortingModel';
 export { SortingController } from './SortingController';
 export { parseSortingLevels } from './SortingLevelParser';

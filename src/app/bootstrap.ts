@@ -17,7 +17,7 @@ import { eventBus } from '../core/events/EventBus';
 import { PreloadScene } from '../ui/Preloader';
 import { LobbyScene } from '../scenes/LobbyScene';
 import { ErrorScene } from '../scenes/ErrorScene';
-import { SortingScene } from '../mechanics/sorting';
+import { MECHANICS } from './mechanics';
 import { mountDebugOverlay } from './debugOverlay';
 import { logWarn } from '../core/utils/logger';
 
@@ -74,7 +74,9 @@ async function bootstrap(): Promise<void> {
     input: {
       activePointers: 2, // pointer events unify mouse + touch
     },
-    scene: [PreloadScene, LobbyScene, SortingScene, ErrorScene],
+    // Mechanic scenes come from the registry (src/app/mechanics.ts) so adding a
+    // mechanic never touches bootstrap. Shell scenes bracket them.
+    scene: [PreloadScene, LobbyScene, ...MECHANICS.flatMap((m) => [...m.scenes]), ErrorScene],
   });
 
   game.registry.set('game', controller);

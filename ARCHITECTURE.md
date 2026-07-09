@@ -35,11 +35,58 @@ analytics. Комунікація назовні — тільки події Eve
 | `<Name>View.ts` | тільки рендер/анімації, реалізує ViewContract |
 | `<Name>Controller.ts` | input → model → view, емітить події; залежить від ViewContract |
 | `<Name>Scene.ts` | Phaser-сцена: HUD, попапи, lifecycle |
+| `<name>Module.ts` | дескриптор `MechanicModule` (реєстрація + master-lobby) |
 | `index.ts` | публічний API модуля — єдина точка імпорту ззовні |
 
-Щоб додати нову механіку: створити папку за цим контрактом, додати сцену в
-`bootstrap.ts`, конфіг рівнів у `public/levels/`, і емітити ті самі події.
-Core-шар змінювати не потрібно.
+Щоб додати нову механіку: створити папку за цим контрактом, експортувати
+`MechanicModule` і додати **один рядок** у реєстр `src/app/mechanics.ts`, покласти
+конфіг рівнів у `public/levels/`, ассети — у власний бакет (див. нижче), і
+емітити ті самі події. `bootstrap.ts` і Core-шар змінювати не потрібно. Повний
+контракт автора — `docs/MECHANIC_SDK.md`.
+
+## Puzzle Hub: реєстр механік
+
+Проект — колекція самодостатніх механік на спільній базі; у майбутньому їх
+об'єднає master-lobby. Механіки **самоописуються**, а не хардкодяться:
+
+```
+core/mechanics/MechanicModule.ts  — контракт (core, механіко-агностичний)
+mechanics/<id>/<id>Module.ts       — дескриптор механіки (id, title, scenes, levelsUrl…)
+app/mechanics.ts                   — реєстр MECHANICS (composition root, 1 рядок/механіка)
+app/bootstrap.ts                   — будує масив сцен Phaser із реєстру
+```
+
+Master-lobby (коли з'явиться) перелічує `MECHANICS` і малює плитку на кожну.
+Механізм завантаження ассетів/рівнів уже сумісний — саме лоббі відкладено.
+
+## Спільний шар vs механіка
+
+```
+SHARED   app/ core/ ui/ config/ platform/ scenes/  +  public/assets/shared/
+MECHANIC src/mechanics/<id>/  +  public/assets/mechanics/<id>/   — приватне власнику
+```
+
+Механіка споживає UI-кіт (`ui/Popup`, `ui/Button`, `ui/sketch`, `ui/doodles`,
+`COLORS`/`FONTS`) — так вона успадковує вигляд. Спільний код для власників
+механік — **тільки additive** (нові опції/компоненти, не зміна наявної
+поведінки), щоб одна механіка не ламала іншу.
+
+## Ассети: два бакети, префіксовані ключі
+
+- `public/assets/shared/` (+ `manifest.shared.json`) — дизайн-система, вантажиться
+  завжди; спільні ключі не переоголошувати.
+- `public/assets/mechanics/<id>/` (+ манифест) — текстури механіки, ключі з
+  префіксом `<id>/` (напр. `sorting/block_0`), lazy-load при вході в механіку.
+- Відсутній арт → процедурна sketch-заглушка (`core/assets/assetManifest.ts`).
+
+## Governance (ізоляція механік у моно-репо)
+
+- **CODEOWNERS** (`.github/CODEOWNERS`) — зміни спільного шару вимагають ревʼю
+  стюарда; папки механік — власнику.
+- **Тести-заморозка**: юніт-набір механіки (напр. ~107 тестів сортингу) червоніє
+  в CI, якщо спільна зміна ламає механіку → PR блокується.
+- **Namespace**: i18n (`mechanics.<id>`), прогрес (`ProgressManager` per id),
+  ассети (префікс ключа) — власники не перетинаються.
 
 ## Lifecycle рівня
 

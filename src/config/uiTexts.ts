@@ -21,6 +21,11 @@ const uk = {
     title: 'Scribble Sort: Сортування кольорів',
     loading: 'Завантаження…',
   },
+  // Per-mechanic strings live under their own namespace so each mechanic owner
+  // adds keys here without touching another mechanic's block (see MECHANIC_SDK).
+  mechanics: {
+    sorting: { name: 'Сортування' },
+  },
   lobby: {
     play: 'Грати',
     playAgain: 'Грати ще',
@@ -134,6 +139,9 @@ const en: Messages = {
   app: {
     title: 'Scribble Sort: Color Puzzle',
     loading: 'Loading…',
+  },
+  mechanics: {
+    sorting: { name: 'Sorting' },
   },
   lobby: {
     play: 'Play',
