@@ -7,15 +7,20 @@ import { readFileSync } from 'node:fs';
 const tints = [];
 for (let i = 0; i < 8; i++) {
   const png = PNG.sync.read(readFileSync(`public/assets/images/block_${i}.png`));
-  let r = 0, g = 0, b = 0, n = 0, rl = 0, gl = 0, bl = 0, nl = 0;
+  let r = 0, g = 0, b = 0, n = 0, rl = 0, gl = 0, bl = 0, nl = 0, rg = 0, gg = 0, bg = 0, ng = 0;
   for (let p = 0; p < png.data.length; p += 4) {
     const [R, G, B, A] = [png.data[p], png.data[p + 1], png.data[p + 2], png.data[p + 3]];
     if (A < 200) continue;
     const sat = Math.max(R, G, B) - Math.min(R, G, B);
+    const lum = (R + G + B) / 3;
     if (sat > 60) { r += R; g += G; b += B; n++; }
     else if (sat > 25) { rl += R; gl += G; bl += B; nl++; }
+    // mid-tone fill (skip the near-black outline and near-white fringe): the
+    // representative colour of a low-saturation (grey) block
+    if (lum > 95 && lum < 225) { rg += R; gg += G; bg += B; ng++; }
   }
   if (n < 100 && nl > 0) { r = rl; g = gl; b = bl; n = nl; }
+  if (n < 100 && ng > 0) { r = rg; g = gg; b = bg; n = ng; } // grey-block fallback
   tints.push(((r / n) << 16) | ((g / n) << 8) | (b / n | 0));
 }
 console.log('export const BLOCK_TINTS: number[] = [');
