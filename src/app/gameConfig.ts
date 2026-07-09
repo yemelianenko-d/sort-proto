@@ -50,7 +50,7 @@ export const BLOCK_STYLES: BlockStyle[] = [
  * block color (chains, target arrows). Regenerate after art changes:
  * `node tools/art/sample-block-tints.mjs`. */
 export const BLOCK_TINTS: number[] = [
-  0xfb8f85, 0x5c8efc, 0x9de27d, 0xfcbd77, 0xb16ced, 0xce9f72, 0x53ced6, 0xf9669e,
+  0xe48780, 0x6c92e5, 0x77bb5b, 0xe5a86b, 0xa977d7, 0xaf8662, 0x53b8bd, 0xe2739f,
 ];
 
 export const FONTS = {
