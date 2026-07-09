@@ -55,8 +55,11 @@ export function scatterDoodles(
   for (let n = 0; n < count && pool.length > 0; n++) {
     const key = pool.splice(Math.floor(rng() * pool.length), 1)[0];
     const frame = scene.textures.getFrame(key);
+    // wide notes are hand-written one-liners (aspect ~7): size them by a
+    // readable text height, not a thin sliver. Compact doodles are little
+    // drawn marks — a touch bigger too.
     const wide = frame.width / frame.height > 2;
-    const targetW = wide ? 140 + rng() * 50 : 84 + rng() * 40;
+    const targetW = wide ? 220 + rng() * 70 : 100 + rng() * 45;
     const scale = targetW / frame.width;
     const dw = frame.width * scale;
     const dh = frame.height * scale;
