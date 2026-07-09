@@ -174,219 +174,167 @@ export class SortingScene extends Phaser.Scene {
     const node = this.add.container(0, 0);
     const g = this.add.graphics();
 
-    // спецмеханіки: власні міні-сцени
-    if (id === 'ink') {
-      // колонка з двома плямами на дні + перекреслена стрілка: їх не зрушити
-      if (hasTexture(this, 'col_frame')) {
-        node.add(this.add.image(-52, 4, 'col_frame').setDisplaySize(34, 80));
+    // Shared helpers so every mini-scene reads the same. `img` places an asset
+    // centred at (x,y), scaled to fit `size` (aspect kept). `arrow` draws a
+    // clean dashed arc with a real arrowhead (optionally crossed = "can't").
+    const img = (key: string, x: number, y: number, size: number, alpha = 1): void => {
+      if (!hasTexture(this, key)) return;
+      const im = this.add.image(x, y, key);
+      const fr = this.textures.getFrame(key);
+      im.setScale(size / Math.max(fr.width, fr.height));
+      if (alpha < 1) im.setAlpha(alpha);
+      node.add(im);
+    };
+    const arrow = (
+      x0: number,
+      y0: number,
+      x1: number,
+      y1: number,
+      opts: { dashed?: boolean; crossed?: boolean; lift?: number } = {},
+    ): void => {
+      const { dashed = true, crossed = false, lift = 22 } = opts;
+      const mx = (x0 + x1) / 2;
+      const my = Math.min(y0, y1) - lift;
+      const pt = (t: number) => ({
+        x: (1 - t) * (1 - t) * x0 + 2 * (1 - t) * t * mx + t * t * x1,
+        y: (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * my + t * t * y1,
+      });
+      g.lineStyle(2.8, COLORS.ink, 0.92);
+      const N = 22;
+      let prev = pt(0);
+      for (let i = 1; i <= N; i++) {
+        const p = pt(i / N);
+        if (!dashed || i % 2 === 0) g.lineBetween(prev.x, prev.y, p.x, p.y);
+        prev = p;
       }
-      const inkAt = (y: number) => {
-        if (hasTexture(this, 'block_ink')) {
-          node.add(this.add.image(-52, y, 'block_ink').setDisplaySize(24, 24));
-        } else {
-          const gg = this.add.graphics();
-          gg.fillStyle(0x3b3e49, 1);
-          gg.fillRoundedRect(-12, -12, 24, 24, 8);
-          gg.setPosition(-52, y);
-          node.add(gg);
-        }
-      };
-      inkAt(30);
-      inkAt(4);
-      // пунктирна стрілка з колонки назовні...
-      g.lineStyle(2.6, COLORS.ink, 0.9);
-      const pts = 9;
-      for (let i = 0; i < pts; i += 2) {
-        const t0 = i / pts;
-        const t1 = (i + 1) / pts;
-        const px = (tt: number) => -30 + tt * 74;
-        const pyf = (tt: number) => 12 - Math.sin(tt * Math.PI) * 20;
-        g.lineBetween(px(t0), pyf(t0), px(t1), pyf(t1));
+      const end = pt(1);
+      const near = pt(1 - 2 / N);
+      const ang = Math.atan2(end.y - near.y, end.x - near.x);
+      const ah = 11;
+      g.lineBetween(end.x, end.y, end.x - Math.cos(ang - 0.55) * ah, end.y - Math.sin(ang - 0.55) * ah);
+      g.lineBetween(end.x, end.y, end.x - Math.cos(ang + 0.55) * ah, end.y - Math.sin(ang + 0.55) * ah);
+      if (crossed) {
+        g.lineStyle(3.4, 0xb23317, 0.95);
+        const cx = (x0 + x1) / 2;
+        const cy = my + 2;
+        g.lineBetween(cx - 9, cy - 9, cx + 9, cy + 9);
+        g.lineBetween(cx + 9, cy - 9, cx - 9, cy + 9);
       }
-      g.lineBetween(44, 12, 37, 4);
-      g.lineBetween(44, 12, 35, 13);
-      // ...перекреслена: плями не переміщуються
-      g.lineStyle(3.2, 0xb23317, 0.95);
-      g.lineBetween(0, -18, 16, 2);
-      g.lineBetween(16, -18, 0, 2);
-      node.add(g);
-      return { node, height: 92 };
-    }
-    if (id === 'keyblock') {
-      if (hasTexture(this, 'block_key')) {
-        node.add(this.add.image(-50, 6, 'block_key').setDisplaySize(34, 34));
-      } else if (hasTexture(this, 'icon_key')) {
-        node.add(this.add.image(-50, 6, 'icon_key').setDisplaySize(30, 30));
-      }
-      g.lineStyle(2.6, COLORS.ink, 0.9);
-      for (let x = -28; x < 26; x += 12) g.lineBetween(x, 6, x + 6, 6);
-      g.lineBetween(30, 6, 22, 0);
-      g.lineBetween(30, 6, 22, 12);
-      node.add(g);
-      if (hasTexture(this, 'col_frame')) node.add(this.add.image(56, 4, 'col_frame').setDisplaySize(30, 74));
-      if (hasTexture(this, 'icon_lock')) node.add(this.add.image(56, 4, 'icon_lock').setDisplaySize(18, 18));
-      return { node, height: 84 };
-    }
-    // dashed arc arrow, reused by the mini-scenes below
-    const arrow = (x0: number, x1: number, y = 2, lift = 22) => {
-      g.lineStyle(2.6, COLORS.ink, 0.9);
-      const pts = 9;
-      for (let i = 0; i < pts; i += 2) {
-        const t0 = i / pts;
-        const t1 = (i + 1) / pts;
-        const px = (tt: number) => x0 + tt * (x1 - x0);
-        const pyf = (tt: number) => y - Math.sin(tt * Math.PI) * lift;
-        g.lineBetween(px(t0), pyf(t0), px(t1), pyf(t1));
-      }
-      g.lineBetween(x1, y, x1 - 7, y - 8);
-      g.lineBetween(x1, y, x1 - 9, y + 1);
+    };
+    const sparkle = (x: number, y: number, r: number): void => {
+      g.lineStyle(2, COLORS.ink, 0.85);
+      g.lineBetween(x - r, y, x + r, y);
+      g.lineBetween(x, y - r, x, y + r);
+      const r2 = r * 0.6;
+      g.lineStyle(1.2, COLORS.ink, 0.7);
+      g.lineBetween(x - r2, y - r2, x + r2, y + r2);
+      g.lineBetween(x - r2, y + r2, x + r2, y - r2);
     };
 
+    // A colour block that just turned face-up: the ? tile plus a sparkle burst
+    // reading as "reveals" (no travel arrow — that would read as a move).
     if (id === 'hidden') {
-      // сорочка -> та сама плитка лицем: суть механіки без зайвих стрілок
-      if (hasTexture(this, 'block_hidden')) {
-        node.add(this.add.image(-52, 6, 'block_hidden').setDisplaySize(36, 36));
-      }
-      arrow(-30, 32, 6, 20);
+      img('block_hidden', -46, 2, 42);
+      sparkle(2, -4, 7);
+      sparkle(-2, 14, 5);
+      sparkle(9, 16, 4);
       node.add(g);
-      if (hasTexture(this, 'block_1')) {
-        node.add(this.add.image(54, 6, 'block_1').setDisplaySize(36, 36));
-      }
-      if (hasTexture(this, 'icon_lens')) {
-        node.add(this.add.image(-52, 34, 'icon_lens').setDisplaySize(16, 16));
-      }
-      return { node, height: 84 };
+      img('block_1', 48, 2, 42);
+      img('icon_lens', -46, 32, 16);
+      return { node, height: 86 };
     }
 
-    if (id === 'target') {
-      // колонка з крейдяним прев'ю кольору + блок цього кольору летить у неї
-      if (hasTexture(this, 'block_1')) {
-        node.add(this.add.image(-56, 6, 'block_1').setDisplaySize(34, 34));
-      }
-      arrow(-36, 34, 4, 22);
+    // Ink: two blots in a column, a crossed arc to a second empty column —
+    // the blots cannot be lifted OUT of their column.
+    if (id === 'ink') {
+      img('col_frame', -54, 6, 82);
+      img('block_ink', -54, 2, 24);
+      img('block_ink', -54, 26, 24);
+      img('col_frame', 56, 6, 82);
+      arrow(-30, 6, 34, 6, { crossed: true, lift: 20 });
       node.add(g);
-      if (hasTexture(this, 'col_frame')) {
-        node.add(this.add.image(58, 4, 'col_frame').setDisplaySize(32, 78));
-      }
-      if (hasTexture(this, 'block_1')) {
-        for (let k = 0; k < 3; k++) {
-          node.add(
-            this.add
-              .image(58, 28 - k * 24, 'block_1')
-              .setDisplaySize(22, 22)
-              .setAlpha(0.22),
-          );
-        }
-      }
       return { node, height: 92 };
     }
 
-    if (id === 'chains') {
-      // зібраний набір кольору -> іскра -> печатка того ж кольору спадає
-      if (hasTexture(this, 'block_0')) {
-        for (let k = 0; k < 3; k++) {
-          node.add(this.add.image(-56, 26 - k * 21, 'block_0').setDisplaySize(19, 19));
-        }
-      }
-      arrow(-38, 30, 0, 24);
+    // Key hidden in a pile -> arc -> the locked column it opens.
+    if (id === 'keyblock') {
+      img('col_frame', -54, 6, 82);
+      img('block_3', -54, 26, 24);
+      img('block_key', -54, 2, 26);
+      arrow(-30, 2, 34, 2, { lift: 20 });
       node.add(g);
-      if (hasTexture(this, 'col_frame')) {
-        node.add(this.add.image(58, 8, 'col_frame').setDisplaySize(34, 82));
-      }
-      // seal emblem: gray ribbon + medallion carrying the target-colour block
+      img('col_frame', 58, 6, 82);
+      img('icon_lock', 58, 4, 20);
+      return { node, height: 90 };
+    }
+
+    // Colour column: a block flies into a column showing its pale colour hint.
+    if (id === 'target') {
+      img('block_0', -56, 4, 36);
+      arrow(-34, 2, 34, 2, { lift: 22 });
+      node.add(g);
+      img('col_frame', 58, 6, 84);
+      for (let k = 0; k < 3; k++) img('block_0', 58, 26 - k * 24, 22, 0.24);
+      return { node, height: 94 };
+    }
+
+    // Seal: a completed colour set breaks the emblem's seal on the column.
+    if (id === 'chains') {
+      for (let k = 0; k < 3; k++) img('block_0', -56, 26 - k * 21, 19);
+      arrow(-38, 28, 30, 4, { lift: 24 });
+      node.add(g);
+      img('col_frame', 58, 10, 84);
       if (hasTexture(this, 'deco_seal')) {
-        const frame = this.textures.getFrame('deco_seal');
-        const sc = 44 / frame.width; // medallion sits at the texture centre (128,128)
+        const fr = this.textures.getFrame('deco_seal');
+        const sc = 46 / fr.width; // medallion is centred in the 256² texture
         node.add(this.add.image(58, -14, 'deco_seal').setScale(sc));
         const socket = this.add.graphics();
         socket.fillStyle(0xf1ede3, 0.95);
-        socket.fillCircle(58, -14, 56 * sc); // measured cream-centre radius
+        socket.fillCircle(58, -14, 56 * sc);
         node.add(socket);
-        if (hasTexture(this, 'block_0')) {
-          node.add(this.add.image(58, -14, 'block_0').setDisplaySize(16, 16));
-        }
+        img('block_0', 58, -14, 16);
       }
       return { node, height: 100 };
     }
 
-    if (id === 'multilock') {
-      // два ключі -> колонка з двома замками
-      if (hasTexture(this, 'icon_key')) {
-        node.add(this.add.image(-54, -10, 'icon_key').setDisplaySize(26, 26));
-        node.add(this.add.image(-54, 22, 'icon_key').setDisplaySize(26, 26));
-      }
-      arrow(-34, 32, 6, 22);
-      node.add(g);
-      if (hasTexture(this, 'col_frame')) {
-        node.add(this.add.image(58, 4, 'col_frame').setDisplaySize(32, 78));
-      }
-      if (hasTexture(this, 'icon_lock')) {
-        node.add(this.add.image(58, -12, 'icon_lock').setDisplaySize(18, 18));
-        node.add(this.add.image(58, 20, 'icon_lock').setDisplaySize(18, 18));
-      }
-      return { node, height: 92 };
-    }
-
+    // Taped column: take-only. A block cannot be dropped in (crossed arc); the
+    // tape strip is clearly stuck across the column's top edge.
     if (id === 'taped') {
-      // блок із перекресленою стрілкою: класти в заклеєну колонку не можна
-      if (hasTexture(this, 'block_0')) {
-        node.add(this.add.image(-56, 10, 'block_0').setDisplaySize(32, 32));
-      }
-      g.lineStyle(2.6, COLORS.ink, 0.9);
-      const pts = 9;
-      for (let i = 0; i < pts; i += 2) {
-        const t0 = i / pts;
-        const t1 = (i + 1) / pts;
-        const px = (tt: number) => -36 + tt * 70;
-        const pyf = (tt: number) => 8 - Math.sin(tt * Math.PI) * 20;
-        g.lineBetween(px(t0), pyf(t0), px(t1), pyf(t1));
-      }
-      g.lineBetween(34, 8, 27, 0);
-      g.lineBetween(34, 8, 25, 9);
-      // перекреслено червоним
-      g.lineStyle(3.2, 0xb23317, 0.95);
-      g.lineBetween(-8, -22, 8, -2);
-      g.lineBetween(8, -22, -8, -2);
-      node.add(g);
-      if (hasTexture(this, 'col_frame')) node.add(this.add.image(58, 6, 'col_frame').setDisplaySize(34, 80));
+      img('block_0', -56, 8, 34);
+      img('col_frame', 58, 10, 82);
       if (hasTexture(this, 'deco_tape')) {
-        const tape = this.add.image(58, -28, 'deco_tape').setAngle(-6);
-        const frame = this.textures.getFrame('deco_tape');
-        tape.setScale(48 / frame.width);
+        const tape = this.add.image(58, -22, 'deco_tape').setAngle(-5);
+        const fr = this.textures.getFrame('deco_tape');
+        tape.setScale(46 / fr.width);
         node.add(tape);
       }
+      arrow(-32, 6, 34, 6, { crossed: true, lift: 20 });
+      node.add(g);
       return { node, height: 96 };
     }
 
-    // generic scene for 'howto' and 'locked': a block flies into a column
-    const block = hasTexture(this, 'block_0')
-      ? this.add.image(-58, 6, 'block_0').setDisplaySize(36, 36)
-      : this.add.text(-58, 6, '■', { fontSize: '30px' }).setOrigin(0.5);
-    node.add(block);
-
-    // пунктирна стрілка-дуга
-    g.lineStyle(2.6, COLORS.ink, 0.9);
-    const pts = 9;
-    for (let i = 0; i < pts; i += 2) {
-      const t0 = i / pts;
-      const t1 = (i + 1) / pts;
-      const px = (tt: number) => -38 + tt * 74;
-      const pyf = (tt: number) => 2 - Math.sin(tt * Math.PI) * 22;
-      g.lineBetween(px(t0), pyf(t0), px(t1), pyf(t1));
+    // Two keys -> a column carrying two locks.
+    if (id === 'multilock') {
+      img('icon_key', -54, -10, 26);
+      img('icon_key', -54, 22, 26);
+      arrow(-32, 6, 34, 6, { lift: 22 });
+      node.add(g);
+      img('col_frame', 58, 4, 82);
+      img('icon_lock', 58, -12, 18);
+      img('icon_lock', 58, 20, 18);
+      return { node, height: 92 };
     }
-    g.lineBetween(36, 2, 29, -6);
-    g.lineBetween(36, 2, 27, 3);
+
+    // Generic 'howto' / 'locked': a block drops into a column.
+    img('block_0', -58, 4, 36);
+    arrow(-38, 2, 34, 2, { lift: 22 });
     node.add(g);
-
-    if (hasTexture(this, 'col_frame')) {
-      node.add(this.add.image(58, 4, 'col_frame').setDisplaySize(30, 74));
-    }
+    img('col_frame', 58, 4, 82);
     if (id === 'locked') {
-      const lockKey = hasTexture(this, 'icon_lock') ? 'icon_lock' : null;
-      if (lockKey) node.add(this.add.image(58, 4, lockKey).setDisplaySize(18, 18));
-      if (hasTexture(this, 'icon_key')) node.add(this.add.image(58, 44, 'icon_key').setDisplaySize(16, 16));
+      img('icon_lock', 58, 4, 18);
+      img('icon_key', 58, 44, 16);
     }
-    return { node, height: 84 };
+    return { node, height: 86 };
   }
 
   /** Beginner idle hint: after a pause on the first levels, pulse a source. */
