@@ -7,6 +7,7 @@ graphify-out/
 # Art tooling scratch (kept local; not part of the pipeline)
 tools/art/__pycache__/
 tools/art/_preview/
+tools/art/_generated/
 tools/art/montage.mjs
 tools/art/montage-current.mjs
 tools/art/render-blocks.mjs

@@ -7,7 +7,9 @@ import {
 } from './assetManifest';
 
 const REGISTRY_KEY = 'assetManifest';
-const MANIFEST_URL = 'assets/manifest.json';
+
+/** The design-system manifest — loaded for every mechanic. */
+export const SHARED_MANIFEST_URL = 'assets/shared/manifest.json';
 
 declare global {
   interface Window {
@@ -16,24 +18,49 @@ declare global {
   }
 }
 
+/** Merge manifests so nineSliceConfig/animations see one combined registry. */
+function mergeManifests(parts: AssetManifest[]): AssetManifest {
+  return {
+    version: 1,
+    images: parts.flatMap((p) => p.images),
+    atlases: parts.flatMap((p) => p.atlases),
+    nineslice: Object.assign({}, ...parts.map((p) => p.nineslice)),
+    animations: parts.flatMap((p) => p.animations),
+  };
+}
+
 /**
- * Loads external art listed in public/assets/manifest.json.
- * Missing or invalid manifest is NOT an error — the game simply keeps its
+ * Loads external art from the given manifests (the shared design-system one
+ * plus each mechanic's bucket — see `MechanicModule.assetManifestUrl`).
+ * A missing or invalid manifest is NOT an error — the game simply keeps its
  * procedural placeholder rendering (fail-gracefully by design).
  */
-export async function loadExternalAssets(scene: Phaser.Scene): Promise<void> {
+export async function loadExternalAssets(
+  scene: Phaser.Scene,
+  urls: readonly string[],
+): Promise<void> {
   let manifest: AssetManifest | null = null;
-  try {
-    if (typeof window !== 'undefined' && window.__SORTPROTO_ASSETS__) {
+  if (typeof window !== 'undefined' && window.__SORTPROTO_ASSETS__) {
+    // Standalone build injects one pre-merged manifest with data-URI urls.
+    try {
       manifest = parseAssetManifest(window.__SORTPROTO_ASSETS__);
-    } else {
-      const res = await fetch(MANIFEST_URL, { cache: 'no-cache' });
-      if (!res.ok) return; // no manifest -> procedural mode
-      manifest = parseAssetManifest(await res.json());
+    } catch (err) {
+      logWarn('[assets] standalone manifest skipped:', err instanceof Error ? err.message : err);
+      return;
     }
-  } catch (err) {
-    logWarn('[assets] manifest skipped:', err instanceof Error ? err.message : err);
-    return;
+  } else {
+    const parts: AssetManifest[] = [];
+    for (const url of urls) {
+      try {
+        const res = await fetch(url, { cache: 'no-cache' });
+        if (!res.ok) continue; // no manifest -> procedural mode for that bucket
+        parts.push(parseAssetManifest(await res.json()));
+      } catch (err) {
+        logWarn(`[assets] manifest ${url} skipped:`, err instanceof Error ? err.message : err);
+      }
+    }
+    if (parts.length === 0) return;
+    manifest = mergeManifests(parts);
   }
 
   scene.game.registry.set(REGISTRY_KEY, manifest);

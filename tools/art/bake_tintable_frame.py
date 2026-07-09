@@ -11,8 +11,8 @@ Run from the repo root:  python3 tools/art/bake_tintable_frame.py
 
 from PIL import Image
 
-SRC = "public/assets/images/col_frame.png"
-DST = "public/assets/images/col_frame_tint.png"
+SRC = "public/assets/mechanics/sorting/col_frame.png"
+DST = "public/assets/mechanics/sorting/col_frame_tint.png"
 
 # Opacity: only genuinely dark (ink) pixels survive. Luminance above CUTOFF
 # (the paper wash inside the frame) maps to fully transparent, so the tint

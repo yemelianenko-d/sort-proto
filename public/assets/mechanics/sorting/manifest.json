@@ -1,0 +1,157 @@
+{
+  "version": 1,
+  "images": [
+    {
+      "key": "block_0",
+      "url": "assets/mechanics/sorting/block_0.png"
+    },
+    {
+      "key": "block_1",
+      "url": "assets/mechanics/sorting/block_1.png"
+    },
+    {
+      "key": "block_2",
+      "url": "assets/mechanics/sorting/block_2.png"
+    },
+    {
+      "key": "block_3",
+      "url": "assets/mechanics/sorting/block_3.png"
+    },
+    {
+      "key": "block_4",
+      "url": "assets/mechanics/sorting/block_4.png"
+    },
+    {
+      "key": "block_5",
+      "url": "assets/mechanics/sorting/block_5.png"
+    },
+    {
+      "key": "block_6",
+      "url": "assets/mechanics/sorting/block_6.png"
+    },
+    {
+      "key": "block_7",
+      "url": "assets/mechanics/sorting/block_7.png"
+    },
+    {
+      "key": "block_hidden",
+      "url": "assets/mechanics/sorting/block_hidden.png"
+    },
+    {
+      "key": "col_frame",
+      "url": "assets/mechanics/sorting/col_frame.png"
+    },
+    {
+      "key": "col_frame_selected",
+      "url": "assets/mechanics/sorting/col_frame_selected.png"
+    },
+    {
+      "key": "col_frame_target",
+      "url": "assets/mechanics/sorting/col_frame_target.png"
+    },
+    {
+      "key": "col_frame_tint",
+      "url": "assets/mechanics/sorting/col_frame_tint.png"
+    },
+    {
+      "key": "icon_key",
+      "url": "assets/mechanics/sorting/icon_key.png"
+    },
+    {
+      "key": "icon_lens",
+      "url": "assets/mechanics/sorting/icon_lens.png"
+    },
+    {
+      "key": "deco_ribbon",
+      "url": "assets/mechanics/sorting/deco_ribbon.png"
+    },
+    {
+      "key": "deco_seal",
+      "url": "assets/mechanics/sorting/deco_seal.png"
+    },
+    {
+      "key": "block_key",
+      "url": "assets/mechanics/sorting/block_key.png"
+    },
+    {
+      "key": "block_ink",
+      "url": "assets/mechanics/sorting/block_ink.png"
+    },
+    {
+      "key": "deco_sort_01",
+      "url": "assets/mechanics/sorting/deco_sort_01.png"
+    },
+    {
+      "key": "deco_sort_02",
+      "url": "assets/mechanics/sorting/deco_sort_02.png"
+    },
+    {
+      "key": "deco_sort_03",
+      "url": "assets/mechanics/sorting/deco_sort_03.png"
+    },
+    {
+      "key": "deco_sort_04",
+      "url": "assets/mechanics/sorting/deco_sort_04.png"
+    },
+    {
+      "key": "deco_sort_05",
+      "url": "assets/mechanics/sorting/deco_sort_05.png"
+    },
+    {
+      "key": "deco_sort_06",
+      "url": "assets/mechanics/sorting/deco_sort_06.png"
+    },
+    {
+      "key": "deco_sort_07",
+      "url": "assets/mechanics/sorting/deco_sort_07.png"
+    },
+    {
+      "key": "deco_sort_08",
+      "url": "assets/mechanics/sorting/deco_sort_08.png"
+    },
+    {
+      "key": "deco_sort_09",
+      "url": "assets/mechanics/sorting/deco_sort_09.png"
+    },
+    {
+      "key": "deco_sort_10",
+      "url": "assets/mechanics/sorting/deco_sort_10.png"
+    },
+    {
+      "key": "tape_flap",
+      "url": "assets/mechanics/sorting/tape_flap.png"
+    },
+    {
+      "key": "tape_flap_open",
+      "url": "assets/mechanics/sorting/tape_flap_open.png"
+    }
+  ],
+  "atlases": [],
+  "nineslice": {
+    "col_frame": {
+      "left": 14,
+      "right": 14,
+      "top": 14,
+      "bottom": 14
+    },
+    "col_frame_selected": {
+      "left": 14,
+      "right": 14,
+      "top": 14,
+      "bottom": 14
+    },
+    "col_frame_target": {
+      "left": 14,
+      "right": 14,
+      "top": 14,
+      "bottom": 14
+    },
+    "col_frame_tint": {
+      "left": 14,
+      "right": 14,
+      "top": 14,
+      "bottom": 14
+    }
+  },
+  "animations": []
+}

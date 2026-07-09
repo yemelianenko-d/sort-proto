@@ -78,13 +78,16 @@ additively (§9).
 
 ## 5. Assets — your own bucket, prefixed keys
 
-- Shared design-system art lives in `public/assets/shared/` and is loaded for
-  every mechanic. Reference it via the shared keys — never redefine those.
-- Your textures go in `public/assets/mechanics/<id>/` with a manifest, and every
-  key is **prefixed with your id**: `blocks/tile_0`, `blocks/board_frame`, …
-  The prefix makes collisions impossible and ownership obvious.
-- The Preloader always loads the shared manifest; your scene lazy-loads your
-  manifest (`assetManifestUrl`) on entry.
+- Shared design-system art lives in `public/assets/shared/` (with its
+  `manifest.json`) and is loaded for every mechanic. Reference it via the shared
+  keys — never redefine those.
+- Your textures go in `public/assets/mechanics/<id>/` with their own
+  `manifest.json`, and every key is **prefixed with your id**: `blocks/tile_0`,
+  `blocks/board_frame`, … The prefix makes collisions impossible and ownership
+  obvious. (Sorting's keys are grandfathered unprefixed — frozen code; do not
+  copy that: new mechanics always prefix.)
+- The Preloader loads the shared manifest plus every registered module's
+  `assetManifestUrl` (per-mechanic lazy-loading arrives with the master-lobby).
 - Missing art falls back to procedural sketch placeholders (see
   `core/assets/assetManifest.ts`) — you can build entirely on shared assets +
   placeholders and drop your art in later with no code change.

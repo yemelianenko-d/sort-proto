@@ -6,7 +6,8 @@ import { GAME_SETTINGS } from '../config/gameSettings';
 import { drawPaper } from './sketch';
 import { eventBus } from '../core/events/EventBus';
 import type { GameController } from '../core/game/GameController';
-import { loadExternalAssets } from '../core/assets/AssetLoader';
+import { loadExternalAssets, SHARED_MANIFEST_URL } from '../core/assets/AssetLoader';
+import { MECHANICS } from '../app/mechanics';
 
 /**
  * Loading flow:
@@ -62,8 +63,14 @@ export class PreloadScene extends Phaser.Scene {
       // 2) external level config (hard requirement)
       await game.levels.load();
 
-      // 3) optional artist assets (fail-graceful: procedural fallback)
-      await loadExternalAssets(this);
+      // 3) optional artist assets (fail-graceful: procedural fallback).
+      // Shared design system + every registered mechanic's bucket. With one
+      // mechanic upfront === lazy; per-mechanic lazy-load comes with the
+      // master-lobby when there is something to defer.
+      await loadExternalAssets(this, [
+        SHARED_MANIFEST_URL,
+        ...MECHANICS.flatMap((m) => (m.assetManifestUrl ? [m.assetManifestUrl] : [])),
+      ]);
 
       eventBus.emit('assets_loaded', { levels_count: game.levels.count });
       eventBus.emit('mechanic_loaded', {

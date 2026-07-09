@@ -14,5 +14,5 @@ export const sortingModule: MechanicModule = {
   scenes: [SortingScene],
   entryScene: SCENE_KEYS.sorting,
   levelsUrl: LEVELS_URL,
-  // assetManifestUrl: pending the shared/per-mechanic asset split.
+  assetManifestUrl: 'assets/mechanics/sorting/manifest.json',
 };

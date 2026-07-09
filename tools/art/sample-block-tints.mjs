@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 
 const tints = [];
 for (let i = 0; i < 8; i++) {
-  const png = PNG.sync.read(readFileSync(`public/assets/images/block_${i}.png`));
+  const png = PNG.sync.read(readFileSync(`public/assets/mechanics/sorting/block_${i}.png`));
   let r = 0, g = 0, b = 0, n = 0, rl = 0, gl = 0, bl = 0, nl = 0, rg = 0, gg = 0, bg = 0, ng = 0;
   for (let p = 0; p < png.data.length; p += 4) {
     const [R, G, B, A] = [png.data[p], png.data[p + 1], png.data[p + 2], png.data[p + 3]];

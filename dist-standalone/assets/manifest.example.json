@@ -1,33 +1,20 @@
 {
+  "_comment": "Example manifest. Real ones: assets/shared/manifest.json (design system, always loaded) and assets/mechanics/<id>/manifest.json (per-mechanic, urls point into that bucket). Keys missing from a manifest keep their procedural fallback.",
   "version": 1,
   "images": [
-    { "key": "bg_paper", "url": "assets/images/bg_paper.png" },
-    { "key": "block_0", "url": "assets/images/block_0.png" },
-    { "key": "block_1", "url": "assets/images/block_1.png" },
-    { "key": "block_2", "url": "assets/images/block_2.png" },
-    { "key": "block_3", "url": "assets/images/block_3.png" },
-    { "key": "block_4", "url": "assets/images/block_4.png" },
-    { "key": "block_5", "url": "assets/images/block_5.png" },
-    { "key": "block_6", "url": "assets/images/block_6.png" },
-    { "key": "block_7", "url": "assets/images/block_7.png" },
-    { "key": "block_hidden", "url": "assets/images/block_hidden.png" },
-    { "key": "col_frame", "url": "assets/images/col_frame.png" },
-    { "key": "col_frame_selected", "url": "assets/images/col_frame_selected.png" },
-    { "key": "col_frame_target", "url": "assets/images/col_frame_target.png" },
-    { "key": "ui_button", "url": "assets/images/ui_button.png" },
-    { "key": "ui_button_primary", "url": "assets/images/ui_button_primary.png" },
-    { "key": "ui_panel", "url": "assets/images/ui_panel.png" },
-    { "key": "icon_lock", "url": "assets/images/icon_lock.png" }
+    { "key": "bg_paper", "url": "assets/shared/bg_paper.png" },
+    { "key": "ui_button", "url": "assets/shared/ui_button.png" },
+    { "key": "ui_panel", "url": "assets/shared/ui_panel.png" },
+    { "key": "icon_lock", "url": "assets/shared/icon_lock.png" },
+    { "key": "block_0", "url": "assets/mechanics/sorting/block_0.png" },
+    { "key": "col_frame", "url": "assets/mechanics/sorting/col_frame.png" }
   ],
   "atlases": [
     { "key": "fx", "textureUrl": "assets/atlas/fx.png", "atlasUrl": "assets/atlas/fx.json" }
   ],
   "nineslice": {
     "col_frame": { "left": 24, "right": 24, "top": 24, "bottom": 32 },
-    "col_frame_selected": { "left": 24, "right": 24, "top": 24, "bottom": 32 },
-    "col_frame_target": { "left": 24, "right": 24, "top": 24, "bottom": 32 },
     "ui_button": { "left": 24, "right": 24, "top": 24, "bottom": 24 },
-    "ui_button_primary": { "left": 24, "right": 24, "top": 24, "bottom": 24 },
     "ui_panel": { "left": 32, "right": 32, "top": 32, "bottom": 32 }
   },
   "animations": [

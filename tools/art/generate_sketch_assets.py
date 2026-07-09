@@ -1,14 +1,16 @@
 """Programmatic 'pencil on notebook paper' asset generator.
 
 Reproducible art pipeline: python3 tools/art/generate_sketch_assets.py
-Outputs PNGs (real alpha, spec sizes) into public/assets/images/.
+LEGACY: real art has replaced these placeholders. Outputs now land in
+tools/art/_generated/ — copy a file into the right bucket manually
+(public/assets/shared/ or public/assets/mechanics/<id>/) if ever needed.
 """
 import math
 import random
 from PIL import Image, ImageDraw, ImageFilter
 import numpy as np
 
-OUT = "public/assets/images"
+OUT = "tools/art/_generated"
 SS = 4  # supersampling factor
 
 PALETTE = [

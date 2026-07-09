@@ -44,7 +44,7 @@ def keep_largest_component(alpha_small):
     out[~keep] = 0
     return Image.fromarray(out)
 
-OUT = "public/assets/images"
+OUT = "public/assets/mechanics/sorting"
 SENTINEL = (255, 0, 255)
 
 def remove_bg_floodfill(path, work=640):
@@ -193,7 +193,7 @@ def hand_wobble(im, amp, wavelength, seed=7):
 
 def shade_interior(im, alpha=168, tint=(252, 249, 240), texture_strength=0.5, texture_scale=1.0):
     """Paper-style interior: translucent cream fill; if a pencil texture tile
-    (public/assets/images/tex_pencil.png) is present, it is tiled over the
+    (tools/art/tex_pencil.png) is present, it is tiled over the
     interior with a multiply blend. No programmatic hatch."""
     a = np.asarray(im).copy()
     r, g, b, al = a[..., 0].astype(int), a[..., 1].astype(int), a[..., 2].astype(int), a[..., 3]
@@ -206,7 +206,7 @@ def shade_interior(im, alpha=168, tint=(252, 249, 240), texture_strength=0.5, te
         a[..., c] = np.where(interior, (a[..., c] * 0.25 + t * 0.75).astype("uint8"), a[..., c])
     a[..., 3] = np.where(interior, alpha, a[..., 3])
 
-    tex_path = f"{OUT}/tex_pencil.png"
+    tex_path = "tools/art/tex_pencil.png"
     try:
         tex = Image.open(tex_path).convert("L")
         if texture_scale != 1.0:
