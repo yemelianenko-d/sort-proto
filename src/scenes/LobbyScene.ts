@@ -161,38 +161,60 @@ export class LobbyScene extends Phaser.Scene {
     // Вертикальне центрування: на високих екранах (fullscreen, десктоп)
     // контент не липне до верху — рахуємо очікувану висоту блоку і зсуваємо
     // все вниз на половину надлишку (кутові кнопки лишаються в кутах).
+    // Title splits on ':' — a large main line + a smaller tagline. Its block
+    // reserves more vertical room than a one-liner would.
+    const colon = UI_TEXTS.app.title.indexOf(':');
+    const mainPart = colon >= 0 ? UI_TEXTS.app.title.slice(0, colon).trim() : UI_TEXTS.app.title;
+    const subPart = colon >= 0 ? UI_TEXTS.app.title.slice(colon + 1).trim() : '';
+    const titleGap = subPart ? 100 : 62; // title.y -> progress row
     const cellSize0 = this.cellSizeFor(w);
     const rowH0 = cellSize0 + CELL_GAP_Y;
     const cheat0 = this.game_.settings.cheat;
-    const gridTop0 = safe.top + 64 + 62 + 68;
+    const gridTop0 = safe.top + 64 + titleGap + 68;
     const fit0 = Math.floor((h - safe.bottom - gridTop0 - (44 + 58 + 26 + (cheat0 ? 52 : 0))) / rowH0);
     const rows0 = Phaser.Math.Clamp(fit0, 2, 6);
     const playBottom0 = gridTop0 + rows0 * rowH0 - CELL_GAP_Y / 2 + 12 + 31 + 14 + 29 + 29;
     const contentBottom0 = playBottom0 + (cheat0 ? 45 : 0);
     const topShift = Math.max(0, Math.floor((h - safe.bottom - contentBottom0) / 2));
 
+    const maxTitleW = w - 56;
     const title = this.add
-      .text(cx, safe.top + 64 + topShift, UI_TEXTS.app.title, {
+      .text(cx, safe.top + 64 + topShift, mainPart, {
         fontFamily: FONTS.display,
-        fontSize: '34px',
+        fontSize: '52px',
         color: COLORS.inkCss,
         fontStyle: 'bold',
-        align: 'center',
-        // the longer localized name wraps to two lines instead of overflowing
-        wordWrap: { width: w - 70 },
         padding: { x: 12, y: 8 }, // рукописні гліфи виходять за метрики
       })
       .setOrigin(0.5)
       .setAngle(-1.5);
+    if (title.displayWidth > maxTitleW) title.setScale(maxTitleW / title.displayWidth);
     this.header.add(title);
 
     this.header.add(this.drawTitleAccent(title.x - title.displayWidth / 2 - 18, title.y, -1));
     this.header.add(this.drawTitleAccent(title.x + title.displayWidth / 2 + 18, title.y, 1));
+
+    let titleBottom = title.y + title.displayHeight / 2;
+    if (subPart) {
+      const sub = this.add
+        .text(cx, titleBottom + 2, subPart, {
+          fontFamily: FONTS.display,
+          fontSize: '30px', // smaller than the main line
+          color: COLORS.inkCss,
+          align: 'center',
+          wordWrap: { width: maxTitleW },
+          padding: { x: 10, y: 6 },
+        })
+        .setOrigin(0.5, 0)
+        .setAngle(-1);
+      if (sub.displayWidth > maxTitleW) sub.setScale(maxTitleW / sub.displayWidth);
+      this.header.add(sub);
+      titleBottom = sub.y + sub.displayHeight;
+    }
     if (hasTexture(this, 'deco_underline')) {
+      const uw = Math.min(Math.max(title.displayWidth, 180) * 1.05, w - 56);
       this.header.add(
-        this.add
-          .image(cx, title.y + title.displayHeight / 2 + 6, 'deco_underline')
-          .setDisplaySize(Math.min(title.displayWidth * 1.1, w - 80), 8),
+        this.add.image(cx, titleBottom + 4, 'deco_underline').setDisplaySize(uw, 8),
       );
     }
 
@@ -218,7 +240,7 @@ export class LobbyScene extends Phaser.Scene {
     const gap = 7;
     const groupGap = 24; // між "Пройдено" і блоком зірок
     const total = doneText.width + groupGap + starSize + gap + starsText.width;
-    const py = title.y + 62;
+    const py = title.y + titleGap;
     doneText.setPosition(cx - total / 2, py);
     this.header.add(doneText);
     if (hasTexture(this, 'icon_star_full')) {
