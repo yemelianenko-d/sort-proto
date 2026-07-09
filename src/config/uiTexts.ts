@@ -1,10 +1,24 @@
 /**
- * All user-facing texts (config-driven, п.9 гайдлайну).
- * Centralized so copy can be tuned or localized without touching scenes.
+ * Localised user-facing text.
+ *
+ * Dependency-free, fully typed i18n: `uk` is the source dictionary, its shape
+ * becomes the `Messages` contract (`typeof uk`), and every other locale must
+ * satisfy it — a missing or extra key is a compile error. `UI_TEXTS` is a live
+ * binding that `setLocale` re-points; call sites keep reading `UI_TEXTS.x.y`
+ * and pick up the active locale when their screen next renders.
+ *
+ * Add a language: write its dictionary as `Messages`, register it in `DICTS`
+ * and `LOCALES`. Interpolation stays type-safe (typed functions, not string
+ * templates), which is why we avoid a heavier runtime i18n lib on this stack.
  */
-export const UI_TEXTS = {
+import { storageGet, storageSet } from '../core/utils/storage';
+import { STORAGE_KEYS } from '../app/gameConfig';
+
+export type Locale = 'uk' | 'en';
+
+const uk = {
   app: {
-    title: 'Сортуй!',
+    title: 'Scribble Sort: Сортування кольорів',
     loading: 'Завантаження…',
   },
   lobby: {
@@ -20,7 +34,6 @@ export const UI_TEXTS = {
     undo: '↶ назад',
     lens: (n: number) => `🔍 ${n}`,
     key: (n: number) => `🔑 ${n}`,
-    /** Counter-only labels used when texture icons are present. */
     countOnly: (n: number) => `${n}`,
     back: '←',
     restart: '↺',
@@ -38,7 +51,6 @@ export const UI_TEXTS = {
       body: 'Заштриховані блоки відкриваються, коли стають верхніми в колонці. Лупа відкриє один одразу.',
     },
     locked: {
-      emoji: '🔒',
       title: 'Замкнена колонка',
       body: 'Додатковий простір під замком. Відкривається ключем, але рівень можна пройти й без нього.',
     },
@@ -96,7 +108,7 @@ export const UI_TEXTS = {
   settings: {
     button: '⚙',
     title: 'Налаштування',
-    body: "Тут скоро з'являться налаштування гри.",
+    language: 'Мова',
     ok: 'Добре',
     cheat: 'Чит-режим',
   },
@@ -110,4 +122,146 @@ export const UI_TEXTS = {
     unknown: 'Невідома помилка завантаження.',
     levelNotFound: (index: number) => `Рівень з індексом ${index} не знайдено в конфігу.`,
   },
-} as const;
+};
+
+/** The text contract every locale must satisfy. */
+export type Messages = typeof uk;
+
+const en: Messages = {
+  app: {
+    title: 'Scribble Sort: Color Puzzle',
+    loading: 'Loading…',
+  },
+  lobby: {
+    play: 'Play',
+    playAgain: 'Play again',
+    progressDone: (done: number) => `Done: ${done}`,
+    progress: (done: number, total: number, stars: number) =>
+      `Done: ${done}/${total} · ★ ${stars}`,
+  },
+  hud: {
+    level: (n: number, par: number) => `Level ${n} · goal ≤ ${par}`,
+    moves: (n: number) => `Moves: ${n}`,
+    undo: '↶ undo',
+    lens: (n: number) => `🔍 ${n}`,
+    key: (n: number) => `🔑 ${n}`,
+    countOnly: (n: number) => `${n}`,
+    back: '←',
+    restart: '↺',
+  },
+  tutorials: {
+    ok: 'Got it!',
+    howto: {
+      emoji: '✏️',
+      title: 'How to play',
+      body: 'Build columns of matching shapes: drop a block only onto the same shape or into an empty column. A full column of one kind is done — a “done” ribbon marks it and it stays out of the way. Clear the whole board!',
+    },
+    hidden: {
+      emoji: '❓',
+      title: 'Hidden blocks',
+      body: 'Hatched blocks reveal themselves once they reach the top of a column. The lens booster reveals one right away.',
+    },
+    locked: {
+      title: 'Locked column',
+      body: 'Extra space behind a lock. A key opens it, but the level can be finished without it.',
+    },
+    target: {
+      title: 'Colour column',
+      body: 'This column takes one colour — the faint pattern hints which. Drop only blocks of that colour here.',
+    },
+    chains: {
+      title: 'Sealed column',
+      body: 'The column is sealed. Each seal shows a block: collect a full set of that colour and the seal falls. Once every seal is gone, the column opens.',
+    },
+    multilock: {
+      title: 'Two locks',
+      body: 'This column has two locks — you will need two keys. Each key you find removes one lock.',
+    },
+    ink: {
+      title: 'Ink blot',
+      body: 'Dead space at the bottom of a column: it cannot be lifted or removed. You can still drop blocks on top — the column just has fewer usable slots.',
+    },
+    keyblock: {
+      title: 'Key in the pile',
+      body: 'A key is buried among the blocks: dig it out and it unlocks the locked column. Stuck? Open it with the key booster up top.',
+    },
+    taped: {
+      title: 'Paper flap',
+      body: 'The flap is one-way: you can only take blocks out, not put them in. Empty the column once and the flap peels away.',
+    },
+  },
+  decorNotes: ['hw: collect every ★', '3 alike = ✓', 'don’t give up!', 'sort → collect ↺', 'almost there!', '?!'],
+  win: {
+    title: 'Level complete!',
+    moves: (moves: number) => `Moves: ${moves}`,
+    hintBefore: 'Up to 3',
+    hintAfter: (par: number) => `— ${par} moves`,
+    next: 'Next →',
+    toLobby: 'Lobby',
+    replay: 'Replay',
+  },
+  locked: {
+    tag: '🔑 open',
+    tagText: 'open',
+  },
+  quitConfirm: {
+    title: 'Leave the level?',
+    body: 'This level’s progress will be lost, and spent boosters won’t return.',
+    yes: 'Leave',
+    no: 'Stay',
+  },
+  restartConfirm: {
+    title: 'Start over?',
+    body: 'This level’s progress will be lost, and spent boosters won’t return.',
+    yes: '↺ Restart',
+    no: 'Stay',
+  },
+  settings: {
+    button: '⚙',
+    title: 'Settings',
+    language: 'Language',
+    ok: 'OK',
+    cheat: 'Cheat mode',
+  },
+  cheat: {
+    reset: 'Reset progress',
+    win: 'WIN',
+  },
+  error: {
+    title: 'Could not start the game',
+    retry: 'Try again',
+    unknown: 'Unknown loading error.',
+    levelNotFound: (index: number) => `Level with index ${index} was not found in the config.`,
+  },
+};
+
+const DICTS: Record<Locale, Messages> = { uk, en };
+
+/** Registry for the language switcher (labels are endonyms — self-names). */
+export const LOCALES: { code: Locale; label: string }[] = [
+  { code: 'uk', label: 'Українська' },
+  { code: 'en', label: 'English' },
+];
+
+function detectInitialLocale(): Locale {
+  const saved = storageGet(STORAGE_KEYS.locale);
+  if (saved === 'uk' || saved === 'en') return saved;
+  const nav = typeof navigator !== 'undefined' ? navigator.language.toLowerCase() : '';
+  return nav.startsWith('en') ? 'en' : 'uk'; // Ukrainian-first, English if the device is
+}
+
+let activeLocale: Locale = detectInitialLocale();
+
+/** Live text for the active locale. Reassigned by setLocale (ES live binding). */
+export let UI_TEXTS: Messages = DICTS[activeLocale];
+
+export function getLocale(): Locale {
+  return activeLocale;
+}
+
+export function setLocale(locale: Locale): void {
+  if (locale === activeLocale) return;
+  activeLocale = locale;
+  UI_TEXTS = DICTS[locale];
+  storageSet(STORAGE_KEYS.locale, locale);
+}

@@ -6,6 +6,7 @@ export { APP_VERSION };
 export const STORAGE_KEYS = {
   progress: 'sortproto.progress.v1',
   settings: 'sortproto.settings.v1',
+  locale: 'sortproto.locale.v1',
 } as const;
 
 export const COLORS = {

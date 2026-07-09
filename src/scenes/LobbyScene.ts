@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS, FONTS, SCENE_KEYS } from '../app/gameConfig';
 import type { GameController } from '../core/game/GameController';
-import { UI_TEXTS } from '../config/uiTexts';
+import { UI_TEXTS, LOCALES, getLocale, setLocale } from '../config/uiTexts';
 import { PaperBackground, strokeSketchRect } from '../ui/sketch';
 import { Button } from '../ui/Button';
 import { Popup } from '../ui/Popup';
@@ -174,22 +174,25 @@ export class LobbyScene extends Phaser.Scene {
     const title = this.add
       .text(cx, safe.top + 64 + topShift, UI_TEXTS.app.title, {
         fontFamily: FONTS.display,
-        fontSize: '52px',
+        fontSize: '34px',
         color: COLORS.inkCss,
         fontStyle: 'bold',
+        align: 'center',
+        // the longer localized name wraps to two lines instead of overflowing
+        wordWrap: { width: w - 70 },
         padding: { x: 12, y: 8 }, // рукописні гліфи виходять за метрики
       })
       .setOrigin(0.5)
       .setAngle(-1.5);
     this.header.add(title);
 
-    this.header.add(this.drawTitleAccent(title.x - title.width / 2 - 24, title.y - 6, -1));
-    this.header.add(this.drawTitleAccent(title.x + title.width / 2 + 24, title.y - 6, 1));
+    this.header.add(this.drawTitleAccent(title.x - title.displayWidth / 2 - 18, title.y, -1));
+    this.header.add(this.drawTitleAccent(title.x + title.displayWidth / 2 + 18, title.y, 1));
     if (hasTexture(this, 'deco_underline')) {
       this.header.add(
         this.add
-          .image(cx, title.y + 34, 'deco_underline')
-          .setDisplaySize(Math.min(title.width * 1.15, w - 80), 8),
+          .image(cx, title.y + title.displayHeight / 2 + 6, 'deco_underline')
+          .setDisplaySize(Math.min(title.displayWidth * 1.1, w - 80), 8),
       );
     }
 
@@ -552,7 +555,7 @@ export class LobbyScene extends Phaser.Scene {
       icon: 'icon_settings',
       emoji: '⚙️',
       title: UI_TEXTS.settings.title,
-      section: this.buildCheatToggle(cardW - 76),
+      section: this.buildSettingsSection(cardW - 76),
       actions: [
         {
           label: UI_TEXTS.settings.ok,
@@ -603,6 +606,64 @@ export class LobbyScene extends Phaser.Scene {
     });
     node.add([label, track, knob, hit]);
     return { node, height: 44 };
+  }
+
+  /** Settings body: language selector stacked above the cheat toggle. */
+  private buildSettingsSection(width: number): {
+    node: Phaser.GameObjects.Container;
+    height: number;
+  } {
+    const node = this.add.container(0, 0);
+    const lang = this.buildLanguageRow(width);
+    const cheat = this.buildCheatToggle(width);
+    cheat.node.setY(lang.height + 18);
+    node.add([lang.node, cheat.node]);
+    return { node, height: lang.height + 18 + cheat.height };
+  }
+
+  /** Language picker: a labelled pair of pills; tapping one switches the app
+   * language (persisted) and restarts the lobby so every string re-renders. */
+  private buildLanguageRow(width: number): {
+    node: Phaser.GameObjects.Container;
+    height: number;
+  } {
+    const node = this.add.container(0, 0);
+    const label = this.add
+      .text(-width / 2, 0, UI_TEXTS.settings.language, {
+        fontFamily: FONTS.display,
+        fontSize: '22px',
+        color: COLORS.inkCss,
+        padding: { x: 6, y: 4 },
+      })
+      .setOrigin(0, 0.5);
+    node.add(label);
+
+    const gap = 10;
+    const pillW = (width - gap) / 2;
+    const py = 34;
+    const active = getLocale();
+    LOCALES.forEach((loc, i) => {
+      const px = -width / 2 + pillW / 2 + i * (pillW + gap);
+      const on = loc.code === active;
+      const pill = this.add.graphics();
+      pill.fillStyle(on ? 0x9ed4a6 : 0xd6dae3, 1);
+      pill.fillRoundedRect(px - pillW / 2, py - 15, pillW, 30, 15);
+      pill.lineStyle(2.2, COLORS.ink, on ? 0.95 : 0.6);
+      pill.strokeRoundedRect(px - pillW / 2, py - 15, pillW, 30, 15);
+      const t = this.add
+        .text(px, py, loc.label, { fontFamily: FONTS.body, fontSize: '16px', color: COLORS.inkCss })
+        .setOrigin(0.5);
+      const hit = this.add
+        .rectangle(px, py, pillW, 36, 0xffffff, 0)
+        .setInteractive({ useHandCursor: true });
+      hit.on('pointerup', () => {
+        if (loc.code === getLocale()) return;
+        setLocale(loc.code);
+        this.scene.restart(); // re-render the lobby in the new language
+      });
+      node.add([pill, t, hit]);
+    });
+    return { node, height: py + 15 };
   }
 
   private startLevel(index: number): void {
