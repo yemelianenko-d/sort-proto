@@ -180,8 +180,14 @@ export class SortingScene extends Phaser.Scene {
     const img = (key: string, x: number, y: number, size: number, alpha = 1): void => {
       if (!hasTexture(this, key)) return;
       const im = this.add.image(x, y, key);
-      const fr = this.textures.getFrame(key);
-      im.setScale(size / Math.max(fr.width, fr.height));
+      if (key === 'col_frame') {
+        // the frame art is a very tall 96x506; force a readable mini-column
+        // width instead of aspect-scaling it down to a thin strip.
+        im.setDisplaySize(32, 78);
+      } else {
+        const fr = this.textures.getFrame(key);
+        im.setScale(size / Math.max(fr.width, fr.height));
+      }
       if (alpha < 1) im.setAlpha(alpha);
       node.add(im);
     };
@@ -297,16 +303,16 @@ export class SortingScene extends Phaser.Scene {
       return { node, height: 100 };
     }
 
-    // Taped column: take-only. A block cannot be dropped in (crossed arc); the
-    // tape strip is clearly stuck across the column's top edge.
+    // Paper-flap column: take-only. A block cannot be dropped in (crossed arc);
+    // the paper flap (same asset as in play) hangs over the column's top edge.
     if (id === 'taped') {
       img('block_0', -56, 8, 34);
       img('col_frame', 58, 10, 82);
-      if (hasTexture(this, 'deco_tape')) {
-        const tape = this.add.image(58, -22, 'deco_tape').setAngle(-5);
-        const fr = this.textures.getFrame('deco_tape');
-        tape.setScale(46 / fr.width);
-        node.add(tape);
+      if (hasTexture(this, 'tape_flap')) {
+        const flap = this.add.image(58, -21, 'tape_flap');
+        const fr = this.textures.getFrame('tape_flap');
+        flap.setDisplaySize(29, (29 * fr.height) / fr.width);
+        node.add(flap);
       }
       arrow(-32, 6, 34, 6, { crossed: true, lift: 20 });
       node.add(g);
