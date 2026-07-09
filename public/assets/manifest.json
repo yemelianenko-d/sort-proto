@@ -373,10 +373,10 @@
       "bottom": 20
     },
     "ui_panel": {
-      "left": 26,
-      "right": 26,
-      "top": 26,
-      "bottom": 26
+      "left": 40,
+      "right": 40,
+      "top": 40,
+      "bottom": 40
     },
     "ui_button_success": {
       "left": 20,
