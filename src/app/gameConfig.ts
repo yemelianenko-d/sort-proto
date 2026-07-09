@@ -31,15 +31,17 @@ export interface BlockStyle {
 }
 
 /** Colour is always doubled by a pattern + glyph (colour-blind friendly). */
+// glyph mirrors the shape drawn in block_N.png (fallback only — art wins when
+// present); ink is the fallback stroke colour. Keep in sync with the art.
 export const BLOCK_STYLES: BlockStyle[] = [
-  { ink: 0xb23317, pattern: 'stripes', glyph: '♥' },
-  { ink: 0x1d5da8, pattern: 'dots', glyph: '○' },
-  { ink: 0x2b7a3c, pattern: 'cross', glyph: '△' },
-  { ink: 0xc26205, pattern: 'hlines', glyph: '☆' },
-  { ink: 0x6836b0, pattern: 'vlines', glyph: '♡' },
-  { ink: 0xa51f5e, pattern: 'stripes', glyph: '◇' },
-  { ink: 0x0e8578, pattern: 'dots', glyph: '✱' },
-  { ink: 0x4a4a4a, pattern: 'solid', glyph: '◻' },
+  { ink: 0xb23317, pattern: 'stripes', glyph: '♥' }, // 0 heart
+  { ink: 0x1d5da8, pattern: 'cross', glyph: '△' }, // 1 triangle
+  { ink: 0x2b7a3c, pattern: 'stripes', glyph: '◇' }, // 2 diamond
+  { ink: 0xc26205, pattern: 'dots', glyph: '○' }, // 3 circle
+  { ink: 0x6836b0, pattern: 'vlines', glyph: '✿' }, // 4 flower
+  { ink: 0xa51f5e, pattern: 'hlines', glyph: '⬡' }, // 5 hexagon
+  { ink: 0x0e8578, pattern: 'dots', glyph: '☆' }, // 6 star
+  { ink: 0x4a4a4a, pattern: 'hlines', glyph: '≈' }, // 7 waves
 ];
 
 /** Perceived block colors sampled from the art textures (block_N.png) —
@@ -48,7 +50,7 @@ export const BLOCK_STYLES: BlockStyle[] = [
  * block color (chains, target arrows). Regenerate after art changes:
  * `node tools/art/sample-block-tints.mjs`. */
 export const BLOCK_TINTS: number[] = [
-  0xf07f7b, 0x5685f9, 0x3bb04e, 0xf8b575, 0x9b62cb, 0x9a6e4c, 0x3cb6ba, 0xee6396,
+  0xfc9589, 0x3d77fb, 0x5eb44c, 0xfcc682, 0xa968da, 0xb78153, 0x3fbdcb, 0xf6689b,
 ];
 
 export const FONTS = {
