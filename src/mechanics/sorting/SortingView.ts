@@ -393,16 +393,17 @@ export class SortingView implements SortingViewContract {
     if (!overlay || !pos || !hasTexture(this.scene, ASSET_KEYS.tapeFlapOpen)) return;
     const w = this.layout.colWidth;
     const frame = this.scene.textures.getFrame(ASSET_KEYS.tapeFlapOpen);
-    const scale = (w * 0.9 - 3) / frame.width;
+    const scale = (w * 0.74) / frame.width; // a touch narrower than the column
     const wx = this.area.x + pos.x + w / 2;
     const wy = this.area.y + pos.y + 6; // hinge a touch below the top edge so the
     // opened flap stays joined to the column (not floating above it)
-    // transient open flap, hinged at the bottom so it lifts UP off the column
+    // transient open flap, hinged at the bottom so it lifts UP; depth -1 renders
+    // it BEHIND the columns, so it reads as lifting from behind the column
     const flap = this.scene.add
       .image(wx, wy, ASSET_KEYS.tapeFlapOpen)
       .setOrigin(0.5, 1)
       .setScale(scale, scale * 0.5)
-      .setDepth(60);
+      .setDepth(-1);
     this.root.add(flap);
     (overlay as Phaser.GameObjects.Image).setVisible(false);
     this.scene.tweens.add({
