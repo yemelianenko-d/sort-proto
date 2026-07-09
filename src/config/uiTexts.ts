@@ -121,6 +121,9 @@ const uk = {
     retry: 'Спробувати ще раз',
     unknown: 'Невідома помилка завантаження.',
     levelNotFound: (index: number) => `Рівень з індексом ${index} не знайдено в конфігу.`,
+    loadFailed: (url: string) => `Не вдалося завантажити конфіг рівнів (${url}): мережа недоступна.`,
+    httpError: (url: string, status: number) => `Конфіг рівнів не знайдено (${url}): HTTP ${status}.`,
+    corrupted: 'Конфіг рівнів пошкоджено: файл не є валідним JSON.',
   },
 };
 
@@ -232,6 +235,9 @@ const en: Messages = {
     retry: 'Try again',
     unknown: 'Unknown loading error.',
     levelNotFound: (index: number) => `Level with index ${index} was not found in the config.`,
+    loadFailed: (url: string) => `Could not load the level config (${url}): network unavailable.`,
+    httpError: (url: string, status: number) => `Level config not found (${url}): HTTP ${status}.`,
+    corrupted: 'Level config is corrupted: the file is not valid JSON.',
   },
 };
 

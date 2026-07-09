@@ -1,4 +1,5 @@
 import { LEVELS_URL } from '../../app/gameConfig';
+import { UI_TEXTS } from '../../config/uiTexts';
 import { parseSortingLevels } from '../../mechanics/sorting/SortingLevelParser';
 import { generateSortingLevel } from '../../mechanics/sorting/SortingLevelGenerator';
 import type { SortingLevelConfig } from '../../mechanics/sorting/SortingTypes';
@@ -33,16 +34,16 @@ export class LevelManager {
     try {
       response = await fetch(LEVELS_URL, { cache: 'no-cache' });
     } catch {
-      throw new Error(`Не вдалося завантажити конфіг рівнів (${LEVELS_URL}): мережа недоступна.`);
+      throw new Error(UI_TEXTS.error.loadFailed(LEVELS_URL));
     }
     if (!response.ok) {
-      throw new Error(`Конфіг рівнів не знайдено (${LEVELS_URL}): HTTP ${response.status}.`);
+      throw new Error(UI_TEXTS.error.httpError(LEVELS_URL, response.status));
     }
     let json: unknown;
     try {
       json = await response.json();
     } catch {
-      throw new Error('Конфіг рівнів пошкоджено: файл не є валідним JSON.');
+      throw new Error(UI_TEXTS.error.corrupted);
     }
     this.levels = parseSortingLevels(json); // throws with a human-readable reason
     this.loaded = true;
