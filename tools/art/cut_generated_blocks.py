@@ -155,40 +155,12 @@ def hollow_interior(im, erode=9):
     return Image.fromarray(a)
 
 
-def pencil_block(im, sat=0.80, val=0.94, grain=0.48, tex_scale=0.5):
-    """Tone down the vivid AI fill and re-introduce a hand-drawn pencil grain,
-    so filled blocks read as sketch instead of flat digital colour."""
-    a = np.asarray(im).astype(np.float32)
-    hsv = np.asarray(im.convert("RGB").convert("HSV")).astype(np.float32)
-    hsv[..., 1] *= sat
-    hsv[..., 2] *= val
-    hsv = np.clip(hsv, 0, 255).astype("uint8")
-    toned = np.asarray(Image.fromarray(hsv, "HSV").convert("RGB")).astype(np.float32)
-    out = np.dstack([toned, a[..., 3]])
-    try:
-        tex = Image.open(f"{OUT}/tex_pencil.png").convert("L")
-        if tex_scale != 1.0:
-            tex = tex.resize((max(8, round(tex.width * tex_scale)), max(8, round(tex.height * tex_scale))), Image.LANCZOS)
-        w, h = im.size
-        tiled = Image.new("L", (w, h))
-        for ty in range(0, h, tex.height):
-            for tx in range(0, w, tex.width):
-                tiled.paste(tex, (tx, ty))
-        g = np.asarray(tiled).astype(np.float32) / 255.0
-        for c in range(3):
-            out[..., c] = out[..., c] * (1 - grain + grain * g)
-    except FileNotFoundError:
-        pass  # no pencil texture yet — toned colour only
-    return Image.fromarray(np.clip(out, 0, 255).astype("uint8"), "RGBA")
-
-
 def save_block(name, path):
     im = remove_bg(path)
     side = max(im.size)
     canvas = Image.new("RGBA", (side, side), (0, 0, 0, 0))
     canvas.paste(im, ((side - im.width) // 2, (side - im.height) // 2), im)
     canvas = canvas.resize((128, 128), Image.LANCZOS)
-    canvas = pencil_block(canvas)  # sketch treatment: soften vivid fill + grain
     canvas.save(f"{OUT}/{name}.png")
     print("ok", name, "from", path.split("/")[-1])
 
