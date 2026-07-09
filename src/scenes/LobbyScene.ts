@@ -161,12 +161,10 @@ export class LobbyScene extends Phaser.Scene {
     // Вертикальне центрування: на високих екранах (fullscreen, десктоп)
     // контент не липне до верху — рахуємо очікувану висоту блоку і зсуваємо
     // все вниз на половину надлишку (кутові кнопки лишаються в кутах).
-    // Title splits on ':' — a large main line + a smaller tagline. Its block
-    // reserves more vertical room than a one-liner would.
+    // Lobby shows only the main name (before ':').
     const colon = UI_TEXTS.app.title.indexOf(':');
     const mainPart = colon >= 0 ? UI_TEXTS.app.title.slice(0, colon).trim() : UI_TEXTS.app.title;
-    const subPart = colon >= 0 ? UI_TEXTS.app.title.slice(colon + 1).trim() : '';
-    const titleGap = subPart ? 100 : 62; // title.y -> progress row
+    const titleGap = 62; // title.y -> progress row
     const cellSize0 = this.cellSizeFor(w);
     const rowH0 = cellSize0 + CELL_GAP_Y;
     const cheat0 = this.game_.settings.cheat;
@@ -194,23 +192,7 @@ export class LobbyScene extends Phaser.Scene {
     this.header.add(this.drawTitleAccent(title.x - title.displayWidth / 2 - 18, title.y, -1));
     this.header.add(this.drawTitleAccent(title.x + title.displayWidth / 2 + 18, title.y, 1));
 
-    let titleBottom = title.y + title.displayHeight / 2;
-    if (subPart) {
-      const sub = this.add
-        .text(cx, titleBottom + 2, subPart, {
-          fontFamily: FONTS.display,
-          fontSize: '30px', // smaller than the main line
-          color: COLORS.inkCss,
-          align: 'center',
-          wordWrap: { width: maxTitleW },
-          padding: { x: 10, y: 6 },
-        })
-        .setOrigin(0.5, 0)
-        .setAngle(-1);
-      if (sub.displayWidth > maxTitleW) sub.setScale(maxTitleW / sub.displayWidth);
-      this.header.add(sub);
-      titleBottom = sub.y + sub.displayHeight;
-    }
+    const titleBottom = title.y + title.displayHeight / 2;
     if (hasTexture(this, 'deco_underline')) {
       const uw = Math.min(Math.max(title.displayWidth, 180) * 1.05, w - 56);
       this.header.add(
@@ -630,21 +612,25 @@ export class LobbyScene extends Phaser.Scene {
     return { node, height: 44 };
   }
 
-  /** Settings body: language selector stacked above the cheat toggle. */
+  private langMenu: Phaser.GameObjects.Container | null = null;
+  private langBackdrop: Phaser.GameObjects.Rectangle | null = null;
+
+  /** Settings body: aligned rows (label left, control right) — a language
+   * dropdown above the cheat toggle. */
   private buildSettingsSection(width: number): {
     node: Phaser.GameObjects.Container;
     height: number;
   } {
     const node = this.add.container(0, 0);
+    const rowGap = 24;
     const lang = this.buildLanguageRow(width);
     const cheat = this.buildCheatToggle(width);
-    cheat.node.setY(lang.height + 18);
+    cheat.node.setY(lang.height + rowGap);
     node.add([lang.node, cheat.node]);
-    return { node, height: lang.height + 18 + cheat.height };
+    return { node, height: lang.height + rowGap + cheat.height };
   }
 
-  /** Language picker: a labelled pair of pills; tapping one switches the app
-   * language (persisted) and restarts the lobby so every string re-renders. */
+  /** Language row: label + a dropdown button that opens a menu of locales. */
   private buildLanguageRow(width: number): {
     node: Phaser.GameObjects.Container;
     height: number;
@@ -660,32 +646,82 @@ export class LobbyScene extends Phaser.Scene {
       .setOrigin(0, 0.5);
     node.add(label);
 
-    const gap = 10;
-    const pillW = (width - gap) / 2;
-    const py = 34;
-    const active = getLocale();
+    const bh = 36;
+    const bw = Math.min(168, width * 0.58);
+    const btn = this.add.container(width / 2 - bw / 2, 0);
+    const g = this.add.graphics();
+    g.fillStyle(0xeef0f4, 1);
+    g.fillRoundedRect(-bw / 2, -bh / 2, bw, bh, bh / 2);
+    g.lineStyle(2, COLORS.ink, 0.85);
+    g.strokeRoundedRect(-bw / 2, -bh / 2, bw, bh, bh / 2);
+    const cur = LOCALES.find((l) => l.code === getLocale())?.label ?? '';
+    const t = this.add
+      .text(-bw / 2 + 14, 0, cur, { fontFamily: FONTS.body, fontSize: '16px', color: COLORS.inkCss })
+      .setOrigin(0, 0.5);
+    const chev = this.add
+      .text(bw / 2 - 15, -1, '▾', { fontFamily: FONTS.body, fontSize: '17px', color: COLORS.inkCss })
+      .setOrigin(0.5);
+    const hit = this.add
+      .rectangle(0, 0, bw, bh, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true });
+    hit.on('pointerup', () => this.openLangMenu(btn, bw, bh));
+    btn.add([g, t, chev, hit]);
+    node.add(btn);
+    return { node, height: bh };
+  }
+
+  /** Opens the language dropdown as a scene overlay anchored under the button,
+   * with a full-screen backdrop that closes it on an outside tap. */
+  private openLangMenu(btn: Phaser.GameObjects.Container, bw: number, bh: number): void {
+    if (this.langMenu) {
+      this.closeLangMenu();
+      return;
+    }
+    const { w, h } = logicalSize(this);
+    const m = btn.getWorldTransformMatrix();
+    const wx = m.tx;
+    const wy = m.ty;
+    const backdrop = this.add.rectangle(w / 2, h / 2, w, h, 0x000000, 0.001).setInteractive().setDepth(1998);
+    backdrop.on('pointerup', () => this.closeLangMenu());
+    const menu = this.add.container(0, 0).setDepth(2000);
+    const optH = 34;
+    const optGap = 6;
     LOCALES.forEach((loc, i) => {
-      const px = -width / 2 + pillW / 2 + i * (pillW + gap);
-      const on = loc.code === active;
-      const pill = this.add.graphics();
-      pill.fillStyle(on ? 0x9ed4a6 : 0xd6dae3, 1);
-      pill.fillRoundedRect(px - pillW / 2, py - 15, pillW, 30, 15);
-      pill.lineStyle(2.2, COLORS.ink, on ? 0.95 : 0.6);
-      pill.strokeRoundedRect(px - pillW / 2, py - 15, pillW, 30, 15);
-      const t = this.add
-        .text(px, py, loc.label, { fontFamily: FONTS.body, fontSize: '16px', color: COLORS.inkCss })
-        .setOrigin(0.5);
-      const hit = this.add
-        .rectangle(px, py, pillW, 36, 0xffffff, 0)
+      const oy = wy + bh / 2 + 8 + i * (optH + optGap);
+      const on = loc.code === getLocale();
+      const og = this.add.graphics();
+      og.fillStyle(on ? 0xdff0e2 : 0xffffff, 1);
+      og.fillRoundedRect(wx - bw / 2, oy, bw, optH, 9);
+      og.lineStyle(2, COLORS.ink, 0.85);
+      og.strokeRoundedRect(wx - bw / 2, oy, bw, optH, 9);
+      const ot = this.add
+        .text(wx - bw / 2 + 14, oy + optH / 2, loc.label, {
+          fontFamily: FONTS.body,
+          fontSize: '16px',
+          color: COLORS.inkCss,
+        })
+        .setOrigin(0, 0.5);
+      const oh = this.add
+        .rectangle(wx, oy + optH / 2, bw, optH, 0xffffff, 0)
         .setInteractive({ useHandCursor: true });
-      hit.on('pointerup', () => {
-        if (loc.code === getLocale()) return;
-        setLocale(loc.code);
-        this.scene.restart(); // re-render the lobby in the new language
+      oh.on('pointerup', () => {
+        this.closeLangMenu();
+        if (loc.code !== getLocale()) {
+          setLocale(loc.code);
+          this.scene.restart(); // re-render the lobby in the new language
+        }
       });
-      node.add([pill, t, hit]);
+      menu.add([og, ot, oh]);
     });
-    return { node, height: py + 15 };
+    this.langMenu = menu;
+    this.langBackdrop = backdrop;
+  }
+
+  private closeLangMenu(): void {
+    this.langMenu?.destroy(true);
+    this.langMenu = null;
+    this.langBackdrop?.destroy();
+    this.langBackdrop = null;
   }
 
   private startLevel(index: number): void {
