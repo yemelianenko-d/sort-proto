@@ -20,6 +20,14 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['dist/**', 'node_modules/**'],
+    // dist/build output + local art-tooling scratch (not part of the pipeline)
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'tools/art/_preview/**',
+      'tools/art/montage.mjs',
+      'tools/art/montage-current.mjs',
+      'tools/art/render-blocks.mjs',
+    ],
   },
 );
