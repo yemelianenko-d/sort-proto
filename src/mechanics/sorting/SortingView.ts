@@ -369,9 +369,8 @@ export class SortingView implements SortingViewContract {
     }
   }
 
-  /** Cover across the top of a sealed (take-only) column. The mechanic is
-   * unchanged — only the look: a folded paper flap (tape_flap) if delivered,
-   * else the washi tape, else a procedural strip. */
+  /** Cover across the top of a take-only column: a folded paper flap
+   * (tape_flap) if delivered, else a procedural strip. */
   private buildTapeOverlay(): Phaser.GameObjects.GameObject {
     const w = this.layout.colWidth;
     if (hasTexture(this.scene, ASSET_KEYS.tapeFlap)) {
@@ -380,16 +379,51 @@ export class SortingView implements SortingViewContract {
       img.setScale((w * 0.9 - 3) / frame.width); // a touch narrower than the column
       return img;
     }
-    if (hasTexture(this.scene, 'deco_tape')) {
-      const img = this.scene.add.image(w / 2, 4, 'deco_tape').setAngle(-5);
-      const frame = this.scene.textures.getFrame('deco_tape');
-      img.setScale((w * 1.35) / frame.width);
-      return img;
-    }
     const g = this.scene.add.graphics();
     g.fillStyle(0xf2e3b5, 0.9);
     g.fillRect(-6, 2, w + 12, 14);
     return g;
+  }
+
+  /** A block just left a take-only column: the paper flap lifts open and
+   * snaps shut (the one-way valve letting a block out). */
+  animateFlapOpen(columnIndex: number): void {
+    const overlay = this.tapeOverlays.get(columnIndex);
+    const pos = this.layout.positions[columnIndex];
+    if (!overlay || !pos || !hasTexture(this.scene, ASSET_KEYS.tapeFlapOpen)) return;
+    const w = this.layout.colWidth;
+    const frame = this.scene.textures.getFrame(ASSET_KEYS.tapeFlapOpen);
+    const scale = (w * 0.9 - 3) / frame.width;
+    const wx = this.area.x + pos.x + w / 2;
+    const wy = this.area.y + pos.y - 9; // the flap's hinge line at the column top
+    // transient open flap, hinged at the bottom so it lifts UP off the column
+    const flap = this.scene.add
+      .image(wx, wy, ASSET_KEYS.tapeFlapOpen)
+      .setOrigin(0.5, 1)
+      .setScale(scale, scale * 0.5)
+      .setDepth(60);
+    this.root.add(flap);
+    (overlay as Phaser.GameObjects.Image).setVisible(false);
+    this.scene.tweens.add({
+      targets: flap,
+      scaleY: scale,
+      duration: 120,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        this.scene.tweens.add({
+          targets: flap,
+          scaleY: scale * 0.15,
+          alpha: 0.75,
+          delay: 70,
+          duration: 130,
+          ease: 'Cubic.easeIn',
+          onComplete: () => {
+            flap.destroy();
+            if (overlay.active) (overlay as Phaser.GameObjects.Image).setVisible(true);
+          },
+        });
+      },
+    });
   }
 
   private buildBlock(colorId: number): Phaser.GameObjects.Container {
@@ -565,25 +599,16 @@ export class SortingView implements SortingViewContract {
     const tape = this.scene.add.container(w * 0.5, 3); // straddles the top edge
     tape.setAngle(-5);
 
-    let tapeH = Math.max(28, cell * 0.46);
-    if (hasTexture(this.scene, 'deco_tape')) {
-      const img = this.scene.add.image(0, 0, 'deco_tape');
-      const frame = this.scene.textures.getFrame('deco_tape');
-      const scale = (w * 1.3) / frame.width;
-      img.setScale(scale);
-      tapeH = frame.height * scale;
-      tape.add(img);
-    } else {
-      const tapeW = w * 1.16;
-      const g = this.scene.add.graphics();
-      g.fillStyle(0xd8c299, 0.94);
-      g.fillRect(-tapeW / 2, -tapeH / 2, tapeW, tapeH);
-      g.fillStyle(0xffffff, 0.12);
-      g.fillRect(-tapeW / 2, -tapeH / 2, tapeW, tapeH * 0.4);
-      g.lineStyle(2, 0xb69a68, 0.9);
-      g.strokeRect(-tapeW / 2, -tapeH / 2, tapeW, tapeH);
-      tape.add(g);
-    }
+    const tapeH = Math.max(28, cell * 0.46);
+    const tapeW = w * 1.16;
+    const g = this.scene.add.graphics();
+    g.fillStyle(0xd8c299, 0.94);
+    g.fillRect(-tapeW / 2, -tapeH / 2, tapeW, tapeH);
+    g.fillStyle(0xffffff, 0.12);
+    g.fillRect(-tapeW / 2, -tapeH / 2, tapeW, tapeH * 0.4);
+    g.lineStyle(2, 0xb69a68, 0.9);
+    g.strokeRect(-tapeW / 2, -tapeH / 2, tapeW, tapeH);
+    tape.add(g);
 
     const label = this.scene.add
       .text(0, 0, 'Готово ✓', {
@@ -647,25 +672,19 @@ export class SortingView implements SortingViewContract {
   /** The taped column just emptied: the tape peels from one end, curls and
    * flutters away. Plays as an overlay right after the rebuild removed it. */
   animateTapePeel(ci: number): void {
-    const asset = hasTexture(this.scene, ASSET_KEYS.tapeFlap)
-      ? ASSET_KEYS.tapeFlap
-      : hasTexture(this.scene, 'deco_tape')
-        ? 'deco_tape'
-        : null;
-    if (!asset) return;
+    if (!hasTexture(this.scene, ASSET_KEYS.tapeFlap)) return;
+    const asset = ASSET_KEYS.tapeFlap;
     const pos = this.layout.positions[ci];
     if (!pos) return;
     const frame = this.scene.textures.getFrame(asset);
-    const isFlap = asset === ASSET_KEYS.tapeFlap;
-    const scale = (this.layout.colWidth * (isFlap ? 1.06 : 1.35)) / frame.width;
+    const scale = (this.layout.colWidth * 1.06) / frame.width;
     // anchored near the left end so the peel rotates around it
     const cx = this.area.x + pos.x + this.layout.colWidth / 2;
-    const cy = this.area.y + pos.y + (isFlap ? frame.height * scale * 0.4 : 4);
+    const cy = this.area.y + pos.y + frame.height * scale * 0.4;
     const tape = this.scene.add
       .image(cx - frame.width * scale * 0.42, cy, asset)
       .setOrigin(0.08, 0.5)
       .setScale(scale)
-      .setAngle(isFlap ? 0 : -5)
       .setDepth(40);
     this.root.add(tape);
 

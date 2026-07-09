@@ -131,6 +131,8 @@ export interface SortingViewContract {
   animateChainBreak(fromColumn: number, onDone: () => void): void;
   /** The emptied taped column: the tape peels off and flutters away. */
   animateTapePeel(columnIndex: number): void;
+  /** A block just left a take-only column: the paper flap lifts open and shuts. */
+  animateFlapOpen(columnIndex: number): void;
   /** Rejected action on the chained column: the chains rattle briefly. */
   rattleChains(columnIndex: number): void;
   pulseColumn(columnIndex: number): void;
