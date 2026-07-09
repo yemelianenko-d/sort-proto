@@ -63,7 +63,7 @@
     },
     {
       "key": "ui_panel",
-      "url": "assets/images/ui_panel.png"
+      "url": "assets/images/ui_panel.png?v=2"
     },
     {
       "key": "icon_key",
@@ -343,7 +343,7 @@
     },
     {
       "key": "tape_flap_open",
-      "url": "assets/images/tape_flap_open.png"
+      "url": "assets/images/tape_flap_open.png?v=2"
     }
   ],
   "atlases": [],
