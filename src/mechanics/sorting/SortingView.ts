@@ -394,8 +394,9 @@ export class SortingView implements SortingViewContract {
     const w = this.layout.colWidth;
     const frame = this.scene.textures.getFrame(ASSET_KEYS.tapeFlapOpen);
     const scale = (w * 0.74 + 2) / frame.width; // narrower than the column, +2px thicker
+    const topEdge = this.area.y + pos.y; // the column's top edge
     const wx = this.area.x + pos.x + w / 2;
-    const wy = this.area.y + pos.y + 6; // hinge a touch below the column's top edge
+    const wy = topEdge + 8; // hinge a little below the edge so the flap has body
     // clean open-flap art (cream paper + bold black border), hinged at the
     // bottom so scaleY reads as lifting up
     const flap = this.scene.add
@@ -403,11 +404,21 @@ export class SortingView implements SortingViewContract {
       .setOrigin(0.5, 1)
       .setScale(scale, scale * 0.5);
     this.root.add(flap);
-    // root renders by insertion order, so push the flap BEHIND the columns —
-    // it then reads as lifting out from behind the column, not over it
     this.root.sendToBack(flap);
+    // Clip to strictly ABOVE the column's top edge: the flap is opaque and the
+    // column is translucent, so without this its lower half ghosts through the
+    // column body. Masked, it reads as lifting out from behind the top edge.
+    const maskG = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    maskG.fillStyle(0xffffff, 1);
+    maskG.fillRect(this.area.x + pos.x - 30, 0, w + 60, topEdge);
+    flap.setMask(maskG.createGeometryMask());
     (overlay as Phaser.GameObjects.Image).setVisible(false);
 
+    const cleanup = (): void => {
+      flap.destroy();
+      maskG.destroy();
+      if (overlay.active) (overlay as Phaser.GameObjects.Image).setVisible(true);
+    };
     this.scene.tweens.add({
       targets: flap,
       scaleY: scale,
@@ -421,10 +432,7 @@ export class SortingView implements SortingViewContract {
           delay: 70,
           duration: 130,
           ease: 'Cubic.easeIn',
-          onComplete: () => {
-            flap.destroy();
-            if (overlay.active) (overlay as Phaser.GameObjects.Image).setVisible(true);
-          },
+          onComplete: cleanup,
         });
       },
     });
