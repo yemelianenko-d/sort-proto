@@ -390,39 +390,33 @@ export class SortingView implements SortingViewContract {
   animateFlapOpen(columnIndex: number): void {
     const overlay = this.tapeOverlays.get(columnIndex);
     const pos = this.layout.positions[columnIndex];
-    if (!overlay || !pos) return;
+    if (!overlay || !pos || !hasTexture(this.scene, ASSET_KEYS.tapeFlapOpen)) return;
     const w = this.layout.colWidth;
-    const fw = w * 0.74 + 2; // narrower than the column, +2px thicker
-    const fh = w * 0.9;
+    const frame = this.scene.textures.getFrame(ASSET_KEYS.tapeFlapOpen);
+    const scale = (w * 0.74 + 2) / frame.width; // narrower than the column, +2px thicker
     const wx = this.area.x + pos.x + w / 2;
     const wy = this.area.y + pos.y + 6; // hinge a touch below the column's top edge
-
-    // Draw the open flap procedurally: cream paper + a hand-drawn black outline
-    // at a FIXED pixel weight, so the border always reads (a scaled-down image's
-    // outline vanished) and the edges are clean. Hinged at the bottom (the paper
-    // spans upward, y from -fh to 0) so scaleY reads as the flap lifting up.
-    const flap = this.scene.add.container(wx, wy);
-    const g = this.scene.add.graphics();
-    g.fillStyle(0xf1ece1, 1);
-    g.fillRect(-fw / 2, -fh, fw, fh);
-    strokeSketchRect(g, -fw / 2, -fh, fw, fh, 0x1c1c1c, 2.6, 1.1);
-    flap.add(g);
+    // clean open-flap art (cream paper + bold black border), hinged at the
+    // bottom so scaleY reads as lifting up
+    const flap = this.scene.add
+      .image(wx, wy, ASSET_KEYS.tapeFlapOpen)
+      .setOrigin(0.5, 1)
+      .setScale(scale, scale * 0.5);
     this.root.add(flap);
     // root renders by insertion order, so push the flap BEHIND the columns —
     // it then reads as lifting out from behind the column, not over it
     this.root.sendToBack(flap);
     (overlay as Phaser.GameObjects.Image).setVisible(false);
 
-    flap.setScale(1, 0.5); // start compressed, then lift open
     this.scene.tweens.add({
       targets: flap,
-      scaleY: 1,
+      scaleY: scale,
       duration: 120,
       ease: 'Back.easeOut',
       onComplete: () => {
         this.scene.tweens.add({
           targets: flap,
-          scaleY: 0.12,
+          scaleY: scale * 0.12,
           alpha: 0.85,
           delay: 70,
           duration: 130,
