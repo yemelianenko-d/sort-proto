@@ -395,7 +395,8 @@ export class SortingView implements SortingViewContract {
     const frame = this.scene.textures.getFrame(ASSET_KEYS.tapeFlapOpen);
     const scale = (w * 0.9 - 3) / frame.width;
     const wx = this.area.x + pos.x + w / 2;
-    const wy = this.area.y + pos.y - 9; // the flap's hinge line at the column top
+    const wy = this.area.y + pos.y + 6; // hinge a touch below the top edge so the
+    // opened flap stays joined to the column (not floating above it)
     // transient open flap, hinged at the bottom so it lifts UP off the column
     const flap = this.scene.add
       .image(wx, wy, ASSET_KEYS.tapeFlapOpen)
