@@ -639,12 +639,19 @@ export class SortingView implements SortingViewContract {
     if (hasTexture(this.scene, ASSET_KEYS.doneRibbon)) {
       const ribbon = marker.getAt(0) as Phaser.GameObjects.NineSlice;
       const fullH = ribbon.height;
-      ribbon.height = Math.min(fullH, 118); // start: just the top + check & tail
+      // Tween a PROXY, not the nine-slice: if a rebuild destroys the ribbon
+      // mid-unroll, writing height into a freed nine-slice crashes the game
+      // loop (resize of undefined). The onUpdate guards the live object.
+      const state = { h: Math.min(fullH, 118) };
+      ribbon.height = state.h; // start: just the top + check & tail
       this.scene.tweens.add({
-        targets: ribbon,
-        height: fullH,
+        targets: state,
+        h: fullH,
         duration: GAME_SETTINGS.animation.ribbonUnrollMs,
         ease: 'Cubic.easeOut',
+        onUpdate: () => {
+          if (ribbon.active) ribbon.height = state.h;
+        },
       });
       return;
     }
