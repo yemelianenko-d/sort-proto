@@ -35,6 +35,8 @@ const uk = {
       score: (n: number) => `Очки: ${n}`,
       scoreLabel: 'Очки',
       pieces: (n: number) => `Фігури: ${n}`,
+      reviveCount: (n: number) => `♻ ${n}`,
+      revive: (n: number) => `Продовжити (${n})`,
       howtoTitle: 'Як грати',
       howtoBody:
         'Перетягуй фігури з лотка на поле. Повний рядок або стовпець зникає. Прибери стартові блоки чи набери очки — і рівень пройдено. Якщо жодна фігура не вміщується — програш.',
@@ -184,6 +186,8 @@ const en: Messages = {
       score: (n: number) => `Score: ${n}`,
       scoreLabel: 'Score',
       pieces: (n: number) => `Pieces: ${n}`,
+      reviveCount: (n: number) => `♻ ${n}`,
+      revive: (n: number) => `Continue (${n})`,
       howtoTitle: 'How to play',
       howtoBody:
         'Drag pieces from the tray onto the board. A full row or column clears. Remove the starting blocks or reach the score — and the level is done. If no piece fits, you lose.',

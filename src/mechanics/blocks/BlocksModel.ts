@@ -133,6 +133,32 @@ export class BlocksModel {
     return this.tray.some((_, slot) => this.hasAnyPlacement(slot));
   }
 
+  /**
+   * Revive booster: wipe the board and deal a fresh tray, KEEPING the run's
+   * score / collected counts / quota progress (the Block-Blast revive). The
+   * combo chain breaks (fresh board). For a collect goal, the still-needed
+   * budget is topped up so a revive can never strand an unreachable quota
+   * (the cleared board dropped any uncollected preset specials).
+   */
+  revive(): void {
+    for (let r = 0; r < this.rows; r++) {
+      for (let c = 0; c < this.cols; c++) this.grid[r][c] = null;
+    }
+    const goal = this.config.goal;
+    if (goal.type === 'collect' && this.targetEcon) {
+      for (const q of goal.quotas) {
+        const remaining = Math.max(0, q.count - (this.collected[q.symbol] ?? 0));
+        this.targetEcon.budgetLeft[q.symbol] = Math.max(this.targetEcon.budgetLeft[q.symbol] ?? 0, remaining);
+        this.targetEcon.batchesSinceSeen[q.symbol] = 0;
+      }
+    }
+    this.comboChain = 0;
+    this.tray.fill(null);
+    this.refillTray();
+    this.won = this.goalMet();
+    this.failed = !this.won && !this.hasAnyMove();
+  }
+
   /** True when not a single cell is occupied (the "clean sheet" praise). */
   isBoardEmpty(): boolean {
     return this.grid.every((row) => row.every((cell) => cell === null));

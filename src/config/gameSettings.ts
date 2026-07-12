@@ -10,6 +10,9 @@ export const GAME_SETTINGS = {
     initialLenses: 3,
     /** Undo charges per session (the back button is a booster too). */
     initialUndos: 3,
+    /** Blocks "Revive" charges per session: on game over, clear the board and
+     * continue the run (keeps score/collected). Cheat can top these up. */
+    initialRevives: 5,
   },
   input: {
     /** Pointer travel (logical px) that turns a press into a drag. Sized for

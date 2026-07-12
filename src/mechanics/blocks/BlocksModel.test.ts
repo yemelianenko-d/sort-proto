@@ -323,6 +323,25 @@ describe('BlocksModel', () => {
     expect(m.score).toBeGreaterThan(0);
   });
 
+  it('revive clears the board, keeps score/collected, un-fails, and refills', () => {
+    const m = new BlocksModel(
+      config({
+        goal: { type: 'collect', quotas: [{ symbol: 3, count: 3 }] },
+        board: ['..0.0', '.0000', '00.00', '0000.', '0.000'],
+        pieces: [{ shape: 'H2', weight: 1 }],
+      }),
+      rng(),
+    );
+    m.place(0, 0, 0); // jams → failed
+    expect(m.isFailed()).toBe(true);
+    const scoreBefore = m.score;
+    m.revive();
+    expect(m.isFailed()).toBe(false);
+    expect(m.isBoardEmpty()).toBe(true); // board wiped
+    expect(m.score).toBe(scoreBefore); // score kept
+    expect(m.tray.every((p) => p !== null)).toBe(true); // fresh tray dealt
+  });
+
   it('endless: still ends (game over) when no tray piece fits', () => {
     const m = new BlocksModel(
       config({

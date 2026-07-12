@@ -37,6 +37,10 @@ interface SceneData {
 /** localStorage key for the endless high score (mechanic-owned). */
 const ENDLESS_BEST_KEY = 'blocks.endless.best';
 
+/** Per-session booster wallet (prototype scope; resets on page load — like the
+ * sorting wallet). Revive: on game over, clear the board and continue the run. */
+const blocksWallet = { revives: GAME_SETTINGS.boosters.initialRevives };
+
 /** Per-level attempt counter (session-scoped; resets on reload). Drives the
  * restart bucket so early retries share a learnable opening (Balance Spec §8). */
 const attemptCounts = new Map<string, number>();
@@ -60,10 +64,12 @@ export class BlocksScene extends Phaser.Scene {
   /** Each collect chip's icon x within hudGoal (target for the fly-out). */
   private chipLocalX = new Map<number, number>();
   private hudPieces!: Phaser.GameObjects.Text;
+  private hudRevive!: Phaser.GameObjects.Text;
   private backBtn!: Button;
   private restartBtn!: Button;
   private fullscreenBtn: Button | null = null;
   private winBtn: Button | null = null;
+  private reviveCheatBtn: Button | null = null;
   private popupOpen = false;
 
   constructor() {
@@ -177,6 +183,9 @@ export class BlocksScene extends Phaser.Scene {
     this.fullscreenBtn?.setPosition(w - safe.right - 82, top + 20);
     const leftmostBtnEdge = this.fullscreenBtn ? w - safe.right - 104 : w - safe.right - 52;
     this.hudPieces.setPosition(leftmostBtnEdge - 12, top + 20);
+    // revive counter under the level name (+ cheat button beside it)
+    this.hudRevive.setPosition(safe.left + 52, top + 34);
+    this.reviveCheatBtn?.setPosition(safe.left + 52 + this.hudRevive.displayWidth + 14, top + 44);
     // cheat WIN sits under the restart button — never over the goal panel
     this.winBtn?.setPosition(w - safe.right - 30, top + 64);
 
@@ -237,6 +246,15 @@ export class BlocksScene extends Phaser.Scene {
         padding: { x: 8, y: 6 },
       })
       .setOrigin(1, 0.5);
+    // revive-booster counter (♻ N), under the level name
+    this.hudRevive = this.add
+      .text(0, 0, '', {
+        fontFamily: FONTS.display,
+        fontSize: '20px',
+        color: '#2e7a3f',
+        padding: { x: 8, y: 4 },
+      })
+      .setOrigin(0, 0);
 
     this.backBtn = new Button(this, 0, 0, {
       width: 44,
@@ -273,6 +291,18 @@ export class BlocksScene extends Phaser.Scene {
         onClick: () => this.onWin(),
       });
     }
+    if (this.game_.settings.cheat) {
+      this.reviveCheatBtn = new Button(this, 0, 0, {
+        width: 26,
+        height: 26,
+        label: '+',
+        fontSize: 18,
+        onClick: () => {
+          blocksWallet.revives += 1;
+          this.refreshHud();
+        },
+      });
+    }
 
     this.refreshHud();
   }
@@ -283,6 +313,8 @@ export class BlocksScene extends Phaser.Scene {
     // score there; collect levels show the symbol chips. No standalone score.
     this.rebuildGoalChip();
     this.hudPieces.setText(t.pieces(this.model.moves));
+    this.hudRevive.setText(t.reviveCount(blocksWallet.revives));
+    this.reviveCheatBtn?.setX(this.hudRevive.x + this.hudRevive.displayWidth + 14);
     this.restartBtn.setEnabled(this.model.moves > 0 && !this.controller.isBusy);
   }
 
@@ -877,9 +909,10 @@ export class BlocksScene extends Phaser.Scene {
           title: t.gameOverTitle,
           body: isNewBest ? `${t.gameOverScore(score)}\n${t.newBest}` : `${t.gameOverScore(score)}\n${t.gameOverBest(this.endlessBest)}`,
           actions: [
+            ...this.reviveActions(),
             {
               label: UI_TEXTS.win.replay,
-              success: true,
+              success: this.reviveActions().length === 0,
               onClick: () => {
                 this.popupOpen = false;
                 this.restart();
@@ -905,9 +938,10 @@ export class BlocksScene extends Phaser.Scene {
         title: t.failTitle,
         body: t.failBody,
         actions: [
+          ...this.reviveActions(),
           {
             label: UI_TEXTS.win.replay,
-            success: true,
+            success: this.reviveActions().length === 0,
             onClick: () => {
               this.popupOpen = false;
               this.restart();
@@ -923,5 +957,27 @@ export class BlocksScene extends Phaser.Scene {
         ],
       });
     });
+  }
+
+  /** The Revive booster action for a game-over popup (empty when none left).
+   * Reviving spends a charge, clears the board and continues the run. */
+  private reviveActions(): { label: string; success?: boolean; onClick: () => void }[] {
+    if (blocksWallet.revives <= 0) return [];
+    return [
+      {
+        label: UI_TEXTS.mechanics.blocks.revive(blocksWallet.revives),
+        success: true,
+        onClick: () => this.doRevive(),
+      },
+    ];
+  }
+
+  private doRevive(): void {
+    blocksWallet.revives -= 1;
+    this.popupOpen = false;
+    this.model.revive();
+    this.view.rebuild({ refilled: true });
+    this.refreshHud();
+    eventBus.emit('booster_used', { level_id: this.model.levelId, booster: 'revive' });
   }
 }
