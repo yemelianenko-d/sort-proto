@@ -10,11 +10,27 @@ export const BLOCKS_SETTINGS = {
   layout: {
     /** Cell size ceiling (logical px). */
     maxCell: 46,
+    /** Vertical band reserved ABOVE the board (portrait) for the button row +
+     * score/goal panel, so on tall/narrow phones the panel never rides up into
+     * the top buttons. Mechanic-owned — the shared hudHeight (92) is untouched. */
+    hudBand: 176,
+    /** Horizontal room reserved on EACH side of the board for the blueprint
+     * decor (dimension lines, datum circles, angle notes) so it never spills off
+     * a narrow screen. The board shrinks to fit within w - 2*decorMargin. */
+    decorMargin: 32,
+    /** How far the decor sits OUTSIDE the board edge (was a hardcoded 26). Lower
+     * = decor hugs the board tighter. */
+    decorGap: 16,
     /** Paper-toned wash under the board: 0 = fully transparent (notebook grid
      * shows through), 1 = solid. Light wash keeps the field mostly transparent
      * while just muting the background cells so they don't fight the board's
      * own grid. */
     boardWashAlpha: 0.28,
+    /** EXPERIMENT: darkening tint painted over the board area (under the grid
+     * and tiles) so the playfield reads darker and the colour tiles pop. Set
+     * boardTintAlpha to 0 to disable. Tune both freely — pure visual. */
+    boardTint: 0x8c8060,
+    boardTintAlpha: 0.5,
     /** Tray strip height in cells (pieces render at trayScale inside). */
     trayHeightCells: 3.6,
     /** Tray preview tile scale relative to the board cell. Smaller than a

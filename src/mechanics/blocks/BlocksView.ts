@@ -105,9 +105,12 @@ export class BlocksView implements BlocksViewContract {
     this.releaseActive(false);
     const { rows, cols } = this.model;
     const L = BLOCKS_SETTINGS.layout;
+    // reserve room on both sides for the blueprint decor so it never spills off
+    // a narrow screen; the board shrinks to fit inside w - 2*decorMargin
+    const usableW = Math.max(cols * 18, w - 2 * L.decorMargin);
     this.cell = Math.max(
       18,
-      Math.min(L.maxCell, Math.floor(Math.min(w / cols, h / (rows + L.trayHeightCells)))),
+      Math.min(L.maxCell, Math.floor(Math.min(usableW / cols, h / (rows + L.trayHeightCells)))),
     );
     const boardW = this.cell * cols;
     const boardH = this.cell * rows;
@@ -145,6 +148,11 @@ export class BlocksView implements BlocksViewContract {
 
     g.fillStyle(COLORS.paper, BLOCKS_SETTINGS.layout.boardWashAlpha);
     g.fillRoundedRect(-2, -2, w + 4, h + 4, 4);
+    if (BLOCKS_SETTINGS.layout.boardTintAlpha > 0) {
+      // EXPERIMENT: darken the playfield (under grid + tiles) so tiles pop
+      g.fillStyle(BLOCKS_SETTINGS.layout.boardTint, BLOCKS_SETTINGS.layout.boardTintAlpha);
+      g.fillRoundedRect(-2, -2, w + 4, h + 4, 4);
+    }
     g.lineStyle(1.4, COLORS.grid, 0.4);
     for (let c = 1; c < cols; c++) g.lineBetween(c * this.cell, 3, c * this.cell, h - 3);
     for (let r = 1; r < rows; r++) g.lineBetween(3, r * this.cell, w - 3, r * this.cell);
@@ -182,6 +190,7 @@ export class BlocksView implements BlocksViewContract {
     cols: number,
   ): void {
     const a = 0.65; // annotation ink alpha
+    const off = BLOCKS_SETTINGS.layout.decorGap; // decor distance outside the board edge
     const dash = (x1: number, y1: number, x2: number, y2: number, seg = 6, gap = 5) => {
       const len = Math.hypot(x2 - x1, y2 - y1);
       const ux = (x2 - x1) / len;
@@ -254,16 +263,16 @@ export class BlocksView implements BlocksViewContract {
       const dh = 46;
       const dw = (69 / 170) * dh;
       const cy = dimY - (0.8 - 0.5) * dh;
-      img('corner_datum', -26 - (0.507 - 0.5) * dw, cy, dw, dh);
-      img('corner_datum', w + 26 + (0.507 - 0.5) * dw, cy, dw, dh, true);
+      img('corner_datum', -off - (0.507 - 0.5) * dw, cy, dw, dh);
+      img('corner_datum', w + off + (0.507 - 0.5) * dw, cy, dw, dh, true);
     } else {
-      g.strokeCircle(-26, dimY, 6);
-      g.strokeCircle(w + 26, dimY, 6);
+      g.strokeCircle(-off, dimY, 6);
+      g.strokeCircle(w + off, dimY, 6);
     }
 
     // right dimension line + count label (edge-to-edge along the board; the
     // line's ink axis sits at fx 0.419 of the trimmed sprite)
-    const dimX = w + 26;
+    const dimX = w + off;
     if (art('dim_line_v')) {
       const lh = h + 10; // 10px taller than the board (5px past each edge)
       const lw = (43 * lh) / 1024;
@@ -273,7 +282,7 @@ export class BlocksView implements BlocksViewContract {
       g.lineBetween(dimX - 5, 0, dimX + 5, 0);
       g.lineBetween(dimX - 5, h, dimX + 5, h);
     }
-    label(dimX + 15, h / 2, String(rows));
+    label(dimX + 9, h / 2, String(rows));
 
     // 90° angle note (bottom-left) — artist sprite, drawn UNDER the board
     if (art('corner_angle')) {
@@ -281,9 +290,9 @@ export class BlocksView implements BlocksViewContract {
       const aw = (435 / 512) * ah;
       // measured node (vertical line × bottom line) at (0.046, 0.949) of the
       // sprite → anchored on the left axis, 20px lower, drawn UNDER the board
-      img('corner_angle', -26 + (0.5 - 0.046) * aw, h + 46 - (0.949 - 0.5) * ah, aw, ah, false, true);
+      img('corner_angle', -off + (0.5 - 0.046) * aw, h + 46 - (0.949 - 0.5) * ah, aw, ah, false, true);
     } else {
-      const ax = -32;
+      const ax = -off - 6;
       const ay = h + 32;
       g.lineBetween(ax, ay, ax, ay - 36);
       g.lineBetween(ax, ay, ax + 30, ay);
@@ -299,9 +308,9 @@ export class BlocksView implements BlocksViewContract {
       const sw = (512 / 500) * sh;
       // measured datum crosshair at (0.664, 0.778) of the sprite → anchored
       // on the right axis, 20px lower, drawn UNDER the board
-      img('corner_square', w + 26 - (0.664 - 0.5) * sw, h + 46 - (0.778 - 0.5) * sh, sw, sh, false, true);
+      img('corner_square', w + off - (0.664 - 0.5) * sw, h + 46 - (0.778 - 0.5) * sh, sw, sh, false, true);
     } else {
-      const sx = w + 18;
+      const sx = w + off + 2;
       const sy = h + 18;
       g.lineBetween(sx, sy, sx, sy - 12);
       g.lineBetween(sx, sy, sx + 12, sy);
