@@ -365,30 +365,35 @@ const LEVELS = [
   collect('blocks_030', 'HARD', 'Walls Dig', 'master', 'walls', { 1: 4, 3: 3 }, { 1: [[1, 0], [6, 2]], 3: [[1, 7], [6, 5]] }, t(1.4, { chance: 0.75, maxPerBatch: 3 }), 22),
 
   /* -- 31–33 : SCORE CLUSTER (three in a row, reference rhythm) -- */
-  score('blocks_031', 'NORMAL', 'Multi-Clear', 'master', 'steps', 140, 22),
-  score('blocks_032', 'HARD', 'Combo', 'master', 'diamond', 150, 24),
-  score('blocks_033', 'HARD', 'Pressure Score', 'master', 'walls', 120, 24),
+  // Score cluster escalates to revive-scale (calibrate.ts REVIVES=5 measured
+  // ~1100-1350 reachable at band win rate → set ~65-75%).
+  score('blocks_031', 'NORMAL', 'Multi-Clear', 'master', 'steps', 700, 40),
+  score('blocks_032', 'HARD', 'Combo', 'master', 'diamond', 900, 44),
+  score('blocks_033', 'HARD', 'Pressure Score', 'master', 'walls', 850, 44),
 
-  /* -- 34–40 : MARATHONS (multi-special flow on dense patterns) -- */
-  collect('blocks_034', 'HARD', 'Marathon', 'master', 'walls', { 0: 4, 1: 4, 3: 4 },
+  /* -- 34–40 : MARATHONS. BB-scale quotas, reachable with the Revive booster
+   * (measured ceilings: 3-type ~28, 4-type ~22, 5-type lower). Set ~65% of
+   * the ceiling so they're a challenge, not a wall. supplyMul bumped so the
+   * initial budget covers the big quotas (Revive also replenishes it). -- */
+  collect('blocks_034', 'HARD', 'Marathon', 'master', 'walls', { 0: 16, 1: 16, 3: 16 },
     { 0: [[1, 0], [3, 0]], 1: [[1, 7], [3, 7]], 3: [[6, 3], [6, 4]] },
-    t(1.4, { chance: 0.8, maxPerBatch: 3 }), 30),
-  collect('blocks_035', 'HARD', 'Marathon / Big Pieces', 'bigstart', 'cradle', { 2: 3, 4: 3 },
+    t(1.3, { chance: 0.85, maxPerBatch: 3 }), 70),
+  collect('blocks_035', 'HARD', 'Marathon / Big Pieces', 'bigstart', 'cradle', { 2: 14, 4: 14 },
     { 2: [[6, 1], [5, 2]], 4: [[6, 6], [5, 5]] },
-    t(1.4, { chance: 0.8, maxPerBatch: 3 }), 30, { tierMix: BIG_MIX }),
-  collect('blocks_036', 'HARD', 'Marathon', 'master', 'frame', { 0: 3, 2: 3, 3: 3, 4: 3 },
+    t(1.3, { chance: 0.85, maxPerBatch: 3 }), 70, { tierMix: BIG_MIX }),
+  collect('blocks_036', 'HARD', 'Marathon', 'master', 'frame', { 0: 13, 2: 13, 3: 13, 4: 13 },
     { 0: [[1, 2]], 2: [[1, 5]], 3: [[5, 2]], 4: [[5, 5]] },
-    t(1.4, { chance: 0.85, maxPerBatch: 3 }), 34),
-  score('blocks_037', 'HARD', 'Pressure Score', 'master', 'checker2', 100, 26),
-  collect('blocks_038', 'PEAK', 'Marathon / Diamond', 'master', 'diamond', { 0: 3, 1: 3, 4: 3 },
+    t(1.3, { chance: 0.9, maxPerBatch: 3 }), 80),
+  score('blocks_037', 'HARD', 'Pressure Score', 'master', 'checker2', 800, 44),
+  collect('blocks_038', 'PEAK', 'Marathon / Diamond', 'master', 'diamond', { 0: 16, 1: 16, 4: 16 },
     { 0: [[2, 2]], 1: [[2, 5]], 4: [[5, 3]] },
-    t(1.35, { chance: 0.85, maxPerBatch: 3 }), 32),
-  collect('blocks_039', 'PEAK', 'Marathon / Big Pieces', 'bigstart', 'cradle', { 1: 3, 2: 3, 3: 3, 4: 3 },
+    t(1.3, { chance: 0.9, maxPerBatch: 3 }), 80),
+  collect('blocks_039', 'PEAK', 'Marathon / Big Pieces', 'bigstart', 'cradle', { 1: 9, 2: 9, 3: 9, 4: 9 },
     { 1: [[6, 0]], 2: [[6, 2]], 3: [[6, 5]], 4: [[6, 7]] },
-    t(1.35, { chance: 0.85, maxPerBatch: 3 }), 36, { tierMix: BIG_MIX }),
-  collect('blocks_040', 'PEAK', 'Final Marathon', 'master', 'gate', { 0: 3, 1: 3, 2: 3, 3: 3, 4: 3 },
+    t(1.35, { chance: 0.9, maxPerBatch: 3 }), 70, { tierMix: BIG_MIX }),
+  collect('blocks_040', 'PEAK', 'Final Marathon', 'master', 'gate', { 0: 9, 1: 9, 2: 9, 3: 9, 4: 9 },
     { 0: [[1, 0]], 1: [[1, 7]], 2: [[4, 3]], 3: [[4, 4]], 4: [[6, 1]] },
-    t(1.3, { chance: 0.9, maxPerBatch: 3 }), 40),
+    t(1.3, { chance: 0.9, maxPerBatch: 3 }), 80),
 ];
 
 /* ---------------- bake + invariants ---------------- */

@@ -54,12 +54,22 @@ function evalPlacement(occ: boolean[][], geo: { rows: number; cols: number; cell
   return clears * 60 - holes * 12 - aggH * 1.2 - bump * 0.6 - filled * 0.3;
 }
 
-/** Play one attempt with a competent greedy autoplayer. */
+/** Revive budget (matches the booster wallet); override with REVIVES=N. */
+const REVIVES = Number(process.env.REVIVES ?? 5);
+
+/** Play one attempt with a competent greedy autoplayer, using up to REVIVES
+ * Revive charges (clear board, keep progress) on game over. */
 function play(levelIndex: number, seed: number): 'won' | 'lost' | 'stall' {
   const m = new BlocksModel(levels[levelIndex], mulberry32(seed));
-  for (let move = 0; move < 500; move++) {
+  let revives = REVIVES;
+  for (let move = 0; move < 4000; move++) {
     if (m.isWon()) return 'won';
-    if (m.isFailed()) return 'lost';
+    if (m.isFailed()) {
+      if (revives <= 0) return 'lost';
+      revives -= 1;
+      m.revive();
+      continue;
+    }
     const occ = snapshot(m);
     let best: { slot: number; r: number; c: number; score: number } | null = null;
     for (let slot = 0; slot < m.tray.length; slot++) {

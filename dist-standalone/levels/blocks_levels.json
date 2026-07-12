@@ -7440,7 +7440,7 @@
       ],
       "goal": {
         "type": "score",
-        "target": 140
+        "target": 700
       },
       "pieces": [
         {
@@ -7643,7 +7643,7 @@
         "comboStep": 1,
         "comboMax": 8
       },
-      "par": 22,
+      "par": 40,
       "difficulty": 4,
       "balanceVersion": 1
     },
@@ -7664,7 +7664,7 @@
       ],
       "goal": {
         "type": "score",
-        "target": 150
+        "target": 900
       },
       "pieces": [
         {
@@ -7867,7 +7867,7 @@
         "comboStep": 1,
         "comboMax": 8
       },
-      "par": 24,
+      "par": 44,
       "difficulty": 6,
       "balanceVersion": 1
     },
@@ -7888,7 +7888,7 @@
       ],
       "goal": {
         "type": "score",
-        "target": 120
+        "target": 850
       },
       "pieces": [
         {
@@ -8091,7 +8091,7 @@
         "comboStep": 1,
         "comboMax": 8
       },
-      "par": 24,
+      "par": 44,
       "difficulty": 6,
       "balanceVersion": 1
     },
@@ -8115,15 +8115,15 @@
         "quotas": [
           {
             "symbol": 0,
-            "count": 4
+            "count": 16
           },
           {
             "symbol": 1,
-            "count": 4
+            "count": 16
           },
           {
             "symbol": 3,
-            "count": 4
+            "count": 16
           }
         ]
       },
@@ -8329,7 +8329,7 @@
         }
       },
       "targetPolicy": {
-        "targetBatchChance": 0.8,
+        "targetBatchChance": 0.85,
         "urgencyStrength": 1.2,
         "maxTargetsPerPiece": 2,
         "maxTargetsPerBatch": 3,
@@ -8337,7 +8337,7 @@
           {
             "symbol": 0,
             "presetCount": 2,
-            "generatedBudget": 4,
+            "generatedBudget": 19,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -8345,7 +8345,7 @@
           {
             "symbol": 1,
             "presetCount": 2,
-            "generatedBudget": 4,
+            "generatedBudget": 19,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -8353,7 +8353,7 @@
           {
             "symbol": 3,
             "presetCount": 2,
-            "generatedBudget": 4,
+            "generatedBudget": 19,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -8386,7 +8386,7 @@
           }
         ]
       },
-      "par": 30,
+      "par": 70,
       "difficulty": 6,
       "balanceVersion": 1
     },
@@ -8410,11 +8410,11 @@
         "quotas": [
           {
             "symbol": 2,
-            "count": 3
+            "count": 14
           },
           {
             "symbol": 4,
-            "count": 3
+            "count": 14
           }
         ]
       },
@@ -8506,7 +8506,7 @@
         }
       },
       "targetPolicy": {
-        "targetBatchChance": 0.8,
+        "targetBatchChance": 0.85,
         "urgencyStrength": 1.2,
         "maxTargetsPerPiece": 2,
         "maxTargetsPerBatch": 3,
@@ -8514,7 +8514,7 @@
           {
             "symbol": 2,
             "presetCount": 2,
-            "generatedBudget": 3,
+            "generatedBudget": 17,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -8522,7 +8522,7 @@
           {
             "symbol": 4,
             "presetCount": 2,
-            "generatedBudget": 3,
+            "generatedBudget": 17,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -8555,7 +8555,7 @@
           }
         ]
       },
-      "par": 30,
+      "par": 70,
       "difficulty": 6,
       "balanceVersion": 1
     },
@@ -8579,19 +8579,19 @@
         "quotas": [
           {
             "symbol": 0,
-            "count": 3
+            "count": 13
           },
           {
             "symbol": 2,
-            "count": 3
+            "count": 13
           },
           {
             "symbol": 3,
-            "count": 3
+            "count": 13
           },
           {
             "symbol": 4,
-            "count": 3
+            "count": 13
           }
         ]
       },
@@ -8787,7 +8787,7 @@
         }
       },
       "targetPolicy": {
-        "targetBatchChance": 0.85,
+        "targetBatchChance": 0.9,
         "urgencyStrength": 1.2,
         "maxTargetsPerPiece": 2,
         "maxTargetsPerBatch": 3,
@@ -8795,7 +8795,7 @@
           {
             "symbol": 0,
             "presetCount": 1,
-            "generatedBudget": 4,
+            "generatedBudget": 16,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -8803,7 +8803,7 @@
           {
             "symbol": 2,
             "presetCount": 1,
-            "generatedBudget": 4,
+            "generatedBudget": 16,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -8811,7 +8811,7 @@
           {
             "symbol": 3,
             "presetCount": 1,
-            "generatedBudget": 4,
+            "generatedBudget": 16,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -8819,7 +8819,7 @@
           {
             "symbol": 4,
             "presetCount": 1,
-            "generatedBudget": 4,
+            "generatedBudget": 16,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -8852,7 +8852,7 @@
           }
         ]
       },
-      "par": 34,
+      "par": 80,
       "difficulty": 6,
       "balanceVersion": 1
     },
@@ -8873,7 +8873,7 @@
       ],
       "goal": {
         "type": "score",
-        "target": 100
+        "target": 800
       },
       "pieces": [
         {
@@ -9076,7 +9076,7 @@
         "comboStep": 1,
         "comboMax": 8
       },
-      "par": 26,
+      "par": 44,
       "difficulty": 6,
       "balanceVersion": 1
     },
@@ -9100,15 +9100,15 @@
         "quotas": [
           {
             "symbol": 0,
-            "count": 3
+            "count": 16
           },
           {
             "symbol": 1,
-            "count": 3
+            "count": 16
           },
           {
             "symbol": 4,
-            "count": 3
+            "count": 16
           }
         ]
       },
@@ -9299,7 +9299,7 @@
         }
       },
       "targetPolicy": {
-        "targetBatchChance": 0.85,
+        "targetBatchChance": 0.9,
         "urgencyStrength": 1.2,
         "maxTargetsPerPiece": 2,
         "maxTargetsPerBatch": 3,
@@ -9307,7 +9307,7 @@
           {
             "symbol": 0,
             "presetCount": 1,
-            "generatedBudget": 4,
+            "generatedBudget": 20,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -9315,7 +9315,7 @@
           {
             "symbol": 1,
             "presetCount": 1,
-            "generatedBudget": 4,
+            "generatedBudget": 20,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -9323,7 +9323,7 @@
           {
             "symbol": 4,
             "presetCount": 1,
-            "generatedBudget": 4,
+            "generatedBudget": 20,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -9356,7 +9356,7 @@
           }
         ]
       },
-      "par": 32,
+      "par": 80,
       "difficulty": 8,
       "balanceVersion": 1
     },
@@ -9380,19 +9380,19 @@
         "quotas": [
           {
             "symbol": 1,
-            "count": 3
+            "count": 9
           },
           {
             "symbol": 2,
-            "count": 3
+            "count": 9
           },
           {
             "symbol": 3,
-            "count": 3
+            "count": 9
           },
           {
             "symbol": 4,
-            "count": 3
+            "count": 9
           }
         ]
       },
@@ -9484,7 +9484,7 @@
         }
       },
       "targetPolicy": {
-        "targetBatchChance": 0.85,
+        "targetBatchChance": 0.9,
         "urgencyStrength": 1.2,
         "maxTargetsPerPiece": 2,
         "maxTargetsPerBatch": 3,
@@ -9492,7 +9492,7 @@
           {
             "symbol": 1,
             "presetCount": 1,
-            "generatedBudget": 4,
+            "generatedBudget": 12,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -9500,7 +9500,7 @@
           {
             "symbol": 2,
             "presetCount": 1,
-            "generatedBudget": 4,
+            "generatedBudget": 12,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -9508,7 +9508,7 @@
           {
             "symbol": 3,
             "presetCount": 1,
-            "generatedBudget": 4,
+            "generatedBudget": 12,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -9516,7 +9516,7 @@
           {
             "symbol": 4,
             "presetCount": 1,
-            "generatedBudget": 4,
+            "generatedBudget": 12,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -9549,7 +9549,7 @@
           }
         ]
       },
-      "par": 36,
+      "par": 70,
       "difficulty": 8,
       "balanceVersion": 1
     },
@@ -9573,23 +9573,23 @@
         "quotas": [
           {
             "symbol": 0,
-            "count": 3
+            "count": 9
           },
           {
             "symbol": 1,
-            "count": 3
+            "count": 9
           },
           {
             "symbol": 2,
-            "count": 3
+            "count": 9
           },
           {
             "symbol": 3,
-            "count": 3
+            "count": 9
           },
           {
             "symbol": 4,
-            "count": 3
+            "count": 9
           }
         ]
       },
@@ -9798,7 +9798,7 @@
           {
             "symbol": 0,
             "presetCount": 1,
-            "generatedBudget": 3,
+            "generatedBudget": 11,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -9806,7 +9806,7 @@
           {
             "symbol": 1,
             "presetCount": 1,
-            "generatedBudget": 3,
+            "generatedBudget": 11,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -9814,7 +9814,7 @@
           {
             "symbol": 2,
             "presetCount": 1,
-            "generatedBudget": 3,
+            "generatedBudget": 11,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -9822,7 +9822,7 @@
           {
             "symbol": 3,
             "presetCount": 1,
-            "generatedBudget": 3,
+            "generatedBudget": 11,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -9830,7 +9830,7 @@
           {
             "symbol": 4,
             "presetCount": 1,
-            "generatedBudget": 3,
+            "generatedBudget": 11,
             "baseSpawnWeight": 1,
             "pityLimitBatches": 3,
             "minFutureSupplySafety": 1
@@ -9863,7 +9863,7 @@
           }
         ]
       },
-      "par": 40,
+      "par": 80,
       "difficulty": 8,
       "balanceVersion": 1
     }
