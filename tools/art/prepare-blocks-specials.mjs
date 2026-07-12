@@ -189,14 +189,15 @@ const find = (marker, n) => {
   return resolve(srcDir, f);
 };
 
-// New clean outline symbols (id order): 0 compass, 1 triangle, 2 protractor,
-// 3 ruler, 4 pencil — used for the HUD chip (symbol_N) AND overlaid on the tile.
+// The FILLED symbols (id order): 0 compass, 1 triangle, 2 protractor, 3 ruler,
+// 4 pencil — used for BOTH the HUD goal chip (symbol_N) and the board tile
+// overlay (special_N), so the panel matches the tiles.
 const SYMBOL_SRC = [
-  find('02_27_17', 1), // compass (blue)
-  find('02_27_17', 2), // triangle (orange)
-  find('02_27_17', 3), // protractor (red)
-  find('02_27_18', 4), // ruler (green)
-  find('02_27_18', 5), // pencil (purple)
+  find('19_19_43', 1), // compass (blue)
+  find('19_19_43', 2), // triangle (orange)
+  find('19_19_43', 3), // protractor (red)
+  find('19_19_43', 4), // ruler (green)
+  find('19_19_43', 5), // pencil (purple)
 ];
 // Original hand-drawn wooden tiles (the base we keep) — same id order.
 const TILE_SRC = [
@@ -206,15 +207,6 @@ const TILE_SRC = [
   find('01_20_01', 4),
   find('01_20_01', 5),
 ];
-// EXPERIMENT: richer FILLED symbols for the board tiles (developer upload).
-// If they don't fit, delete these and pass SYMBOL_SRC to processTile instead.
-const TILE_SYMBOL_SRC = [
-  find('19_19_43', 1), // compass
-  find('19_19_43', 2), // triangle
-  find('19_19_43', 3), // protractor
-  find('19_19_43', 4), // ruler
-  find('19_19_43', 5), // pencil
-];
 
 for (let i = 0; i < 5; i++) await processSymbol(SYMBOL_SRC[i], `symbol_${i}.png`);
-for (let i = 0; i < 5; i++) await processTile(TILE_SRC[i], TILE_SYMBOL_SRC[i], `special_${i}.png`);
+for (let i = 0; i < 5; i++) await processTile(TILE_SRC[i], SYMBOL_SRC[i], `special_${i}.png`);
