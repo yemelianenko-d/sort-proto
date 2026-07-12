@@ -24,7 +24,7 @@ const uk = {
   // Per-mechanic strings live under their own namespace so each mechanic owner
   // adds keys here without touching another mechanic's block (see MECHANIC_SDK).
   mechanics: {
-    sorting: { name: 'Сортування' },
+    sorting: { name: 'Scribble Sort' },
     blocks: {
       name: 'Блоки',
       level: (n: number) => `Рівень ${n}`,
@@ -175,7 +175,7 @@ const en: Messages = {
     loading: 'Loading…',
   },
   mechanics: {
-    sorting: { name: 'Sorting' },
+    sorting: { name: 'Scribble Sort' },
     blocks: {
       name: 'Blocks',
       level: (n: number) => `Level ${n}`,
