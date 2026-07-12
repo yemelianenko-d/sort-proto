@@ -249,6 +249,19 @@ export class SortingController {
     return this.model.findAnyMove();
   }
 
+  /**
+   * Cheat auto-solve: apply one solver move with the full animated path.
+   * Returns false when busy (mid chain-break animation) or the move is
+   * illegal — the caller then retries after a beat or aborts.
+   */
+  performExternalMove(from: number, to: number): boolean {
+    if (this.busy) return false;
+    if (!this.model.canDrop(from, to)) return false;
+    this.selected = -1;
+    this.performMove(from, to, 'tap');
+    return true;
+  }
+
   useKey(): boolean {
     if (this.busy) return false;
     const res = this.model.unlockColumn();

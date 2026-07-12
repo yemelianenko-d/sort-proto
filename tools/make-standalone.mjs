@@ -8,9 +8,11 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const htmlPath = resolve(root, 'dist-standalone/index.html');
 const levels = readFileSync(resolve(root, 'public/levels/sorting_levels.json'), 'utf8');
+const blocksLevels = readFileSync(resolve(root, 'public/levels/blocks_levels.json'), 'utf8');
 
 let html = readFileSync(htmlPath, 'utf8');
 let inject = `<script>window.__SORTPROTO_LEVELS__ = ${levels};</script>`;
+inject += `\n<script>window.__SORTPROTO_BLOCKS_LEVELS__ = ${blocksLevels};</script>`;
 
 // Inline artist assets (if any): urls become base64 data URIs.
 // Buckets (shared design system + per-mechanic) are merged into the single
@@ -18,10 +20,12 @@ let inject = `<script>window.__SORTPROTO_LEVELS__ = ${levels};</script>`;
 const MANIFESTS = [
   'public/assets/shared/manifest.json',
   'public/assets/mechanics/sorting/manifest.json',
+  'public/assets/mechanics/blocks/manifest.json',
 ];
 try {
   const toDataUri = (url) => {
-    const buf = readFileSync(resolve(root, 'public', url));
+    // manifests may cache-bust urls with ?v=N — strip the query for the file read
+    const buf = readFileSync(resolve(root, 'public', url.split('?')[0]));
     return `data:image/png;base64,${buf.toString('base64')}`;
   };
   const merged = { version: 1, images: [], atlases: [], nineslice: {}, animations: [] };

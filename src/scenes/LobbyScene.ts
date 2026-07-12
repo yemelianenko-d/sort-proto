@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
-import { COLORS, FONTS, SCENE_KEYS } from '../app/gameConfig';
+import { COLORS, FONTS, SCENE_KEYS, readAppFlags } from '../app/gameConfig';
+import { MECHANICS } from '../app/mechanics';
+import type { MechanicModule } from '../core/mechanics/MechanicModule';
 import type { GameController } from '../core/game/GameController';
 import { UI_TEXTS, LOCALES, getLocale, setLocale } from '../config/uiTexts';
 import { PaperBackground, strokeSketchRect } from '../ui/sketch';
@@ -24,6 +26,9 @@ const TAP_TOLERANCE = 10;
  */
 export class LobbyScene extends Phaser.Scene {
   private game_!: GameController;
+  /** Mechanic this lobby drives (from `?mechanic=`; default = the first,
+   * sorting). Until the master-lobby lands, the lobby itself is per-mechanic. */
+  private module!: MechanicModule;
   private paper!: PaperBackground;
   private doodles!: Phaser.GameObjects.Container;
   private doodleSeed = 0;
@@ -52,6 +57,8 @@ export class LobbyScene extends Phaser.Scene {
 
   create(): void {
     this.game_ = this.registry.get('game') as GameController;
+    const wanted = readAppFlags().mechanic;
+    this.module = MECHANICS.find((m) => m.id === wanted) ?? MECHANICS[0];
     this.paper = new PaperBackground(this);
     this.doodles = this.add.container(0, 0).setDepth(-8);
     this.doodleSeed = Math.floor(Math.random() * 2 ** 31);
@@ -265,7 +272,7 @@ export class LobbyScene extends Phaser.Scene {
 
     // кнопка "Грати" одразу під нижньою стрілкою
     const playY = this.gridBottom + 12 + 31 + 14 + 29;
-    const available = this.game_.levels.count;
+    const available = this.levelCount();
     const allDone = nextIndex >= available;
     this.bottom.add(
       new Button(this, cx, playY, {
@@ -317,7 +324,7 @@ export class LobbyScene extends Phaser.Scene {
     } else {
       // поточний рівень тримаємо у верхній третині видимої зони
       const cell = this.cellSizeFor(w);
-      const row = Math.floor(Math.min(nextIndex, this.game_.levels.count - 1) / PER_ROW);
+      const row = Math.floor(Math.min(nextIndex, this.levelCount() - 1) / PER_ROW);
       const rowWorldY = this.gridPadTop + this.gridTop + cell / 2 + row * (cell + CELL_GAP_Y);
       const desiredY = this.gridTop + (this.gridBottom - this.gridTop) * 0.28;
       this.setScroll(desiredY - rowWorldY);
@@ -330,11 +337,13 @@ export class LobbyScene extends Phaser.Scene {
 
   /** Builds all level cells into gridWrap; returns content height. */
   private buildGrid(w: number, nextIndex: number): number {
-    const availableCount = this.game_.levels.count;
+    const availableCount = this.levelCount();
     const cellSize = this.cellSizeFor(w);
     const gridW = PER_ROW * cellSize + (PER_ROW - 1) * CELL_GAP_X;
     const startX = w / 2 - gridW / 2 + cellSize / 2;
-    const windowCount = GAME_SETTINGS.lobby.totalCells;
+    // Sorting is endless (generated past the curated set); other mechanics
+    // show exactly their curated levels.
+    const windowCount = this.module.levels ? availableCount : GAME_SETTINGS.lobby.totalCells;
 
     for (let i = 0; i < windowCount; i++) {
       const row = Math.floor(i / PER_ROW);
@@ -350,6 +359,7 @@ export class LobbyScene extends Phaser.Scene {
 
   /** Compact mechanic glyphs for the cheat mode: I=ink K=keys L=lock T=tape C=color-target S=set-unlock. */
   private mechanicGlyphs(index: number): string {
+    if (this.module.id !== 'sorting') return ''; // glyphs describe sorting specials only
     if (index >= this.game_.levels.count) return ''; // avoid generating endless levels here
     const cfg = this.game_.levels.byIndex(index);
     if (!cfg) return '';
@@ -375,7 +385,7 @@ export class LobbyScene extends Phaser.Scene {
     y: number,
     cellSize: number,
   ): Phaser.GameObjects.Container {
-    const id = this.game_.levels.idFor(i);
+    const id = this.levelIdFor(i);
     const completed = this.game_.progress.isCompleted(id);
     const isCurrent = i === nextIndex && !completed && i < availableCount;
     const locked = !completed && !isCurrent;
@@ -500,10 +510,20 @@ export class LobbyScene extends Phaser.Scene {
 
   /* ---------------- helpers ---------------- */
 
+  /** Curated level count of the active mechanic. */
+  private levelCount(): number {
+    return this.module.levels?.count ?? this.game_.levels.count;
+  }
+
+  /** Progress/level id of index `i` in the active mechanic. */
+  private levelIdFor(i: number): string {
+    return this.module.levels?.idFor(i) ?? this.game_.levels.idFor(i);
+  }
+
   /** First not-yet-completed level index (clamped to the available set). */
   private nextLevelIndex(): number {
     let i = 0;
-    while (this.game_.progress.isCompleted(this.game_.levels.idFor(i))) i += 1;
+    while (this.game_.progress.isCompleted(this.levelIdFor(i))) i += 1;
     return i;
   }
 
@@ -725,6 +745,7 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   private startLevel(index: number): void {
-    this.scene.start(SCENE_KEYS.sorting, { levelIndex: index });
+    this.game_.state.currentMechanic = this.module.id; // analytics base tag
+    this.scene.start(this.module.entryScene, { levelIndex: index });
   }
 }

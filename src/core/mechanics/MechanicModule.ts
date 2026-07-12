@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import type { MechanicLevelSource } from '../game/JsonLevelSource';
 
 /** A Phaser scene class the game can register (matches `typeof Phaser.Scene`). */
 export type SceneClass = typeof Phaser.Scene;
@@ -33,4 +34,10 @@ export interface MechanicModule {
    * assets are split out of the shared manifest.
    */
   readonly assetManifestUrl?: string;
+  /**
+   * The mechanic's own level list (count + stable ids) for the lobby and the
+   * preloader. Optional: sorting predates this hook and keeps using the core
+   * LevelManager; new mechanics provide a JsonLevelSource over `levelsUrl`.
+   */
+  readonly levels?: MechanicLevelSource;
 }

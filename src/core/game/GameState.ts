@@ -4,7 +4,8 @@
  * inside the mechanic's own model.
  */
 export class GameState {
-  currentMechanic = 'sorting' as const;
+  /** Mechanic id of the level being played (set by the launch points). */
+  currentMechanic: string = 'sorting';
   currentLevelIndex = 0;
   levelStartedAt = 0;
 

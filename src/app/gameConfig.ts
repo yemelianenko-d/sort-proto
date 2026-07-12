@@ -63,6 +63,7 @@ export const SCENE_KEYS = {
   preload: 'PreloadScene',
   lobby: 'LobbyScene',
   sorting: 'SortingScene',
+  blocks: 'BlocksScene',
   error: 'ErrorScene',
 } as const;
 
@@ -71,13 +72,24 @@ export interface AppFlags {
   /** Dev shortcut `?level=N` (1-based): boot straight into that level instead
    * of the lobby. null when absent or malformed. Bounds-checked at use site. */
   level: number | null;
+  /** `?mechanic=<id>`: which mechanic the lobby (and `?level=`) drives until
+   * the master-lobby lands. null / unknown id = the default (sorting). */
+  mechanic: string | null;
+  /** `?endless=1`: boot straight into the mechanic's arcade/endless mode (only
+   * the blocks mechanic has one). Ignored by mechanics without one. */
+  endless: boolean;
 }
 
 export function readAppFlags(): AppFlags {
   const params = new URLSearchParams(window.location.search);
   const raw = params.get('level');
   const n = raw !== null && /^\d+$/.test(raw) ? parseInt(raw, 10) : NaN;
-  return { debug: params.get('debug') === 'true', level: n >= 1 ? n : null };
+  return {
+    debug: params.get('debug') === 'true',
+    level: n >= 1 ? n : null,
+    mechanic: params.get('mechanic'),
+    endless: params.get('endless') === '1',
+  };
 }
 
 export const LEVELS_URL = 'levels/sorting_levels.json';

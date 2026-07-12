@@ -73,6 +73,11 @@ Render UI through the shared components so you inherit the look for free:
 `ui/Popup.ts`, `ui/Button.ts`, `ui/sketch.ts` (sketch strokes), `ui/doodles.ts`,
 and `COLORS` / `FONTS` from `app/gameConfig.ts`. Follow the STYLE_GUIDE recipe
 "додати візуал нової механіки в стилі" for the mechanic's own visual metaphor.
+
+Margin doodles: a mechanic may ship its own THEMED doodles (textures in its
+bucket, e.g. `blocks/doodle_NN`) — pass them to `scatterDoodles` via
+`extraKeys` so they always MIX with the universal set, never replace it
+(the design rule; sorting's `deco_sort_NN` follow the same pattern).
 Do **not** fork these components — if one needs a capability, extend it
 additively (§9).
 

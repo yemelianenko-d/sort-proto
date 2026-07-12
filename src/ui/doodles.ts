@@ -8,8 +8,19 @@ export interface DoodleRect {
   h: number;
 }
 
-/** Universal doodles: usable on any scene of any mechanic. */
+/** All delivered doodles. NOTE: `deco_doodle_11..20` are handwritten TEXT
+ * puns (mostly sorting-flavoured: "Live long & sort", "Winter is sorting", …)
+ * — authored when the game was sorting-only, so they are NOT theme-neutral.
+ * Sorting still uses the whole set (its own flavour); other mechanics should
+ * pass `NEUTRAL_DOODLE_KEYS` as `universalKeys` to avoid the cross-mechanic
+ * text leak, and add their OWN themed doodles via `extraKeys`. */
 const DOODLE_KEYS = Array.from({ length: 30 }, (_, i) => `deco_doodle_${String(i + 1).padStart(2, '0')}`);
+
+/** Theme-neutral subset: pure drawings only (no handwritten text), safe on any
+ * mechanic. Excludes the `deco_doodle_11..20` text puns. */
+export const NEUTRAL_DOODLE_KEYS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30].map(
+  (n) => `deco_doodle_${String(n).padStart(2, '0')}`,
+);
 
 function mulberry32(seed: number): () => number {
   let s = seed | 0;
@@ -34,6 +45,8 @@ function overlaps(r: DoodleRect, list: DoodleRect[], pad: number): boolean {
  *
  * `extraKeys` are mechanic-scoped doodles (e.g. sorting one-liners): pass
  * them only from that mechanic's scenes so they never leak elsewhere.
+ * `universalKeys` overrides the base pool (default: all 30) — pass
+ * `NEUTRAL_DOODLE_KEYS` from a non-sorting mechanic to keep sorting text out.
  */
 export function scatterDoodles(
   scene: Phaser.Scene,
@@ -44,9 +57,10 @@ export function scatterDoodles(
   seed: number,
   count = 8,
   extraKeys: string[] = [],
+  universalKeys: readonly string[] = DOODLE_KEYS,
 ): void {
   container.removeAll(true);
-  const keys = [...DOODLE_KEYS, ...extraKeys].filter((k) => hasTexture(scene, k));
+  const keys = [...universalKeys, ...extraKeys].filter((k) => hasTexture(scene, k));
   if (keys.length === 0) return;
   const rng = mulberry32(seed);
   const placed: DoodleRect[] = [];

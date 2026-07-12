@@ -20,6 +20,7 @@ import { SortingView } from './SortingView';
 import { SortingController } from './SortingController';
 import { hasTexture } from '../../core/assets/AssetLoader';
 import { SPECIAL } from './SortingTypes';
+import { solvePath, type SolverState } from './SortingSolver';
 
 interface SceneData {
   levelIndex: number;
@@ -58,6 +59,8 @@ export class SortingScene extends Phaser.Scene {
   private plusKeyBtn: Button | null = null;
   private plusUndoBtn: Button | null = null;
   private winBtn: Button | null = null;
+  private solveBtn: Button | null = null;
+  private autoSolving = false;
 
   constructor() {
     super(SCENE_KEYS.sorting);
@@ -237,17 +240,19 @@ export class SortingScene extends Phaser.Scene {
       g.lineBetween(x - r2, y + r2, x + r2, y - r2);
     };
 
-    // A colour block that just turned face-up: the ? tile plus a sparkle burst
-    // reading as "reveals" (no travel arrow — that would read as a move).
+    // The core rule as a flip: one hatched tile turns face-up when it becomes
+    // the column top. Back-of-card (?) → reveal sparkles → the colour beneath.
+    // Tiles sit CLOSE so it reads as one tile in two states, not two blocks
+    // moving; no travel arrow, no lens icon (the lens is a secondary path the
+    // text explains — the picture shows the rule).
     if (id === 'hidden') {
-      img('block_hidden', -46, 2, 42);
-      sparkle(2, -4, 7);
-      sparkle(-2, 14, 5);
-      sparkle(9, 16, 4);
+      img('block_hidden', -28, 2, 46);
+      img('block_1', 28, 2, 46);
+      sparkle(0, 2, 9);
+      sparkle(-3, -11, 5);
+      sparkle(4, 14, 4);
       node.add(g);
-      img('block_1', 48, 2, 42);
-      img('icon_lens', -46, 32, 16);
-      return { node, height: 86 };
+      return { node, height: 80 };
     }
 
     // Ink: two blots in a column, a crossed arc to a second empty column —
@@ -394,7 +399,8 @@ export class SortingScene extends Phaser.Scene {
     this.plusLensBtn?.setPosition(w / 2 + 44, bottomY - 24);
     this.plusKeyBtn?.setPosition(w / 2 + 132, bottomY - 24);
     this.plusUndoBtn?.setPosition(w / 2 - 44, bottomY - 24);
-    this.winBtn?.setPosition(w / 2, top + 24);
+    this.winBtn?.setPosition(w / 2 - 33, top + 24);
+    this.solveBtn?.setPosition(w / 2 + 33, top + 24);
 
     this.view.setArea(
       safe.left + 8,
@@ -547,9 +553,75 @@ export class SortingScene extends Phaser.Scene {
         fontSize: 16,
         onClick: () => this.onWin(),
       });
+      this.solveBtn = new Button(this, 0, 0, {
+        width: 58,
+        height: 34,
+        label: UI_TEXTS.cheat.solve,
+        fontSize: 16,
+        onClick: () => this.autoSolve(),
+      });
     }
 
     this.refreshHud();
+  }
+
+  /** Snapshot the live model as a solver state (column indices line up 1:1,
+   * since the model lays out base → locked → sealed columns the same way the
+   * generator's stateOf does). Hidden blocks contribute their true colour —
+   * a cheat legitimately sees through them. */
+  private buildSolverState(): SolverState {
+    const m = this.model;
+    const cols = m.columns.map((col) => col.map((b) => b.color));
+    const chainCols = m.sealedColumns;
+    const targets = new Map<number, number>();
+    const taped = new Set<number>();
+    for (let i = 0; i < m.columns.length; i++) {
+      const t = m.targetColor(i);
+      if (t !== null) targets.set(i, t);
+      if (m.isTaped(i)) taped.add(i);
+    }
+    return {
+      cols,
+      cap: m.cap,
+      locked: m.lockedColumn ?? -1,
+      locks: m.locksLeft,
+      chainCols,
+      chainSeals: chainCols.map((c) => m.chainsLeft(c)),
+      taped,
+      targets,
+    };
+  }
+
+  /** Cheat: compute a full solution and replay it at a watchable pace. */
+  private autoSolve(): void {
+    if (this.autoSolving || this.controller.isBusy) return;
+    const path = solvePath(this.buildSolverState());
+    if (!path || path.length === 0) {
+      this.solveBtn?.setEnabled(false); // already solved or unsolvable from here
+      return;
+    }
+    this.autoSolving = true;
+    this.solveBtn?.setEnabled(false);
+    const STEP_MS = 480; // slow enough to follow each move by eye
+    let i = 0;
+    const step = (): void => {
+      if (i >= path.length || this.model.isWon()) {
+        this.autoSolving = false;
+        return;
+      }
+      if (this.controller.isBusy) {
+        this.time.delayedCall(120, step); // wait out a chain-break animation
+        return;
+      }
+      const mv = path[i];
+      if (!this.controller.performExternalMove(mv.from, mv.to)) {
+        this.autoSolving = false; // solver/model divergence — stop gracefully
+        return;
+      }
+      i += 1;
+      this.time.delayedCall(STEP_MS, step);
+    };
+    step();
   }
 
   private refreshHud(): void {

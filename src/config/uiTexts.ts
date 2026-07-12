@@ -25,6 +25,37 @@ const uk = {
   // adds keys here without touching another mechanic's block (see MECHANIC_SDK).
   mechanics: {
     sorting: { name: 'Сортування' },
+    blocks: {
+      name: 'Блоки',
+      level: (n: number) => `Рівень ${n}`,
+      goalClear: (left: number) => `Прибрати блоки: ${left}`,
+      goalClearLabel: 'Прибрати:',
+      combo: (chain: number) => `Комбо ${chain}`,
+      goalScore: (score: number, target: number) => `Очки: ${score} / ${target}`,
+      score: (n: number) => `Очки: ${n}`,
+      scoreLabel: 'Очки',
+      pieces: (n: number) => `Фігури: ${n}`,
+      howtoTitle: 'Як грати',
+      howtoBody:
+        'Перетягуй фігури з лотка на поле. Повний рядок або стовпець зникає. Прибери стартові блоки чи набери очки — і рівень пройдено. Якщо жодна фігура не вміщується — програш.',
+      winScore: (score: number) => `Очки: ${score}`,
+      winHintAfter: (par: number) => `— ${par} фігур`,
+      failTitle: 'Немає місця!',
+      failBody: 'Фігурам з лотка більше нема куди стати.',
+      confirmBody: 'Прогрес цього рівня зникне.',
+      praise: {
+        double: ['Гарно!', 'Акуратно!'],
+        triple: ['Чудово!', 'Як по лінійці!'],
+        quad: ['Легендарно!', 'Майстерно!'],
+        allClear: ['Чистий аркуш!'],
+      },
+      endlessName: 'Нескінченний',
+      endlessBest: (n: number) => `Рекорд: ${n}`,
+      gameOverTitle: 'Гру завершено',
+      gameOverScore: (score: number) => `Рахунок: ${score}`,
+      gameOverBest: (best: number) => `Рекорд: ${best}`,
+      newBest: 'Новий рекорд! 🎉',
+    },
   },
   lobby: {
     play: 'Грати',
@@ -120,6 +151,7 @@ const uk = {
   cheat: {
     reset: 'Скинути прогрес',
     win: 'WIN',
+    solve: 'AUTO',
   },
   error: {
     title: 'Не вдалося запустити гру',
@@ -142,6 +174,37 @@ const en: Messages = {
   },
   mechanics: {
     sorting: { name: 'Sorting' },
+    blocks: {
+      name: 'Blocks',
+      level: (n: number) => `Level ${n}`,
+      goalClear: (left: number) => `Clear the blocks: ${left}`,
+      goalClearLabel: 'Clear:',
+      combo: (chain: number) => `Combo ${chain}`,
+      goalScore: (score: number, target: number) => `Score: ${score} / ${target}`,
+      score: (n: number) => `Score: ${n}`,
+      scoreLabel: 'Score',
+      pieces: (n: number) => `Pieces: ${n}`,
+      howtoTitle: 'How to play',
+      howtoBody:
+        'Drag pieces from the tray onto the board. A full row or column clears. Remove the starting blocks or reach the score — and the level is done. If no piece fits, you lose.',
+      winScore: (score: number) => `Score: ${score}`,
+      winHintAfter: (par: number) => `— ${par} pieces`,
+      failTitle: 'No room left!',
+      failBody: 'None of the tray pieces fits anywhere.',
+      confirmBody: 'This level’s progress will be lost.',
+      praise: {
+        double: ['Nice!', 'Neat!'],
+        triple: ['Great!', 'Ruler-straight!'],
+        quad: ['Legendary!', 'Masterful!'],
+        allClear: ['Clean sheet!'],
+      },
+      endlessName: 'Endless',
+      endlessBest: (n: number) => `Best: ${n}`,
+      gameOverTitle: 'Game over',
+      gameOverScore: (score: number) => `Score: ${score}`,
+      gameOverBest: (best: number) => `Best: ${best}`,
+      newBest: 'New best! 🎉',
+    },
   },
   lobby: {
     play: 'Play',
@@ -237,6 +300,7 @@ const en: Messages = {
   cheat: {
     reset: 'Reset progress',
     win: 'WIN',
+    solve: 'AUTO',
   },
   error: {
     title: 'Could not start the game',

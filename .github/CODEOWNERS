@@ -21,6 +21,5 @@
 # --- Mechanics: each folder owned by its specialist ---
 /src/mechanics/sorting/            @yemelianenko-d
 /public/assets/mechanics/sorting/  @yemelianenko-d
-# New mechanic — assign to its owner when it lands:
-# /src/mechanics/blocks/            @<blocks-owner>
-# /public/assets/mechanics/blocks/  @<blocks-owner>
+/src/mechanics/blocks/             @yemelianenko-d
+/public/assets/mechanics/blocks/   @yemelianenko-d

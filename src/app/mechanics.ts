@@ -1,5 +1,6 @@
 import type { MechanicModule } from '../core/mechanics/MechanicModule';
 import { sortingModule } from '../mechanics/sorting';
+import { blocksModule } from '../mechanics/blocks';
 
 /**
  * The composition root's list of shipped mechanics.
@@ -10,4 +11,4 @@ import { sortingModule } from '../mechanics/sorting';
  * master-lobby renders one tile per entry. This is the single shared file both
  * mechanic owners touch — keep edits to it one line per mechanic.
  */
-export const MECHANICS: readonly MechanicModule[] = [sortingModule];
+export const MECHANICS: readonly MechanicModule[] = [sortingModule, blocksModule];

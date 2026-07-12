@@ -60,8 +60,12 @@ export class PreloadScene extends Phaser.Scene {
         new Promise((resolve) => setTimeout(resolve, GAME_SETTINGS.loading.fontTimeoutMs)),
       ]);
 
-      // 2) external level config (hard requirement)
+      // 2) external level configs (hard requirement): the core sorting
+      //    manager plus every registered mechanic's own level source
       await game.levels.load();
+      for (const m of MECHANICS) {
+        if (m.levels && !m.levels.isLoaded) await m.levels.load();
+      }
 
       // 3) optional artist assets (fail-graceful: procedural fallback).
       // Shared design system + every registered mechanic's bucket. With one
@@ -73,17 +77,28 @@ export class PreloadScene extends Phaser.Scene {
       ]);
 
       eventBus.emit('assets_loaded', { levels_count: game.levels.count });
-      eventBus.emit('mechanic_loaded', {
-        mechanic_id: 'sorting',
-        levels_count: game.levels.count,
-      });
+      for (const m of MECHANICS) {
+        eventBus.emit('mechanic_loaded', {
+          mechanic_id: m.id,
+          levels_count: m.levels?.count ?? game.levels.count,
+        });
+      }
       // Dev shortcut: `?level=N` boots straight into that level (1-based,
       // clamped to the available range) so a specific level can be opened
-      // deterministically without clicking through the lobby.
-      const jump = readAppFlags().level;
-      if (jump !== null) {
-        this.scene.start(SCENE_KEYS.sorting, {
-          levelIndex: Math.min(jump - 1, game.levels.count - 1),
+      // deterministically without clicking through the lobby. `?mechanic=<id>`
+      // picks which mechanic both the jump and the lobby drive.
+      const flags = readAppFlags();
+      const active = MECHANICS.find((m) => m.id === flags.mechanic) ?? MECHANICS[0];
+      if (flags.endless && active.id === 'blocks') {
+        // `?mechanic=blocks&endless=1` → straight into the arcade/endless mode
+        // (the campaign scene reads `endless` from its scene data).
+        game.state.currentMechanic = active.id;
+        this.scene.start(active.entryScene, { levelIndex: 0, endless: true });
+      } else if (flags.level !== null) {
+        const count = active.levels?.count ?? game.levels.count;
+        game.state.currentMechanic = active.id; // analytics base tag
+        this.scene.start(active.entryScene, {
+          levelIndex: Math.min(flags.level - 1, count - 1),
         });
       } else {
         this.scene.start(SCENE_KEYS.lobby);

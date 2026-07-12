@@ -46,6 +46,10 @@
       "url": "assets/shared/lvl_cell_done.png"
     },
     {
+      "key": "icon_check",
+      "url": "assets/shared/icon_check.png"
+    },
+    {
       "key": "icon_settings",
       "url": "assets/shared/icon_settings.png"
     },

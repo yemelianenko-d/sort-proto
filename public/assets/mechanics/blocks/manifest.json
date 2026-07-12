@@ -1,0 +1,172 @@
+{
+  "version": 1,
+  "images": [
+    {
+      "key": "blocks/tile_0",
+      "url": "assets/mechanics/blocks/tile_0.png?v=2"
+    },
+    {
+      "key": "blocks/tile_1",
+      "url": "assets/mechanics/blocks/tile_1.png?v=2"
+    },
+    {
+      "key": "blocks/tile_2",
+      "url": "assets/mechanics/blocks/tile_2.png?v=2"
+    },
+    {
+      "key": "blocks/tile_3",
+      "url": "assets/mechanics/blocks/tile_3.png?v=2"
+    },
+    {
+      "key": "blocks/tile_4",
+      "url": "assets/mechanics/blocks/tile_4.png?v=2"
+    },
+    {
+      "key": "blocks/tile_5",
+      "url": "assets/mechanics/blocks/tile_5.png?v=2"
+    },
+    {
+      "key": "blocks/tile_6",
+      "url": "assets/mechanics/blocks/tile_6.png?v=2"
+    },
+    {
+      "key": "blocks/tile_7",
+      "url": "assets/mechanics/blocks/tile_7.png?v=2"
+    },
+    {
+      "key": "blocks/board_frame",
+      "url": "assets/mechanics/blocks/board_frame.png"
+    },
+    {
+      "key": "blocks/score_panel",
+      "url": "assets/mechanics/blocks/score_panel.png?v=4"
+    },
+    {
+      "key": "blocks/dim_line_h",
+      "url": "assets/mechanics/blocks/dim_line_h.png"
+    },
+    {
+      "key": "blocks/dim_line_v",
+      "url": "assets/mechanics/blocks/dim_line_v.png"
+    },
+    {
+      "key": "blocks/corner_datum",
+      "url": "assets/mechanics/blocks/corner_datum.png"
+    },
+    {
+      "key": "blocks/corner_angle",
+      "url": "assets/mechanics/blocks/corner_angle.png"
+    },
+    {
+      "key": "blocks/corner_square",
+      "url": "assets/mechanics/blocks/corner_square.png"
+    },
+    {
+      "key": "blocks/doodle_01",
+      "url": "assets/mechanics/blocks/doodle_01.png"
+    },
+    {
+      "key": "blocks/doodle_02",
+      "url": "assets/mechanics/blocks/doodle_02.png"
+    },
+    {
+      "key": "blocks/doodle_03",
+      "url": "assets/mechanics/blocks/doodle_03.png"
+    },
+    {
+      "key": "blocks/doodle_04",
+      "url": "assets/mechanics/blocks/doodle_04.png"
+    },
+    {
+      "key": "blocks/doodle_05",
+      "url": "assets/mechanics/blocks/doodle_05.png"
+    },
+    {
+      "key": "blocks/doodle_06",
+      "url": "assets/mechanics/blocks/doodle_06.png"
+    },
+    {
+      "key": "blocks/doodle_07",
+      "url": "assets/mechanics/blocks/doodle_07.png"
+    },
+    {
+      "key": "blocks/doodle_08",
+      "url": "assets/mechanics/blocks/doodle_08.png"
+    },
+    {
+      "key": "blocks/doodle_09",
+      "url": "assets/mechanics/blocks/doodle_09.png"
+    },
+    {
+      "key": "blocks/doodle_10",
+      "url": "assets/mechanics/blocks/doodle_10.png"
+    },
+    {
+      "key": "blocks/doodle_11",
+      "url": "assets/mechanics/blocks/doodle_11.png"
+    },
+    {
+      "key": "blocks/doodle_12",
+      "url": "assets/mechanics/blocks/doodle_12.png"
+    },
+    {
+      "key": "blocks/doodle_13",
+      "url": "assets/mechanics/blocks/doodle_13.png"
+    },
+    {
+      "key": "blocks/doodle_14",
+      "url": "assets/mechanics/blocks/doodle_14.png"
+    },
+    {
+      "key": "blocks/doodle_15",
+      "url": "assets/mechanics/blocks/doodle_15.png"
+    },
+    {
+      "key": "blocks/doodle_16",
+      "url": "assets/mechanics/blocks/doodle_16.png"
+    },
+    {
+      "key": "blocks/special_0",
+      "url": "assets/mechanics/blocks/special_0.png?v=6"
+    },
+    {
+      "key": "blocks/special_1",
+      "url": "assets/mechanics/blocks/special_1.png?v=6"
+    },
+    {
+      "key": "blocks/special_2",
+      "url": "assets/mechanics/blocks/special_2.png?v=6"
+    },
+    {
+      "key": "blocks/special_3",
+      "url": "assets/mechanics/blocks/special_3.png?v=6"
+    },
+    {
+      "key": "blocks/special_4",
+      "url": "assets/mechanics/blocks/special_4.png?v=6"
+    },
+    {
+      "key": "blocks/symbol_0",
+      "url": "assets/mechanics/blocks/symbol_0.png?v=3"
+    },
+    {
+      "key": "blocks/symbol_1",
+      "url": "assets/mechanics/blocks/symbol_1.png?v=3"
+    },
+    {
+      "key": "blocks/symbol_2",
+      "url": "assets/mechanics/blocks/symbol_2.png?v=3"
+    },
+    {
+      "key": "blocks/symbol_3",
+      "url": "assets/mechanics/blocks/symbol_3.png?v=3"
+    },
+    {
+      "key": "blocks/symbol_4",
+      "url": "assets/mechanics/blocks/symbol_4.png?v=3"
+    }
+  ],
+  "atlases": [],
+  "nineslice": {},
+  "animations": []
+}
