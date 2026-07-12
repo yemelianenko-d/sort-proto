@@ -81,6 +81,18 @@ async function bootstrap(): Promise<void> {
 
   game.registry.set('game', controller);
 
+  // Dev-only: the embedded preview pane throttles requestAnimationFrame and
+  // reports the page as hidden, so Phaser would pause its own render loop and
+  // the canvas stays black. Neutralise the self-pause in dev so the game still
+  // renders during the pane's RAF bursts. A real browser tab is unaffected
+  // (it never hides); never do this in prod — a genuinely hidden tab should
+  // pause to save battery.
+  if (import.meta.env.DEV) {
+    const loop = game.loop as unknown as { pause: () => void; blur: () => void };
+    loop.pause = () => {};
+    loop.blur = () => {};
+  }
+
   // Scale.NONE needs a manual resize feed (fires the same RESIZE event the
   // scenes already subscribe to через ResponsiveContainer/onResize).
   const feedResize = () => game.scale.resize(window.innerWidth * DPR, window.innerHeight * DPR);

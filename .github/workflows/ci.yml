@@ -1,0 +1,28 @@
+name: CI
+
+# Gate every PR into main (and main itself) with the full quality suite.
+# Deploy stays in deploy.yml; this job never ships — it only verifies.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Match the npm major that generated package-lock.json (npm 11 / Node
+          # 24); npm 10 resolves esbuild differently and fails `npm ci`.
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
