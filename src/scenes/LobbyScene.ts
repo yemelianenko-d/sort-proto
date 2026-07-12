@@ -168,9 +168,8 @@ export class LobbyScene extends Phaser.Scene {
     // Вертикальне центрування: на високих екранах (fullscreen, десктоп)
     // контент не липне до верху — рахуємо очікувану висоту блоку і зсуваємо
     // все вниз на половину надлишку (кутові кнопки лишаються в кутах).
-    // Lobby shows only the main name (before ':').
-    const colon = UI_TEXTS.app.title.indexOf(':');
-    const mainPart = colon >= 0 ? UI_TEXTS.app.title.slice(0, colon).trim() : UI_TEXTS.app.title;
+    // Lobby header = the active mechanic's own name (Блоки / Сортування).
+    const mainPart = this.module.title();
     const titleGap = 62; // title.y -> progress row
     const cellSize0 = this.cellSizeFor(w);
     const rowH0 = cellSize0 + CELL_GAP_Y;
