@@ -8,8 +8,11 @@ export const BLOCKS_SETTINGS = {
   // Scoring/combo formulas live in blocksScoring.ts (Balance Spec v3 §9),
   // deterministic and unit-tested; the model owns the combo chain state.
   layout: {
-    /** Cell size ceiling (logical px). */
-    maxCell: 46,
+    /** Cell size ceiling (logical px). High enough that on a large/desktop
+     * panel the board+tray grow to FILL the available height (like sorting)
+     * instead of sitting small with empty space below; on a phone the width
+     * still binds first, so mobile sizing is unchanged. */
+    maxCell: 74,
     /** Vertical band reserved ABOVE the board (portrait) for the button row +
      * score/goal panel, so on tall/narrow phones the panel never rides up into
      * the top buttons. Mechanic-owned — the shared hudHeight (92) is untouched. */
