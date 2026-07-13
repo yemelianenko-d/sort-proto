@@ -53,13 +53,34 @@ export const BLOCKS_SETTINGS = {
 } as const;
 
 /**
- * Per-colour tint (index = TileColor 0..7) for line-clear flashes, ghost
- * previews, win confetti and the celebration burst. Sampled from the tile art
- * by tools/art/prepare-blocks-tiles.mjs. MECHANIC-OWNED: kept separate from the
- * shared BLOCK_TINTS (which the sorting mechanic uses) so new blocks art never
- * changes sorting's colours. Re-run the tool and paste TILE_TINTS after any
- * tile-art change.
+ * Which tile-art set is active. Both sets ship and load; flip this in code (on
+ * request) to switch the whole board+tray between them. 'new' = the current
+ * sketch tiles (tile_N), 'legacy' = the pre-swap tiles (tile_legacy_N).
  */
-export const BLOCKS_TILE_TINTS: readonly number[] = [
-  0x96baf8, 0xfba1bd, 0x86d6cc, 0xfdbe82, 0xb4de75, 0xc2a2e3, 0xd3aa82, 0xfee79e,
+export type BlocksTileSet = 'new' | 'legacy';
+// `as` keeps the union type so the set can be flipped without tsc flagging the
+// comparisons below as "no overlap".
+export const BLOCKS_TILE_SET = 'new' as BlocksTileSet;
+
+/** Texture key for a colour under the ACTIVE set (used by BlocksView). */
+export const blocksTileKey = (color: number): string =>
+  BLOCKS_TILE_SET === 'legacy' ? `blocks/tile_legacy_${color}` : `blocks/tile_${color}`;
+
+/** New sketch set — sampled from tile_0..7 by prepare-blocks-tiles.mjs. */
+const TILE_TINTS_NEW: readonly number[] = [
+  0x97bcf8, 0x83dbd0, 0xfcb979, 0xf9a1bd, 0xbae081, 0xbf9ade, 0xd1a989, 0xfde688,
 ];
+/** Legacy set — the original shared BLOCK_TINTS the pre-swap tiles matched. */
+const TILE_TINTS_LEGACY: readonly number[] = [
+  0xfb8f85, 0x709cf5, 0x9de27d, 0xfcbf83, 0xd890db, 0xbbbfc5, 0x69d5c8, 0xf57895,
+];
+
+/**
+ * Per-colour tint (index = TileColor 0..7) for the ACTIVE set — line-clear
+ * flashes, ghost previews, win confetti and the celebration burst. Follows
+ * BLOCKS_TILE_SET so highlights always match the tiles on screen. MECHANIC-
+ * OWNED: never touches the shared BLOCK_TINTS (which the sorting mechanic uses).
+ * Re-run prepare-blocks-tiles.mjs and paste TILE_TINTS after any tile-art change.
+ */
+export const BLOCKS_TILE_TINTS: readonly number[] =
+  BLOCKS_TILE_SET === 'legacy' ? TILE_TINTS_LEGACY : TILE_TINTS_NEW;

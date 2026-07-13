@@ -34,6 +34,38 @@
       "url": "assets/mechanics/blocks/tile_7.png?v=3"
     },
     {
+      "key": "blocks/tile_legacy_0",
+      "url": "assets/mechanics/blocks/tile_legacy_0.png"
+    },
+    {
+      "key": "blocks/tile_legacy_1",
+      "url": "assets/mechanics/blocks/tile_legacy_1.png"
+    },
+    {
+      "key": "blocks/tile_legacy_2",
+      "url": "assets/mechanics/blocks/tile_legacy_2.png"
+    },
+    {
+      "key": "blocks/tile_legacy_3",
+      "url": "assets/mechanics/blocks/tile_legacy_3.png"
+    },
+    {
+      "key": "blocks/tile_legacy_4",
+      "url": "assets/mechanics/blocks/tile_legacy_4.png"
+    },
+    {
+      "key": "blocks/tile_legacy_5",
+      "url": "assets/mechanics/blocks/tile_legacy_5.png"
+    },
+    {
+      "key": "blocks/tile_legacy_6",
+      "url": "assets/mechanics/blocks/tile_legacy_6.png"
+    },
+    {
+      "key": "blocks/tile_legacy_7",
+      "url": "assets/mechanics/blocks/tile_legacy_7.png"
+    },
+    {
       "key": "blocks/board_frame",
       "url": "assets/mechanics/blocks/board_frame.png"
     },

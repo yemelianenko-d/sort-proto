@@ -5,7 +5,7 @@ import { hasTexture } from '../../core/assets/AssetLoader';
 import { toLogical } from '../../core/utils/hidpi';
 import { fillPattern, strokeSketchRect } from '../../ui/sketch';
 import { PIECE_SHAPES } from './blocksPieces';
-import { BLOCKS_SETTINGS, BLOCKS_TILE_TINTS } from './blocksSettings';
+import { BLOCKS_SETTINGS, BLOCKS_TILE_TINTS, blocksTileKey } from './blocksSettings';
 import type { BlocksModel } from './BlocksModel';
 import type { BlocksViewContract, ClearedCell, GridPos } from './BlocksTypes';
 
@@ -13,7 +13,7 @@ import type { BlocksViewContract, ClearedCell, GridPos } from './BlocksTypes';
  * must never flash a per-piece colour that changes every clear. */
 const SPECIAL_HIGHLIGHT = 0xf7b733;
 
-export const TILE_KEY = (color: number) => `blocks/tile_${color}`;
+export const TILE_KEY = (color: number) => blocksTileKey(color);
 const FRAME_KEY = 'blocks/board_frame';
 /** Fraction of the frame texture taken by the border band (measured by
  * tools/art/prepare-blocks-board.mjs) — the playfield aligns to its inside. */
