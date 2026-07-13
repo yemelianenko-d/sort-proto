@@ -420,8 +420,8 @@ export class BlocksScene extends Phaser.Scene {
     const ty = ly(P.trackY);
     // the scale runs BETWEEN the circles: starts a bit right of the blue one,
     // ends a bit left of the orange one — never overlapping either (2px wider)
-    const x0 = cxL + R + 9;
-    const x1 = cxR - R - 9;
+    const x0 = cxL + R + 7.5; // scale widened 3px total (1.5 each end)
+    const x1 = cxR - R - 7.5;
     const ratio = Math.min(score / target, 1);
     const px = x0 + (x1 - x0) * ratio;
 
@@ -452,9 +452,10 @@ export class BlocksScene extends Phaser.Scene {
     for (let i = 0; i <= 10; i++) {
       const tx = Math.round(x0 + ((x1 - x0) * i) / 10) + 0.5;
       const major = i % 5 === 0;
+      const topExtend = i === 0 || i === 10 ? 10 : 0; // end ticks reach 10px higher
       g.lineStyle(major ? 2 : 1.5, COLORS.ink, major ? 0.7 : 0.5);
       g.beginPath();
-      g.moveTo(tx, ty + 5);
+      g.moveTo(tx, ty + 5 - topExtend);
       g.lineTo(tx, ty + (major ? 15 : 11));
       g.strokePath();
     }
