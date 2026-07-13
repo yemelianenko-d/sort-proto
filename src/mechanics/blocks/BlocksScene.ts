@@ -452,7 +452,7 @@ export class BlocksScene extends Phaser.Scene {
     for (let i = 0; i <= 10; i++) {
       const tx = Math.round(x0 + ((x1 - x0) * i) / 10) + 0.5;
       const major = i % 5 === 0;
-      const topExtend = i === 0 || i === 10 ? 10 : 0; // end ticks reach 10px higher
+      const topExtend = i === 0 || i === 10 ? 8 : 0; // end ticks reach 8px higher
       g.lineStyle(major ? 2 : 1.5, COLORS.ink, major ? 0.7 : 0.5);
       g.beginPath();
       g.moveTo(tx, ty + 5 - topExtend);
