@@ -51,6 +51,62 @@ function removeCheckerBackground(data, w, h) {
   }
 }
 
+/** Symbols whose glyph is a SOLID/washed fill (set-square, protractor). Their
+ * fill shares the stroke hue so it can't be keyed by colour alone — we hollow
+ * the centre geometrically, leaving a thin outline. Others stay as drawn. */
+const HOLLOW_IDS = new Set([1, 2]);
+/** Outline band kept along every edge, as a fraction of the glyph's long side. */
+const HOLLOW_RIM_FRAC = 7 / 112;
+
+/** Clear pale/washed fill (light tints), keep saturated ink strokes — catches
+ * the protractor's translucent dome the flood/light-strip miss. */
+function clearPaleFill(data, w, h) {
+  for (let i = 0; i < w * h; i++) {
+    if (data[i * 4 + 3] === 0) continue;
+    const mx = Math.max(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]);
+    const mn = Math.min(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]);
+    if (mn >= 180 && mx - mn <= 78) data[i * 4 + 3] = 0;
+  }
+}
+
+/** Hollow a filled glyph: keep a `rim`-px band along every edge (outer contour
+ * AND the transparent background; the canvas border counts as an edge), clear
+ * the deep interior. Manhattan-distance BFS from the background. */
+function hollowInterior(data, w, h, rim, OP = 128) {
+  const dist = new Int32Array(w * h).fill(-1);
+  const q = [];
+  for (let i = 0; i < w * h; i++) if (data[i * 4 + 3] < OP) { dist[i] = 0; q.push(i); }
+  for (let x = 0; x < w; x++) for (const y of [0, h - 1]) {
+    const i = y * w + x; if (dist[i] === -1 && data[i * 4 + 3] >= OP) { dist[i] = 1; q.push(i); }
+  }
+  for (let y = 0; y < h; y++) for (const x of [0, w - 1]) {
+    const i = y * w + x; if (dist[i] === -1 && data[i * 4 + 3] >= OP) { dist[i] = 1; q.push(i); }
+  }
+  let head = 0;
+  while (head < q.length) {
+    const i = q[head++]; const d = dist[i];
+    const x = i % w, y = (i / w) | 0;
+    const nb = [];
+    if (x > 0) nb.push(i - 1); if (x < w - 1) nb.push(i + 1);
+    if (y > 0) nb.push(i - w); if (y < h - 1) nb.push(i + w);
+    for (const j of nb) if (dist[j] === -1 && data[j * 4 + 3] >= OP) { dist[j] = d + 1; q.push(j); }
+  }
+  for (let i = 0; i < w * h; i++) {
+    if (data[i * 4 + 3] < OP) continue;
+    const d = dist[i];
+    if (d > rim + 1) data[i * 4 + 3] = 0;
+    else if (d > rim) data[i * 4 + 3] = Math.round(data[i * 4 + 3] * 0.45); // 1px feather
+  }
+}
+
+/** Hollow the glyph in place on a small (output-resolution) canvas context. */
+function hollowGlyph(ctx, w, h) {
+  const id = ctx.getImageData(0, 0, w, h);
+  clearPaleFill(id.data, w, h);
+  hollowInterior(id.data, w, h, Math.round(Math.max(w, h) * HOLLOW_RIM_FRAC));
+  ctx.putImageData(id, 0, 0);
+}
+
 function trimBox(data, w, h) {
   let minX = w, minY = h, maxX = -1, maxY = -1;
   for (let y = 0; y < h; y++) {
@@ -152,7 +208,7 @@ async function processTile(baseSrc, symbolSrc, outName) {
  * Enclosed light fills (e.g. the pencil body) are stripped so the glyph reads
  * as a hollow outline — the edge flood can't reach interiors, so we clear ALL
  * light-neutral pixels; the saturated coloured strokes survive. */
-async function processSymbol(srcPath, outName) {
+async function processSymbol(srcPath, outName, id) {
   const { canvas, ctx, imageData, data, w, h } = await loadClean(srcPath);
   for (let i = 0; i < w * h; i++) {
     if (data[i * 4 + 3] === 0) continue;
@@ -172,6 +228,7 @@ async function processSymbol(srcPath, outName) {
   octx.imageSmoothingEnabled = true;
   octx.imageSmoothingQuality = 'high';
   octx.drawImage(canvas, b.minX, b.minY, bw, bh, 0, 0, ow, oh);
+  if (HOLLOW_IDS.has(id)) hollowGlyph(octx, ow, oh); // set-square / protractor: clear the fill
   save(out, outName);
 }
 
@@ -208,5 +265,5 @@ const TILE_SRC = [
   find('01_20_01', 5),
 ];
 
-for (let i = 0; i < 5; i++) await processSymbol(SYMBOL_SRC[i], `symbol_${i}.png`);
+for (let i = 0; i < 5; i++) await processSymbol(SYMBOL_SRC[i], `symbol_${i}.png`, i);
 for (let i = 0; i < 5; i++) await processTile(TILE_SRC[i], SYMBOL_SRC[i], `special_${i}.png`);

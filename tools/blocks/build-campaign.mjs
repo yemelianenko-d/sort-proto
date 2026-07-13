@@ -37,31 +37,31 @@ const BALANCE_VERSION = 1;
 
 const BANDS = {
   TUTORIAL: {
-    tierMix: { flexible: 0.45, normal: 0.5, demanding: 0.05, killer: 0 },
+    tierMix: { flexible: 0.4, normal: 0.5, demanding: 0.09, killer: 0.01 },
     batchClassWeights: { recovery: 0.32, normal: 0.63, pressure: 0.05 },
     solvabilityPolicy: { SOLVABLE_NOW: 0.6, SOLVABLE_AFTER_CLEAR: 0.38, DANGEROUS: 0.02, DEAD: 0 },
     maxPressureStreak: 1,
   },
   EASY: {
-    tierMix: { flexible: 0.4, normal: 0.5, demanding: 0.09, killer: 0.01 },
+    tierMix: { flexible: 0.34, normal: 0.5, demanding: 0.14, killer: 0.02 },
     batchClassWeights: { recovery: 0.28, normal: 0.65, pressure: 0.07 },
     solvabilityPolicy: { SOLVABLE_NOW: 0.45, SOLVABLE_AFTER_CLEAR: 0.5, DANGEROUS: 0.05, DEAD: 0 },
     maxPressureStreak: 1,
   },
   NORMAL: {
-    tierMix: { flexible: 0.32, normal: 0.5, demanding: 0.15, killer: 0.03 },
+    tierMix: { flexible: 0.26, normal: 0.46, demanding: 0.22, killer: 0.06 },
     batchClassWeights: { recovery: 0.18, normal: 0.67, pressure: 0.15 },
     solvabilityPolicy: { SOLVABLE_NOW: 0.3, SOLVABLE_AFTER_CLEAR: 0.62, DANGEROUS: 0.08, DEAD: 0 },
     maxPressureStreak: 1,
   },
   HARD: {
-    tierMix: { flexible: 0.22, normal: 0.48, demanding: 0.24, killer: 0.06 },
+    tierMix: { flexible: 0.18, normal: 0.43, demanding: 0.3, killer: 0.09 },
     batchClassWeights: { recovery: 0.15, normal: 0.55, pressure: 0.3 },
     solvabilityPolicy: { SOLVABLE_NOW: 0.22, SOLVABLE_AFTER_CLEAR: 0.66, DANGEROUS: 0.12, DEAD: 0 },
     maxPressureStreak: 1,
   },
   PEAK: {
-    tierMix: { flexible: 0.15, normal: 0.45, demanding: 0.28, killer: 0.12 },
+    tierMix: { flexible: 0.12, normal: 0.42, demanding: 0.32, killer: 0.14 },
     batchClassWeights: { recovery: 0.15, normal: 0.5, pressure: 0.35 },
     solvabilityPolicy: { SOLVABLE_NOW: 0.18, SOLVABLE_AFTER_CLEAR: 0.68, DANGEROUS: 0.14, DEAD: 0 },
     maxPressureStreak: 1,
@@ -84,16 +84,19 @@ const RESTART = {
 
 const ROSTERS = {
   // THE backbone: every tetromino family + small corners + rectangles, NO S1.
+  // Weighted TOWARD bigger polyominoes (developer: "always corners/T/bars/2x2,
+  // rarely bigger"). Tiny fillers trimmed; 5+-cell pieces (R2x3/R3x2/H5/V5/
+  // R3x3/L3x3) boosted. tierMix (below) gates the DEMANDING/KILLER ones.
   master: [
-    ['H2', 5], ['V2', 5], ['H3', 7], ['V3', 7], ['R2x2', 9],
-    ['L2x2_NW', 6], ['L2x2_NE', 6], ['L2x2_SW', 6], ['L2x2_SE', 6],
-    ['H4', 6], ['V4', 6], ['R2x3', 6], ['R3x2', 6],
+    ['H2', 3], ['V2', 3], ['H3', 5], ['V3', 5], ['R2x2', 7],
+    ['L2x2_NW', 5], ['L2x2_NE', 5], ['L2x2_SW', 5], ['L2x2_SE', 5],
+    ['H4', 6], ['V4', 6], ['R2x3', 10], ['R3x2', 10],
     ['T4_DOWN', 5], ['T4_UP', 5], ['T4_LEFT', 4], ['T4_RIGHT', 4],
-    ['L2x3_NW', 4], ['L2x3_NE', 4], ['L2x3_SW', 4], ['L2x3_SE', 4],
-    ['L3x2_NW', 4], ['L3x2_NE', 4], ['L3x2_SW', 4], ['L3x2_SE', 4],
+    ['L2x3_NW', 5], ['L2x3_NE', 5], ['L2x3_SW', 5], ['L2x3_SE', 5],
+    ['L3x2_NW', 5], ['L3x2_NE', 5], ['L3x2_SW', 5], ['L3x2_SE', 5],
     ['SZ_S_H', 4], ['SZ_Z_H', 4], ['SZ_S_V', 4], ['SZ_Z_V', 4],
-    ['H5', 3], ['V5', 3], ['R3x3', 4], ['D3_ASC', 2], ['D3_DESC', 2],
-    ['L3x3_NE', 2], ['L3x3_SW', 2],
+    ['H5', 6], ['V5', 6], ['R3x3', 8], ['D3_ASC', 2], ['D3_DESC', 2],
+    ['L3x3_NE', 4], ['L3x3_SW', 4],
   ],
   // "Big Blocks" hero roster — only on OPEN (bottom-heavy) patterns.
   bigstart: [['R3x3', 14], ['R2x3', 12], ['R3x2', 12], ['R2x2', 9], ['L3x3_NE', 5], ['L3x3_SW', 5], ['T4_DOWN', 4], ['T4_UP', 4], ['H3', 4], ['V3', 4]],
@@ -300,7 +303,7 @@ function score(id, band, archetype, rosterName, pattern, scoreGoal, par, opts = 
     pieces: roster(rosterName),
     batchPolicy: batchPolicy(band, opts.tierMix, opts.opening),
     restartPolicy: RESTART,
-    scorePolicy: { placementPerTile: 1, clearBasePoints: 10, comboStep: 1.0, comboMax: 8.0 },
+    scorePolicy: { placementPerTile: 3, clearBasePoints: 10, comboStep: 1.0, comboMax: 8.0 },
     par,
     difficulty: bandDifficulty(band),
     balanceVersion: BALANCE_VERSION,

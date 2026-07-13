@@ -10,11 +10,27 @@ export const BLOCKS_SETTINGS = {
   layout: {
     /** Cell size ceiling (logical px). */
     maxCell: 46,
+    /** Vertical band reserved ABOVE the board (portrait) for the button row +
+     * score/goal panel, so on tall/narrow phones the panel never rides up into
+     * the top buttons. Mechanic-owned — the shared hudHeight (92) is untouched. */
+    hudBand: 176,
+    /** Horizontal room reserved on EACH side of the board for the blueprint
+     * decor (dimension lines, datum circles, angle notes) so it never spills off
+     * a narrow screen. The board shrinks to fit within w - 2*decorMargin. */
+    decorMargin: 32,
+    /** How far the decor sits OUTSIDE the board edge (was a hardcoded 26). Lower
+     * = decor hugs the board tighter. */
+    decorGap: 16,
     /** Paper-toned wash under the board: 0 = fully transparent (notebook grid
      * shows through), 1 = solid. Light wash keeps the field mostly transparent
      * while just muting the background cells so they don't fight the board's
      * own grid. */
     boardWashAlpha: 0.28,
+    /** EXPERIMENT: darkening tint painted over the board area (under the grid
+     * and tiles) so the playfield reads darker and the colour tiles pop. Set
+     * boardTintAlpha to 0 to disable. Tune both freely — pure visual. */
+    boardTint: 0x8c8060,
+    boardTintAlpha: 0,
     /** Tray strip height in cells (pieces render at trayScale inside). */
     trayHeightCells: 3.6,
     /** Tray preview tile scale relative to the board cell. Smaller than a
@@ -24,9 +40,13 @@ export const BLOCKS_SETTINGS = {
      * mismatched. */
     trayScale: 0.75,
     /** Dragged piece rides this many cells above the finger on TOUCH devices
-     * (Block-Blast feel: the finger never covers the piece). With a mouse
-     * the piece stays under the cursor. */
-    dragLiftCells: 1.4,
+     * (Block-Blast feel: the finger never covers the piece). Applies from the
+     * moment of press (select) through the drag. With a mouse the piece stays
+     * under the cursor (lift = 0). */
+    dragLiftCells: 2.4,
+    /** Push the board + tray + blueprint decor down by up to this many logical
+     * px (into the empty space below), WITHOUT moving the score/goal panel. */
+    boardDrop: 26,
   },
   animation: {
     /** Rejected piece floats back to its tray slot. */
@@ -35,3 +55,36 @@ export const BLOCKS_SETTINGS = {
     ghostAlpha: 0.32,
   },
 } as const;
+
+/**
+ * Which tile-art set is active. Both sets ship and load; flip this in code (on
+ * request) to switch the whole board+tray between them. 'new' = the current
+ * sketch tiles (tile_N), 'legacy' = the pre-swap tiles (tile_legacy_N).
+ */
+export type BlocksTileSet = 'new' | 'legacy';
+// `as` keeps the union type so the set can be flipped without tsc flagging the
+// comparisons below as "no overlap".
+export const BLOCKS_TILE_SET = 'legacy' as BlocksTileSet;
+
+/** Texture key for a colour under the ACTIVE set (used by BlocksView). */
+export const blocksTileKey = (color: number): string =>
+  BLOCKS_TILE_SET === 'legacy' ? `blocks/tile_legacy_${color}` : `blocks/tile_${color}`;
+
+/** New sketch set — sampled from tile_0..7 (darkened 10% to calm the glare). */
+const TILE_TINTS_NEW: readonly number[] = [
+  0x88a9df, 0x75c4ba, 0xe3a76f, 0xe090aa, 0xa7c974, 0xad8cc8, 0xbc987c, 0xe4cf7a,
+];
+/** Legacy set — the original shared BLOCK_TINTS the pre-swap tiles matched. */
+const TILE_TINTS_LEGACY: readonly number[] = [
+  0xfb8f85, 0x709cf5, 0x9de27d, 0xfcbf83, 0xd890db, 0xbbbfc5, 0x69d5c8, 0xf57895,
+];
+
+/**
+ * Per-colour tint (index = TileColor 0..7) for the ACTIVE set — line-clear
+ * flashes, ghost previews, win confetti and the celebration burst. Follows
+ * BLOCKS_TILE_SET so highlights always match the tiles on screen. MECHANIC-
+ * OWNED: never touches the shared BLOCK_TINTS (which the sorting mechanic uses).
+ * Re-run prepare-blocks-tiles.mjs and paste TILE_TINTS after any tile-art change.
+ */
+export const BLOCKS_TILE_TINTS: readonly number[] =
+  BLOCKS_TILE_SET === 'legacy' ? TILE_TINTS_LEGACY : TILE_TINTS_NEW;

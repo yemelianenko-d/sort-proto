@@ -3,35 +3,67 @@
   "images": [
     {
       "key": "blocks/tile_0",
-      "url": "assets/mechanics/blocks/tile_0.png?v=2"
+      "url": "assets/mechanics/blocks/tile_0.png?v=4"
     },
     {
       "key": "blocks/tile_1",
-      "url": "assets/mechanics/blocks/tile_1.png?v=2"
+      "url": "assets/mechanics/blocks/tile_1.png?v=4"
     },
     {
       "key": "blocks/tile_2",
-      "url": "assets/mechanics/blocks/tile_2.png?v=2"
+      "url": "assets/mechanics/blocks/tile_2.png?v=4"
     },
     {
       "key": "blocks/tile_3",
-      "url": "assets/mechanics/blocks/tile_3.png?v=2"
+      "url": "assets/mechanics/blocks/tile_3.png?v=4"
     },
     {
       "key": "blocks/tile_4",
-      "url": "assets/mechanics/blocks/tile_4.png?v=2"
+      "url": "assets/mechanics/blocks/tile_4.png?v=4"
     },
     {
       "key": "blocks/tile_5",
-      "url": "assets/mechanics/blocks/tile_5.png?v=2"
+      "url": "assets/mechanics/blocks/tile_5.png?v=4"
     },
     {
       "key": "blocks/tile_6",
-      "url": "assets/mechanics/blocks/tile_6.png?v=2"
+      "url": "assets/mechanics/blocks/tile_6.png?v=4"
     },
     {
       "key": "blocks/tile_7",
-      "url": "assets/mechanics/blocks/tile_7.png?v=2"
+      "url": "assets/mechanics/blocks/tile_7.png?v=4"
+    },
+    {
+      "key": "blocks/tile_legacy_0",
+      "url": "assets/mechanics/blocks/tile_legacy_0.png"
+    },
+    {
+      "key": "blocks/tile_legacy_1",
+      "url": "assets/mechanics/blocks/tile_legacy_1.png"
+    },
+    {
+      "key": "blocks/tile_legacy_2",
+      "url": "assets/mechanics/blocks/tile_legacy_2.png"
+    },
+    {
+      "key": "blocks/tile_legacy_3",
+      "url": "assets/mechanics/blocks/tile_legacy_3.png"
+    },
+    {
+      "key": "blocks/tile_legacy_4",
+      "url": "assets/mechanics/blocks/tile_legacy_4.png"
+    },
+    {
+      "key": "blocks/tile_legacy_5",
+      "url": "assets/mechanics/blocks/tile_legacy_5.png"
+    },
+    {
+      "key": "blocks/tile_legacy_6",
+      "url": "assets/mechanics/blocks/tile_legacy_6.png"
+    },
+    {
+      "key": "blocks/tile_legacy_7",
+      "url": "assets/mechanics/blocks/tile_legacy_7.png"
     },
     {
       "key": "blocks/board_frame",
@@ -39,7 +71,7 @@
     },
     {
       "key": "blocks/score_panel",
-      "url": "assets/mechanics/blocks/score_panel.png?v=4"
+      "url": "assets/mechanics/blocks/score_panel.png?v=5"
     },
     {
       "key": "blocks/dim_line_h",
@@ -151,11 +183,11 @@
     },
     {
       "key": "blocks/symbol_1",
-      "url": "assets/mechanics/blocks/symbol_1.png?v=4"
+      "url": "assets/mechanics/blocks/symbol_1.png?v=6"
     },
     {
       "key": "blocks/symbol_2",
-      "url": "assets/mechanics/blocks/symbol_2.png?v=4"
+      "url": "assets/mechanics/blocks/symbol_2.png?v=6"
     },
     {
       "key": "blocks/symbol_3",
