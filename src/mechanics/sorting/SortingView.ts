@@ -683,6 +683,13 @@ export class SortingView implements SortingViewContract {
    * settles with a little overshoot). */
   markColumnDone(column: number): void {
     this.rebuild();
+
+    // Colour-complete payoff: a spark burst in the completed colour. Fires for
+    // every completion (before the ribbon/washi marker, which may be absent).
+    const doneCol = this.model.columns[column];
+    const color = doneCol && doneCol.length > 0 ? doneCol[doneCol.length - 1].color : -1;
+    this.spawnSparks(column, color >= 0 ? BLOCK_TINTS[color] : undefined);
+
     const marker = this.doneTapes.get(column);
     if (!marker) return;
 
@@ -1437,7 +1444,7 @@ export class SortingView implements SortingViewContract {
     this.pulseTarget = null;
   }
 
-  private spawnSparks(columnIndex: number): void {
+  private spawnSparks(columnIndex: number, tint?: number): void {
     const c = this.columnContainers[columnIndex];
     if (!c) return;
 
@@ -1450,13 +1457,16 @@ export class SortingView implements SortingViewContract {
       return;
     }
 
+    // Sparks take the completed colour when given one ("this colour is done!"),
+    // else fall back to pencil ink.
+    const color = tint !== undefined ? '#' + tint.toString(16).padStart(6, '0') : COLORS.inkCss;
     const glyphs = ['✳', '✦', '✧', '＊'];
     for (let i = 0; i < GAME_SETTINGS.animation.sparkCount; i++) {
       const s = this.scene.add
         .text(c.x + this.layout.colWidth / 2, c.y + this.layout.colHeight / 3, glyphs[i % 4], {
           fontFamily: FONTS.display,
           fontSize: '18px',
-          color: COLORS.inkCss,
+          color,
         })
         .setOrigin(0.5)
         .setDepth(500);
