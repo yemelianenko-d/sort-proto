@@ -1444,6 +1444,35 @@ export class SortingView implements SortingViewContract {
     this.pulseTarget = null;
   }
 
+  /** Level-win flourish: a left-to-right wave of little bobs + colour sparks
+   * across the finished board, then `onDone` (the scene shows the popup after).
+   * Called by the scene on the concrete view — no contract change. */
+  playWinCelebration(onDone: () => void): void {
+    const stagger = GAME_SETTINGS.animation.winWaveStaggerMs;
+    let last = 0;
+    this.columnContainers.forEach((c, ci) => {
+      const col = this.model.columns[ci];
+      if (!c || !col || col.length === 0) return; // skip empty columns
+      const color = col[col.length - 1].color;
+      const delay = ci * stagger;
+      last = Math.max(last, delay);
+      this.scene.time.delayedCall(delay, () => {
+        if (!c.active) return;
+        this.spawnSparks(ci, color >= 0 ? BLOCK_TINTS[color] : undefined);
+        const baseY = c.y;
+        this.scene.tweens.chain({
+          targets: c,
+          tweens: [
+            { y: baseY - 14, duration: 130, ease: 'Quad.easeOut' },
+            { y: baseY, duration: 220, ease: 'Back.easeOut' },
+          ],
+        });
+      });
+    });
+    // Popup after the last column's bob settles (stays > the 300ms tap-guard).
+    this.scene.time.delayedCall(last + 360, onDone);
+  }
+
   private spawnSparks(columnIndex: number, tint?: number): void {
     const c = this.columnContainers[columnIndex];
     if (!c) return;

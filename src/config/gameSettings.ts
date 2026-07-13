@@ -73,6 +73,8 @@ export const GAME_SETTINGS = {
     /** Pick-up lift: quick anticipation dip (gather), then spring up. */
     liftDipMs: 55,
     liftRiseMs: 130,
+    /** Level-win: per-column stagger for the celebration wave. */
+    winWaveStaggerMs: 70,
     revealDurationMs: 260,
     pulseDurationMs: 450,
     clearBlockDurationMs: 320,

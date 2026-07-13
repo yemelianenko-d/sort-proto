@@ -747,10 +747,11 @@ export class SortingScene extends Phaser.Scene {
 
     const t = UI_TEXTS.win;
     const hasNext = this.levelIndex + 1 < this.game_.levels.count;
-    // Delay the popup briefly: the move that completes the level can fire on
-    // pointer-down, and without this gap the same tap's pointer-up lands on the
-    // freshly-shown "Next" button and skips to the next level.
-    this.time.delayedCall(300, () => {
+    // Win flourish first, then the popup. The celebration also covers the tap
+    // guard: the move that completes the level can fire on pointer-down, and
+    // without the gap the same tap's pointer-up would land on the freshly-shown
+    // "Next" button and skip ahead.
+    this.view.playWinCelebration(() => {
       new Popup(this, {
         title: t.title,
         stars,
