@@ -452,7 +452,7 @@ export class BlocksScene extends Phaser.Scene {
     g.lineTo(x1, ty);
     g.strokePath();
     for (let i = 0; i <= 10; i++) {
-      const tx = Math.round(x0 + ((x1 - x0) * i) / 10) + 0.5;
+      const tx = Math.round(x0 + ((x1 - x0) * i) / 10) + 0.5 - (i === 0 ? 2 : 0); // nudge left end tick 2px left
       const major = i % 5 === 0;
       const topExtend = i === 0 || i === 10 ? 8 : 0; // end ticks reach 8px higher
       g.lineStyle(major ? 2 : 1.5, COLORS.ink, major ? 0.7 : 0.5);
