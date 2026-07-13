@@ -30,7 +30,7 @@ export const BLOCKS_SETTINGS = {
      * and tiles) so the playfield reads darker and the colour tiles pop. Set
      * boardTintAlpha to 0 to disable. Tune both freely — pure visual. */
     boardTint: 0x8c8060,
-    boardTintAlpha: 0.5,
+    boardTintAlpha: 0.4,
     /** Tray strip height in cells (pieces render at trayScale inside). */
     trayHeightCells: 3.6,
     /** Tray preview tile scale relative to the board cell. Smaller than a
