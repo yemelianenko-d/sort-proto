@@ -60,7 +60,7 @@ export const BLOCKS_SETTINGS = {
 export type BlocksTileSet = 'new' | 'legacy';
 // `as` keeps the union type so the set can be flipped without tsc flagging the
 // comparisons below as "no overlap".
-export const BLOCKS_TILE_SET = 'new' as BlocksTileSet;
+export const BLOCKS_TILE_SET = 'legacy' as BlocksTileSet;
 
 /** Texture key for a colour under the ACTIVE set (used by BlocksView). */
 export const blocksTileKey = (color: number): string =>

@@ -14,14 +14,6 @@ import type { BlocksViewContract, ClearedCell, GridPos } from './BlocksTypes';
 const SPECIAL_HIGHLIGHT = 0xf7b733;
 
 export const TILE_KEY = (color: number) => blocksTileKey(color);
-
-/** Lift a colour toward white by `amt` (0..1) — same hue, brighter. Used for
- * the line-clear preview glow so it reads on the pale tiles. */
-function brightenTint(c: number, amt: number): number {
-  const r = (c >> 16) & 0xff, g = (c >> 8) & 0xff, b = c & 0xff;
-  const lift = (v: number) => Math.round(v + (255 - v) * amt);
-  return (lift(r) << 16) | (lift(g) << 8) | lift(b);
-}
 const FRAME_KEY = 'blocks/board_frame';
 /** Fraction of the frame texture taken by the border band (measured by
  * tools/art/prepare-blocks-board.mjs) — the playfield aligns to its inside. */
@@ -652,17 +644,14 @@ export class BlocksView implements BlocksViewContract {
           ? pieceTint
           : null;
       if (tint === null) return;
-      // a BRIGHTER version of the cell's own colour (same hue, lifted toward
-      // white) at a stronger alpha — the original faint same-colour wash was
-      // pretty but hard to see on the pale tiles; no ugly white flash/rim
-      g.fillStyle(brightenTint(tint, 0.32), 0.72);
+      g.fillStyle(tint, 0.45);
       g.fillRoundedRect(col * this.cell + 3, row * this.cell + 3, this.cell - 6, this.cell - 6, 7);
     };
     for (const r of rows) for (let c = 0; c < this.model.cols; c++) paintCell(r, c);
     for (const c of cols) for (let r = 0; r < this.model.rows; r++) paintCell(r, c);
-    // gentle warm "lit from below" bar along each completing line
+    // gentle neutral "lit from below" bar along each completing line
     const underGlow = (x: number, y: number, w: number, h: number) => {
-      g.fillStyle(0xffe6a3, 0.32);
+      g.fillStyle(0xffe6a3, 0.28);
       g.fillRoundedRect(x + 2, y + h - 8, w - 4, 8, 4);
     };
     for (const r of rows) underGlow(0, r * this.cell, boardW, this.cell);
