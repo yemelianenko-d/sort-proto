@@ -70,6 +70,9 @@ export const GAME_SETTINGS = {
     landSquashY: 0.86,
     landSquashMs: 55,
     landSettleMs: 120,
+    /** Pick-up lift: quick anticipation dip (gather), then spring up. */
+    liftDipMs: 55,
+    liftRiseMs: 130,
     revealDurationMs: 260,
     pulseDurationMs: 450,
     clearBlockDurationMs: 320,

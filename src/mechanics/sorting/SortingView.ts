@@ -57,6 +57,9 @@ export class SortingView implements SortingViewContract {
    * unlocking a column can't reshuffle the board. */
   private displayPerm: number[] | null = null;
   private displayPermKey = '';
+  /** Column selected on the previous rebuild — lets the lift spring once on a
+   * fresh pick instead of re-animating on every rebuild while it stays held. */
+  private lastSelected = -1;
 
   constructor(
     private scene: Phaser.Scene,
@@ -134,6 +137,10 @@ export class SortingView implements SortingViewContract {
     const hideColumn = opts.hideTopGroup ?? -1;
     const hideCount = hideColumn >= 0 ? this.model.topGroup(hideColumn) : 0;
     const targets = selected >= 0 ? new Set(this.model.validTargets(selected)) : new Set<number>();
+    // Spring the lift only when a NEW column is picked, not on every rebuild
+    // that keeps it selected.
+    const freshSelect = selected >= 0 && selected !== this.lastSelected;
+    this.lastSelected = selected;
 
     this.targetGhosts.clear();
     this.tapeOverlays.clear();
@@ -157,17 +164,42 @@ export class SortingView implements SortingViewContract {
       const vaulted = this.model.lockedColumn === ci || this.model.isSealed(ci);
       const blocks: Phaser.GameObjects.Container[] = [];
       column.forEach((block, bi) => {
+        const A = GAME_SETTINGS.animation;
         const b = this.buildBlock(block.hidden ? -1 : block.color);
         if (vaulted) b.setAlpha(0.55);
         if (hideColumn === ci && bi >= column.length - hideCount) b.setVisible(false);
         const { x, y } = this.blockLocalPos(bi, ci);
         b.setPosition(x, y);
         if (liftGroup > 0 && bi >= column.length - liftGroup) {
-          b.y -= 12;
-          b.setScale(1.03);
+          const restY = b.y;
+          if (freshSelect) {
+            // Pick-up: quick anticipation dip (gather), then spring up to the
+            // resting lift (y-12, 1.03) — the same state a static rebuild draws.
+            this.scene.tweens.chain({
+              targets: b,
+              tweens: [
+                {
+                  y: restY + 2,
+                  scaleX: 1.04,
+                  scaleY: 0.96,
+                  duration: A.liftDipMs,
+                  ease: 'Quad.easeOut',
+                },
+                {
+                  y: restY - 12,
+                  scaleX: 1.03,
+                  scaleY: 1.03,
+                  duration: A.liftRiseMs,
+                  ease: 'Back.easeOut',
+                },
+              ],
+            });
+          } else {
+            b.y -= 12;
+            b.setScale(1.03);
+          }
         }
         if (opts.landedColumn === ci && bi >= column.length - (opts.landedCount ?? 0)) {
-          const A = GAME_SETTINGS.animation;
           const targetY = b.y;
           b.y = targetY - 22;
           b.setScale(1);
