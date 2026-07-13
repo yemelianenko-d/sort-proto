@@ -61,6 +61,9 @@ export class BlocksView implements BlocksViewContract {
   private boardX = 0;
   private boardY = 0;
   private trayY = 0;
+  /** How far the board was pushed down past centre (so the scene can keep the
+   * score panel put while the board+tray+decor drop). */
+  appliedDrop = 0;
   private slotW = 0;
   private trayH = 0;
   /** Tray piece hit rects in scene coords, null for empty slots. */
@@ -117,7 +120,11 @@ export class BlocksView implements BlocksViewContract {
     this.trayH = this.cell * (L.trayHeightCells - 0.4);
     const contentH = boardH + this.cell * 0.4 + this.trayH;
     this.boardX = x + (w - boardW) / 2;
-    this.boardY = y + Math.max(0, (h - contentH) / 2);
+    // centre vertically, then drop by boardDrop into the free space below
+    // (clamped so the content never spills past the area's bottom edge)
+    const centred = Math.max(0, (h - contentH) / 2);
+    this.appliedDrop = Math.min(centred, L.boardDrop);
+    this.boardY = y + centred + this.appliedDrop;
     this.trayY = this.boardY + boardH + this.cell * 0.4;
     this.slotW = boardW / BLOCKS_SETTINGS.traySize;
     this.contentBounds = { x: this.boardX, y: this.boardY, w: boardW, h: contentH };

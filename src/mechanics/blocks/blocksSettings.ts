@@ -40,9 +40,13 @@ export const BLOCKS_SETTINGS = {
      * mismatched. */
     trayScale: 0.75,
     /** Dragged piece rides this many cells above the finger on TOUCH devices
-     * (Block-Blast feel: the finger never covers the piece). With a mouse
-     * the piece stays under the cursor. */
-    dragLiftCells: 1.4,
+     * (Block-Blast feel: the finger never covers the piece). Applies from the
+     * moment of press (select) through the drag. With a mouse the piece stays
+     * under the cursor (lift = 0). */
+    dragLiftCells: 2.4,
+    /** Push the board + tray + blueprint decor down by up to this many logical
+     * px (into the empty space below), WITHOUT moving the score/goal panel. */
+    boardDrop: 26,
   },
   animation: {
     /** Rejected piece floats back to its tray slot. */

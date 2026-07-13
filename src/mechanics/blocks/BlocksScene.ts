@@ -193,8 +193,10 @@ export class BlocksScene extends Phaser.Scene {
 
     const board = this.view.contentBounds;
     // the goal panel sits above the board, clear of the blueprint dimension
-    // line and its "8" label / datum circles (the enlarged compass is tall)
-    this.hudGoal.setPosition(w / 2, board.y - 86);
+    // line and its "8" label / datum circles (the enlarged compass is tall).
+    // Subtract the board's applied drop so the panel stays put while the board
+    // + tray + decor move down (developer: lower the field, not the panel).
+    this.hudGoal.setPosition(w / 2, board.y - 86 - this.view.appliedDrop);
     // wider pad than usual: the board carries blueprint dimension lines
     const pad = 56;
     // Doodles must never sit under any HUD text: exclude the top bar, the goal
