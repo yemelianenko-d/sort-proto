@@ -644,15 +644,25 @@ export class BlocksView implements BlocksViewContract {
           ? pieceTint
           : null;
       if (tint === null) return;
-      g.fillStyle(tint, 0.45);
-      g.fillRoundedRect(col * this.cell + 3, row * this.cell + 3, this.cell - 6, this.cell - 6, 7);
+      const x = col * this.cell + 3;
+      const y = row * this.cell + 3;
+      const s = this.cell - 6;
+      // brighten the cell (white wash) so it clearly "lights up" even on the
+      // pale tiles, tint it in the line's colour, then a bold bright rim — the
+      // preview was barely visible when it was just a faint same-colour wash
+      g.fillStyle(0xffffff, 0.5);
+      g.fillRoundedRect(x, y, s, s, 7);
+      g.fillStyle(tint, 0.6);
+      g.fillRoundedRect(x, y, s, s, 7);
+      g.lineStyle(3, 0xffffff, 0.95);
+      g.strokeRoundedRect(x, y, s, s, 7);
     };
     for (const r of rows) for (let c = 0; c < this.model.cols; c++) paintCell(r, c);
     for (const c of cols) for (let r = 0; r < this.model.rows; r++) paintCell(r, c);
-    // gentle neutral "lit from below" bar along each completing line
+    // warm "lit from below" bar along each completing line (stronger now)
     const underGlow = (x: number, y: number, w: number, h: number) => {
-      g.fillStyle(0xffe6a3, 0.28);
-      g.fillRoundedRect(x + 2, y + h - 8, w - 4, 8, 4);
+      g.fillStyle(0xffd166, 0.5);
+      g.fillRoundedRect(x + 2, y + h - 9, w - 4, 9, 4);
     };
     for (const r of rows) underGlow(0, r * this.cell, boardW, this.cell);
     for (const c of cols) underGlow(c * this.cell, 0, this.cell, boardH);

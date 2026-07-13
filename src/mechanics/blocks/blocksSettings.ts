@@ -66,9 +66,9 @@ export const BLOCKS_TILE_SET = 'new' as BlocksTileSet;
 export const blocksTileKey = (color: number): string =>
   BLOCKS_TILE_SET === 'legacy' ? `blocks/tile_legacy_${color}` : `blocks/tile_${color}`;
 
-/** New sketch set — sampled from tile_0..7 by prepare-blocks-tiles.mjs. */
+/** New sketch set — sampled from tile_0..7 (darkened 10% to calm the glare). */
 const TILE_TINTS_NEW: readonly number[] = [
-  0x97bcf8, 0x83dbd0, 0xfcb979, 0xf9a1bd, 0xbae081, 0xbf9ade, 0xd1a989, 0xfde688,
+  0x88a9df, 0x75c4ba, 0xe3a76f, 0xe090aa, 0xa7c974, 0xad8cc8, 0xbc987c, 0xe4cf7a,
 ];
 /** Legacy set — the original shared BLOCK_TINTS the pre-swap tiles matched. */
 const TILE_TINTS_LEGACY: readonly number[] = [
