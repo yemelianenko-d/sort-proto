@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
-import { BLOCK_TINTS, COLORS, FONTS, SCENE_KEYS } from '../../app/gameConfig';
+import { COLORS, FONTS, SCENE_KEYS } from '../../app/gameConfig';
 import { UI_TEXTS } from '../../config/uiTexts';
 import { GAME_SETTINGS } from '../../config/gameSettings';
-import { BLOCKS_SETTINGS } from './blocksSettings';
+import { BLOCKS_SETTINGS, BLOCKS_TILE_TINTS } from './blocksSettings';
 import { eventBus } from '../../core/events/EventBus';
 import type { GameController } from '../../core/game/GameController';
 import { hasTexture } from '../../core/assets/AssetLoader';
@@ -793,7 +793,7 @@ export class BlocksScene extends Phaser.Scene {
         const cell = this.model.grid[r][c];
         if (!cell) continue;
         const { x, y } = this.view.cellWorldXY(r, c);
-        const tint = cell.special !== undefined ? 0xf7b733 : (BLOCK_TINTS[cell.color] ?? 0x9de27d);
+        const tint = cell.special !== undefined ? 0xf7b733 : (BLOCKS_TILE_TINTS[cell.color] ?? 0x9de27d);
         const s = this.view.cellSize * 0.72;
         const sq = this.add.rectangle(x, y, s, s, tint).setDepth(1650).setAlpha(0.95);
         const spread = 0.6 + Math.random() * 0.5;
@@ -817,7 +817,7 @@ export class BlocksScene extends Phaser.Scene {
     const h = this.scale.height;
     for (let i = 0; i < 54; i++) {
       const size = 8 + Math.random() * 10;
-      const tint = BLOCK_TINTS[Math.floor(Math.random() * BLOCK_TINTS.length)];
+      const tint = BLOCKS_TILE_TINTS[Math.floor(Math.random() * BLOCKS_TILE_TINTS.length)];
       const px = Math.random() * w;
       const sq = this.add
         .rectangle(px, -20 - Math.random() * 80, size, size, tint)

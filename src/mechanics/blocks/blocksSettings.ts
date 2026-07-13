@@ -51,3 +51,15 @@ export const BLOCKS_SETTINGS = {
     ghostAlpha: 0.32,
   },
 } as const;
+
+/**
+ * Per-colour tint (index = TileColor 0..7) for line-clear flashes, ghost
+ * previews, win confetti and the celebration burst. Sampled from the tile art
+ * by tools/art/prepare-blocks-tiles.mjs. MECHANIC-OWNED: kept separate from the
+ * shared BLOCK_TINTS (which the sorting mechanic uses) so new blocks art never
+ * changes sorting's colours. Re-run the tool and paste TILE_TINTS after any
+ * tile-art change.
+ */
+export const BLOCKS_TILE_TINTS: readonly number[] = [
+  0x96baf8, 0xfba1bd, 0x86d6cc, 0xfdbe82, 0xb4de75, 0xc2a2e3, 0xd3aa82, 0xfee79e,
+];

@@ -1,11 +1,11 @@
 import Phaser from 'phaser';
-import { BLOCK_STYLES, BLOCK_TINTS, COLORS, FONTS } from '../../app/gameConfig';
+import { BLOCK_STYLES, COLORS, FONTS } from '../../app/gameConfig';
 import { GAME_SETTINGS } from '../../config/gameSettings';
 import { hasTexture } from '../../core/assets/AssetLoader';
 import { toLogical } from '../../core/utils/hidpi';
 import { fillPattern, strokeSketchRect } from '../../ui/sketch';
 import { PIECE_SHAPES } from './blocksPieces';
-import { BLOCKS_SETTINGS } from './blocksSettings';
+import { BLOCKS_SETTINGS, BLOCKS_TILE_TINTS } from './blocksSettings';
 import type { BlocksModel } from './BlocksModel';
 import type { BlocksViewContract, ClearedCell, GridPos } from './BlocksTypes';
 
@@ -620,7 +620,7 @@ export class BlocksView implements BlocksViewContract {
     // gap cells being filled by the ghost read in the piece's colour.
     const { rows, cols } = this.model.previewClears(slot, anchor.row, anchor.col);
     if (rows.length === 0 && cols.length === 0) return;
-    const pieceTint = BLOCK_TINTS[piece.color] ?? 0xffe6a3;
+    const pieceTint = BLOCKS_TILE_TINTS[piece.color] ?? 0xffe6a3;
     const ghostCells = new Set(
       geo.cells.map(({ r, c }) => (anchor.row + r) * this.model.cols + (anchor.col + c)),
     );
@@ -639,7 +639,7 @@ export class BlocksView implements BlocksViewContract {
       const tint = cell
         ? cell.special !== undefined
           ? SPECIAL_HIGHLIGHT
-          : (BLOCK_TINTS[cell.color] ?? pieceTint)
+          : (BLOCKS_TILE_TINTS[cell.color] ?? pieceTint)
         : ghostCells.has(key)
           ? pieceTint
           : null;
@@ -699,7 +699,7 @@ export class BlocksView implements BlocksViewContract {
     // in the signature for the controller but no longer recolours the clear.
     void pieceColor;
     const flashTint = (cell: ClearedCell): number =>
-      cell.special !== undefined ? SPECIAL_HIGHLIGHT : BLOCK_TINTS[cell.color] ?? 0xffe6a3;
+      cell.special !== undefined ? SPECIAL_HIGHLIGHT : BLOCKS_TILE_TINTS[cell.color] ?? 0xffe6a3;
 
     cells.forEach((cell, i) => {
       const x = cell.col * this.cell + this.cell / 2;
