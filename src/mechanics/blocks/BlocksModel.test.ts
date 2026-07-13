@@ -53,7 +53,7 @@ describe('BlocksModel', () => {
     expect(m.grid[1][2]).toEqual({ color: 2, initial: false });
     expect(m.tray[0]).toBeNull();
     expect(m.moves).toBe(1);
-    expect(r!.gained).toBe(3); // 3 cells, no lines
+    expect(r!.gained).toBe(9); // 3 cells × 3/tile, no lines
   });
 
   it('clears a full row and scores it quadratically', () => {
@@ -65,7 +65,7 @@ describe('BlocksModel', () => {
     expect(r.clearedRows).toEqual([0]);
     expect(r.clearedCols).toEqual([]);
     expect(r.clearedCells).toHaveLength(5);
-    expect(r.gained).toBe(1 + 10); // 1 cell + 10 * 1²
+    expect(r.gained).toBe(3 + 10); // 1 cell × 3 + 10 * 1²
     expect(m.grid[0].every((c) => c === null)).toBe(true);
   });
 
@@ -83,7 +83,7 @@ describe('BlocksModel', () => {
     expect(r.clearedRows).toEqual([0]);
     expect(r.clearedCols).toEqual([0]);
     expect(r.clearedCells).toHaveLength(9); // 5 + 5 - shared corner
-    expect(r.gained).toBe(1 + 30); // 1 cell + triangular L=2 (10·2·3/2), combo ×1.0
+    expect(r.gained).toBe(3 + 30); // 1 cell × 3 + triangular L=2 (10·2·3/2), combo ×1.0
     expect(r.comboChain).toBe(1);
   });
 
@@ -98,11 +98,11 @@ describe('BlocksModel', () => {
     );
     const a = m.place(0, 0, 4)!; // clears row 0 -> chain 1, ×1.0, clear 10
     expect(a.comboChain).toBe(1);
-    expect(a.gained).toBe(1 + 10);
+    expect(a.gained).toBe(3 + 10);
     const b = m.place(1, 1, 4)!; // clears row 1 -> chain 2, ×2 (combo = chain), clear 20
     expect(b.comboChain).toBe(2);
     expect(b.comboMultiplier).toBe(2);
-    expect(b.gained).toBe(1 + 20);
+    expect(b.gained).toBe(3 + 20);
     const c = m.place(2, 3, 0)!; // no clear -> chain resets to 0
     expect(c.comboChain).toBe(0);
     expect(m.maxCombo).toBe(2);

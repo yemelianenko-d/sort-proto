@@ -230,7 +230,7 @@
         ]
       },
       "scorePolicy": {
-        "placementPerTile": 1,
+        "placementPerTile": 3,
         "clearBasePoints": 10,
         "comboStep": 1,
         "comboMax": 8
@@ -461,7 +461,7 @@
         ]
       },
       "scorePolicy": {
-        "placementPerTile": 1,
+        "placementPerTile": 3,
         "clearBasePoints": 10,
         "comboStep": 1,
         "comboMax": 8
@@ -1417,7 +1417,7 @@
         ]
       },
       "scorePolicy": {
-        "placementPerTile": 1,
+        "placementPerTile": 3,
         "clearBasePoints": 10,
         "comboStep": 1,
         "comboMax": 8
@@ -2165,7 +2165,7 @@
         ]
       },
       "scorePolicy": {
-        "placementPerTile": 1,
+        "placementPerTile": 3,
         "clearBasePoints": 10,
         "comboStep": 1,
         "comboMax": 8
@@ -2928,7 +2928,7 @@
         ]
       },
       "scorePolicy": {
-        "placementPerTile": 1,
+        "placementPerTile": 3,
         "clearBasePoints": 10,
         "comboStep": 1,
         "comboMax": 8
@@ -3594,7 +3594,7 @@
         ]
       },
       "scorePolicy": {
-        "placementPerTile": 1,
+        "placementPerTile": 3,
         "clearBasePoints": 10,
         "comboStep": 1,
         "comboMax": 8
@@ -4369,7 +4369,7 @@
         ]
       },
       "scorePolicy": {
-        "placementPerTile": 1,
+        "placementPerTile": 3,
         "clearBasePoints": 10,
         "comboStep": 1,
         "comboMax": 8
@@ -5407,7 +5407,7 @@
         ]
       },
       "scorePolicy": {
-        "placementPerTile": 1,
+        "placementPerTile": 3,
         "clearBasePoints": 10,
         "comboStep": 1,
         "comboMax": 8
@@ -6694,7 +6694,7 @@
         ]
       },
       "scorePolicy": {
-        "placementPerTile": 1,
+        "placementPerTile": 3,
         "clearBasePoints": 10,
         "comboStep": 1,
         "comboMax": 8
@@ -7638,7 +7638,7 @@
         ]
       },
       "scorePolicy": {
-        "placementPerTile": 1,
+        "placementPerTile": 3,
         "clearBasePoints": 10,
         "comboStep": 1,
         "comboMax": 8
@@ -7862,7 +7862,7 @@
         ]
       },
       "scorePolicy": {
-        "placementPerTile": 1,
+        "placementPerTile": 3,
         "clearBasePoints": 10,
         "comboStep": 1,
         "comboMax": 8
@@ -8086,7 +8086,7 @@
         ]
       },
       "scorePolicy": {
-        "placementPerTile": 1,
+        "placementPerTile": 3,
         "clearBasePoints": 10,
         "comboStep": 1,
         "comboMax": 8
@@ -9071,7 +9071,7 @@
         ]
       },
       "scorePolicy": {
-        "placementPerTile": 1,
+        "placementPerTile": 3,
         "clearBasePoints": 10,
         "comboStep": 1,
         "comboMax": 8

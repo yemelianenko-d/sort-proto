@@ -30,7 +30,7 @@ export interface ScorePolicy {
  * targets across the campaign are calibrated against this compounding.
  */
 export const DEFAULT_SCORE_POLICY: ScorePolicy = {
-  placementPerTile: 1,
+  placementPerTile: 3, // Block Blast awards ~3/cell for placement (video-measured)
   clearBasePoints: 10,
   comboStep: 1.0,
   comboMax: 8.0,

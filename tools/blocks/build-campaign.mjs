@@ -303,7 +303,7 @@ function score(id, band, archetype, rosterName, pattern, scoreGoal, par, opts = 
     pieces: roster(rosterName),
     batchPolicy: batchPolicy(band, opts.tierMix, opts.opening),
     restartPolicy: RESTART,
-    scorePolicy: { placementPerTile: 1, clearBasePoints: 10, comboStep: 1.0, comboMax: 8.0 },
+    scorePolicy: { placementPerTile: 3, clearBasePoints: 10, comboStep: 1.0, comboMax: 8.0 },
     par,
     difficulty: bandDifficulty(band),
     balanceVersion: BALANCE_VERSION,

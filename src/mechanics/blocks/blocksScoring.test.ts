@@ -22,29 +22,29 @@ describe('blocksScoring', () => {
   });
 
   it('adds placement + clear and advances the chain on a clearing move', () => {
-    // first clear: chain 0 -> 1, multiplier 1.0
+    // first clear: chain 0 -> 1, multiplier 1.0. placement = 3 tiles × 3 = 9
     expect(scoreMove(3, 1, 0)).toEqual({
-      placement: 3,
+      placement: 9,
       clear: 10,
-      total: 13,
+      total: 19,
       comboChain: 1,
       multiplier: 1,
     });
   });
 
   it('applies the combo multiplier to the clear score only (spec example)', () => {
-    // piece area 5, 2 lines, combo now 3: placement 5, base 30, ×3 = 90
+    // piece area 5, 2 lines, combo now 3: placement 5×3=15, base 30, ×3 = 90
     const r = scoreMove(5, 2, 2);
     expect(r.comboChain).toBe(3);
     expect(r.multiplier).toBe(3);
-    expect(r.placement).toBe(5);
+    expect(r.placement).toBe(15);
     expect(r.clear).toBe(90);
-    expect(r.total).toBe(95);
+    expect(r.total).toBe(105);
   });
 
   it('resets the chain on a move that clears nothing', () => {
     const r = scoreMove(4, 0, 3);
-    expect(r).toEqual({ placement: 4, clear: 0, total: 4, comboChain: 0, multiplier: 1 });
+    expect(r).toEqual({ placement: 12, clear: 0, total: 12, comboChain: 0, multiplier: 1 });
   });
 
   it('compounds a held chain (six chained singles = 210, not 60)', () => {
