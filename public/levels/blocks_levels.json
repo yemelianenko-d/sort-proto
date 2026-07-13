@@ -25,39 +25,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -69,11 +69,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -93,35 +93,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -141,15 +141,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -161,11 +161,11 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
@@ -182,10 +182,10 @@
           ]
         ],
         "tierMix": {
-          "flexible": 0.45,
+          "flexible": 0.4,
           "normal": 0.5,
-          "demanding": 0.05,
-          "killer": 0
+          "demanding": 0.09,
+          "killer": 0.01
         },
         "batchClassWeights": {
           "recovery": 0.32,
@@ -261,39 +261,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -305,11 +305,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -329,35 +329,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -377,15 +377,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -397,11 +397,11 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
@@ -413,10 +413,10 @@
           ]
         ],
         "tierMix": {
-          "flexible": 0.4,
+          "flexible": 0.34,
           "normal": 0.5,
-          "demanding": 0.09,
-          "killer": 0.01
+          "demanding": 0.14,
+          "killer": 0.02
         },
         "batchClassWeights": {
           "recovery": 0.28,
@@ -519,39 +519,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -563,11 +563,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -587,35 +587,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -635,15 +635,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -655,11 +655,11 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
@@ -671,10 +671,10 @@
           ]
         ],
         "tierMix": {
-          "flexible": 0.4,
+          "flexible": 0.34,
           "normal": 0.5,
-          "demanding": 0.09,
-          "killer": 0.01
+          "demanding": 0.14,
+          "killer": 0.02
         },
         "batchClassWeights": {
           "recovery": 0.28,
@@ -791,39 +791,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -835,11 +835,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -859,35 +859,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -907,15 +907,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -927,19 +927,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.4,
+          "flexible": 0.34,
           "normal": 0.5,
-          "demanding": 0.09,
-          "killer": 0.01
+          "demanding": 0.14,
+          "killer": 0.02
         },
         "batchClassWeights": {
           "recovery": 0.28,
@@ -1078,39 +1078,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -1122,11 +1122,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -1146,35 +1146,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -1194,15 +1194,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -1214,19 +1214,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.4,
+          "flexible": 0.34,
           "normal": 0.5,
-          "demanding": 0.09,
-          "killer": 0.01
+          "demanding": 0.14,
+          "killer": 0.02
         },
         "batchClassWeights": {
           "recovery": 0.28,
@@ -1465,39 +1465,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -1509,11 +1509,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -1533,35 +1533,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -1581,15 +1581,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -1601,19 +1601,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.32,
-          "normal": 0.5,
-          "demanding": 0.15,
-          "killer": 0.03
+          "flexible": 0.26,
+          "normal": 0.46,
+          "demanding": 0.22,
+          "killer": 0.06
         },
         "batchClassWeights": {
           "recovery": 0.18,
@@ -1730,39 +1730,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -1774,11 +1774,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -1798,35 +1798,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -1846,15 +1846,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -1866,19 +1866,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.32,
-          "normal": 0.5,
-          "demanding": 0.15,
-          "killer": 0.03
+          "flexible": 0.26,
+          "normal": 0.46,
+          "demanding": 0.22,
+          "killer": 0.06
         },
         "batchClassWeights": {
           "recovery": 0.18,
@@ -1972,39 +1972,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -2016,11 +2016,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -2040,35 +2040,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -2088,15 +2088,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -2108,19 +2108,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.32,
-          "normal": 0.5,
-          "demanding": 0.15,
-          "killer": 0.03
+          "flexible": 0.26,
+          "normal": 0.46,
+          "demanding": 0.22,
+          "killer": 0.06
         },
         "batchClassWeights": {
           "recovery": 0.18,
@@ -2228,39 +2228,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -2272,11 +2272,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -2296,35 +2296,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -2344,15 +2344,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -2364,19 +2364,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.32,
-          "normal": 0.5,
-          "demanding": 0.15,
-          "killer": 0.03
+          "flexible": 0.26,
+          "normal": 0.46,
+          "demanding": 0.22,
+          "killer": 0.06
         },
         "batchClassWeights": {
           "recovery": 0.18,
@@ -2493,39 +2493,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -2537,11 +2537,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -2561,35 +2561,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -2609,15 +2609,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -2629,19 +2629,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.32,
-          "normal": 0.5,
-          "demanding": 0.15,
-          "killer": 0.03
+          "flexible": 0.26,
+          "normal": 0.46,
+          "demanding": 0.22,
+          "killer": 0.06
         },
         "batchClassWeights": {
           "recovery": 0.18,
@@ -2735,39 +2735,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -2779,11 +2779,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -2803,35 +2803,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -2851,15 +2851,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -2871,19 +2871,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.32,
-          "normal": 0.5,
-          "demanding": 0.15,
-          "killer": 0.03
+          "flexible": 0.26,
+          "normal": 0.46,
+          "demanding": 0.22,
+          "killer": 0.06
         },
         "batchClassWeights": {
           "recovery": 0.18,
@@ -2990,39 +2990,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -3034,11 +3034,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -3058,35 +3058,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -3106,15 +3106,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -3126,19 +3126,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.32,
-          "normal": 0.5,
-          "demanding": 0.15,
-          "killer": 0.03
+          "flexible": 0.26,
+          "normal": 0.46,
+          "demanding": 0.22,
+          "killer": 0.06
         },
         "batchClassWeights": {
           "recovery": 0.18,
@@ -3401,39 +3401,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -3445,11 +3445,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -3469,35 +3469,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -3517,15 +3517,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -3537,19 +3537,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.32,
-          "normal": 0.5,
-          "demanding": 0.15,
-          "killer": 0.03
+          "flexible": 0.26,
+          "normal": 0.46,
+          "demanding": 0.22,
+          "killer": 0.06
         },
         "batchClassWeights": {
           "recovery": 0.18,
@@ -3655,39 +3655,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -3699,11 +3699,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -3723,35 +3723,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -3771,15 +3771,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -3791,19 +3791,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.32,
-          "normal": 0.5,
-          "demanding": 0.15,
-          "killer": 0.03
+          "flexible": 0.26,
+          "normal": 0.46,
+          "demanding": 0.22,
+          "killer": 0.06
         },
         "batchClassWeights": {
           "recovery": 0.18,
@@ -3942,39 +3942,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -3986,11 +3986,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -4010,35 +4010,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -4058,15 +4058,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -4078,19 +4078,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.22,
-          "normal": 0.48,
-          "demanding": 0.24,
-          "killer": 0.06
+          "flexible": 0.18,
+          "normal": 0.43,
+          "demanding": 0.3,
+          "killer": 0.09
         },
         "batchClassWeights": {
           "recovery": 0.15,
@@ -4176,39 +4176,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -4220,11 +4220,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -4244,35 +4244,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -4292,15 +4292,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -4312,19 +4312,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.22,
-          "normal": 0.48,
-          "demanding": 0.24,
-          "killer": 0.06
+          "flexible": 0.18,
+          "normal": 0.43,
+          "demanding": 0.3,
+          "killer": 0.09
         },
         "batchClassWeights": {
           "recovery": 0.15,
@@ -4431,39 +4431,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -4475,11 +4475,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -4499,35 +4499,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -4547,15 +4547,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -4567,19 +4567,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.22,
-          "normal": 0.48,
-          "demanding": 0.24,
-          "killer": 0.06
+          "flexible": 0.18,
+          "normal": 0.43,
+          "demanding": 0.3,
+          "killer": 0.09
         },
         "batchClassWeights": {
           "recovery": 0.15,
@@ -4708,39 +4708,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -4752,11 +4752,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -4776,35 +4776,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -4824,15 +4824,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -4844,19 +4844,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.22,
-          "normal": 0.48,
-          "demanding": 0.24,
-          "killer": 0.06
+          "flexible": 0.18,
+          "normal": 0.43,
+          "demanding": 0.3,
+          "killer": 0.09
         },
         "batchClassWeights": {
           "recovery": 0.15,
@@ -4980,39 +4980,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -5024,11 +5024,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -5048,35 +5048,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -5096,15 +5096,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -5116,19 +5116,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.32,
-          "normal": 0.5,
-          "demanding": 0.15,
-          "killer": 0.03
+          "flexible": 0.26,
+          "normal": 0.46,
+          "demanding": 0.22,
+          "killer": 0.06
         },
         "batchClassWeights": {
           "recovery": 0.18,
@@ -5214,39 +5214,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -5258,11 +5258,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -5282,35 +5282,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -5330,15 +5330,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -5350,19 +5350,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.32,
-          "normal": 0.5,
-          "demanding": 0.15,
-          "killer": 0.03
+          "flexible": 0.26,
+          "normal": 0.46,
+          "demanding": 0.22,
+          "killer": 0.06
         },
         "batchClassWeights": {
           "recovery": 0.18,
@@ -5469,39 +5469,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -5513,11 +5513,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -5537,35 +5537,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -5585,15 +5585,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -5605,19 +5605,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.32,
-          "normal": 0.5,
-          "demanding": 0.15,
-          "killer": 0.03
+          "flexible": 0.26,
+          "normal": 0.46,
+          "demanding": 0.22,
+          "killer": 0.06
         },
         "batchClassWeights": {
           "recovery": 0.18,
@@ -5733,39 +5733,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -5777,11 +5777,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -5801,35 +5801,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -5849,15 +5849,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -5869,19 +5869,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.22,
-          "normal": 0.48,
-          "demanding": 0.24,
-          "killer": 0.06
+          "flexible": 0.18,
+          "normal": 0.43,
+          "demanding": 0.3,
+          "killer": 0.09
         },
         "batchClassWeights": {
           "recovery": 0.15,
@@ -5998,39 +5998,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -6042,11 +6042,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -6066,35 +6066,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -6114,15 +6114,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -6134,19 +6134,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.22,
-          "normal": 0.48,
-          "demanding": 0.24,
-          "killer": 0.06
+          "flexible": 0.18,
+          "normal": 0.43,
+          "demanding": 0.3,
+          "killer": 0.09
         },
         "batchClassWeights": {
           "recovery": 0.15,
@@ -6267,39 +6267,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -6311,11 +6311,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -6335,35 +6335,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -6383,15 +6383,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -6403,19 +6403,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.22,
-          "normal": 0.48,
-          "demanding": 0.24,
-          "killer": 0.06
+          "flexible": 0.18,
+          "normal": 0.43,
+          "demanding": 0.3,
+          "killer": 0.09
         },
         "batchClassWeights": {
           "recovery": 0.15,
@@ -6501,39 +6501,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -6545,11 +6545,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -6569,35 +6569,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -6617,15 +6617,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -6637,19 +6637,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.22,
-          "normal": 0.48,
-          "demanding": 0.24,
-          "killer": 0.06
+          "flexible": 0.18,
+          "normal": 0.43,
+          "demanding": 0.3,
+          "killer": 0.09
         },
         "batchClassWeights": {
           "recovery": 0.15,
@@ -6770,39 +6770,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -6814,11 +6814,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -6838,35 +6838,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -6886,15 +6886,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -6906,19 +6906,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.22,
-          "normal": 0.48,
-          "demanding": 0.24,
-          "killer": 0.06
+          "flexible": 0.18,
+          "normal": 0.43,
+          "demanding": 0.3,
+          "killer": 0.09
         },
         "batchClassWeights": {
           "recovery": 0.15,
@@ -7203,39 +7203,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -7247,11 +7247,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -7271,35 +7271,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -7319,15 +7319,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -7339,19 +7339,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.22,
-          "normal": 0.48,
-          "demanding": 0.24,
-          "killer": 0.06
+          "flexible": 0.18,
+          "normal": 0.43,
+          "demanding": 0.3,
+          "killer": 0.09
         },
         "batchClassWeights": {
           "recovery": 0.15,
@@ -7445,39 +7445,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -7489,11 +7489,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -7513,35 +7513,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -7561,15 +7561,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -7581,19 +7581,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.32,
-          "normal": 0.5,
-          "demanding": 0.15,
-          "killer": 0.03
+          "flexible": 0.26,
+          "normal": 0.46,
+          "demanding": 0.22,
+          "killer": 0.06
         },
         "batchClassWeights": {
           "recovery": 0.18,
@@ -7669,39 +7669,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -7713,11 +7713,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -7737,35 +7737,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -7785,15 +7785,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -7805,19 +7805,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.22,
-          "normal": 0.48,
-          "demanding": 0.24,
-          "killer": 0.06
+          "flexible": 0.18,
+          "normal": 0.43,
+          "demanding": 0.3,
+          "killer": 0.09
         },
         "batchClassWeights": {
           "recovery": 0.15,
@@ -7893,39 +7893,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -7937,11 +7937,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -7961,35 +7961,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -8009,15 +8009,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -8029,19 +8029,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.22,
-          "normal": 0.48,
-          "demanding": 0.24,
-          "killer": 0.06
+          "flexible": 0.18,
+          "normal": 0.43,
+          "demanding": 0.3,
+          "killer": 0.09
         },
         "batchClassWeights": {
           "recovery": 0.15,
@@ -8162,39 +8162,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -8206,11 +8206,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -8230,35 +8230,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -8278,15 +8278,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -8298,19 +8298,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.22,
-          "normal": 0.48,
-          "demanding": 0.24,
-          "killer": 0.06
+          "flexible": 0.18,
+          "normal": 0.43,
+          "demanding": 0.3,
+          "killer": 0.09
         },
         "batchClassWeights": {
           "recovery": 0.15,
@@ -8620,39 +8620,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -8664,11 +8664,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -8688,35 +8688,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -8736,15 +8736,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -8756,19 +8756,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.22,
-          "normal": 0.48,
-          "demanding": 0.24,
-          "killer": 0.06
+          "flexible": 0.18,
+          "normal": 0.43,
+          "demanding": 0.3,
+          "killer": 0.09
         },
         "batchClassWeights": {
           "recovery": 0.15,
@@ -8878,39 +8878,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -8922,11 +8922,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -8946,35 +8946,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -8994,15 +8994,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -9014,19 +9014,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.22,
-          "normal": 0.48,
-          "demanding": 0.24,
-          "killer": 0.06
+          "flexible": 0.18,
+          "normal": 0.43,
+          "demanding": 0.3,
+          "killer": 0.09
         },
         "batchClassWeights": {
           "recovery": 0.15,
@@ -9132,39 +9132,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -9176,11 +9176,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -9200,35 +9200,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -9248,15 +9248,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -9268,19 +9268,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.15,
-          "normal": 0.45,
-          "demanding": 0.28,
-          "killer": 0.12
+          "flexible": 0.12,
+          "normal": 0.42,
+          "demanding": 0.32,
+          "killer": 0.14
         },
         "batchClassWeights": {
           "recovery": 0.15,
@@ -9623,39 +9623,39 @@
       "pieces": [
         {
           "shape": "H2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "V2",
-          "weight": 5
+          "weight": 3
         },
         {
           "shape": "H3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "V3",
-          "weight": 7
+          "weight": 5
         },
         {
           "shape": "R2x2",
-          "weight": 9
+          "weight": 7
         },
         {
           "shape": "L2x2_NW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_NE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SW",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "L2x2_SE",
-          "weight": 6
+          "weight": 5
         },
         {
           "shape": "H4",
@@ -9667,11 +9667,11 @@
         },
         {
           "shape": "R2x3",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "R3x2",
-          "weight": 6
+          "weight": 10
         },
         {
           "shape": "T4_DOWN",
@@ -9691,35 +9691,35 @@
         },
         {
           "shape": "L2x3_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L2x3_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_NE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SW",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "L3x2_SE",
-          "weight": 4
+          "weight": 5
         },
         {
           "shape": "SZ_S_H",
@@ -9739,15 +9739,15 @@
         },
         {
           "shape": "H5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "V5",
-          "weight": 3
+          "weight": 6
         },
         {
           "shape": "R3x3",
-          "weight": 4
+          "weight": 8
         },
         {
           "shape": "D3_ASC",
@@ -9759,19 +9759,19 @@
         },
         {
           "shape": "L3x3_NE",
-          "weight": 2
+          "weight": 4
         },
         {
           "shape": "L3x3_SW",
-          "weight": 2
+          "weight": 4
         }
       ],
       "batchPolicy": {
         "tierMix": {
-          "flexible": 0.15,
-          "normal": 0.45,
-          "demanding": 0.28,
-          "killer": 0.12
+          "flexible": 0.12,
+          "normal": 0.42,
+          "demanding": 0.32,
+          "killer": 0.14
         },
         "batchClassWeights": {
           "recovery": 0.15,

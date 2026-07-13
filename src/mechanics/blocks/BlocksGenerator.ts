@@ -59,6 +59,38 @@ function applyPlacement(board: Occupancy, geo: PieceGeometry, row: number, col: 
   return next;
 }
 
+/** Lines (rows+cols) a placement of `geo` at (r0,c0) would complete at once. */
+function placementClearCount(board: Occupancy, geo: PieceGeometry, r0: number, c0: number): number {
+  const rows = board.length;
+  const cols = board[0].length;
+  const isSet = (r: number, c: number) => board[r][c] || geo.cells.some((x) => r0 + x.r === r && c0 + x.c === c);
+  const addedRows = new Set(geo.cells.map((x) => r0 + x.r));
+  const addedCols = new Set(geo.cells.map((x) => c0 + x.c));
+  let n = 0;
+  for (const r of addedRows) { let full = true; for (let c = 0; c < cols; c++) if (!isSet(r, c)) { full = false; break; } if (full) n++; }
+  for (const c of addedCols) { let full = true; for (let r = 0; r < rows; r++) if (!isSet(r, c)) { full = false; break; } if (full) n++; }
+  return n;
+}
+
+/** Most lines any SINGLE piece in the batch could clear on the current board.
+ * 0 = no instant clear (buildup batch), 1 = a one-piece "rescue", 2+ = a
+ * multi-clear opportunity we want to reward. */
+function bestInstantClear(board: Occupancy, geos: PieceGeometry[]): number {
+  const rows = board.length;
+  const cols = board[0].length;
+  let best = 0;
+  for (const geo of geos) {
+    for (let r = 0; r + geo.rows <= rows; r++) {
+      for (let c = 0; c + geo.cols <= cols; c++) {
+        if (!geo.cells.every(({ r: dr, c: dc }) => !board[r + dr][c + dc])) continue;
+        const n = placementClearCount(board, geo, r, c);
+        if (n > best) best = n;
+      }
+    }
+  }
+  return best;
+}
+
 export interface SolvabilityResult {
   klass: SolvabilityClass;
   /** Number of distinct first placements (legal moves) across the batch. */
@@ -118,6 +150,14 @@ export function evaluateSolvability(
 /* ---------------- weighting & rolling ---------------- */
 
 const DEFAULT_TIER_MIX: TierMix = { flexible: 0.4, normal: 0.4, demanding: 0.18, killer: 0.02 };
+
+/** Pick-weight multipliers by the batch's best single-piece instant clear:
+ *   1 line  → penalise (a one-piece "rescue"; developer wants these rarer);
+ *   2+ lines → reward (a multi-clear the player can actually land);
+ *   0 lines → neutral (a buildup batch — no line goes yet, lines accumulate).
+ * Together they push play from "clear one line to survive" toward stacking. */
+const INSTANT_CLEAR_BIAS: Record<number, number> = { 0: 1, 1: 0.25 };
+const MULTI_CLEAR_REWARD = 1.6;
 
 function tierMultiplier(tier: ShapeTier, mix: TierMix): number {
   switch (tier) {
@@ -254,6 +294,7 @@ export function generateBatch(
     shapes: string[];
     sol: SolvabilityResult;
     score: number;
+    bestClear: number;
   }
   const candidates: Cand[] = [];
   for (let i = 0; i < attempts; i++) {
@@ -263,7 +304,7 @@ export function generateBatch(
     const sol = evaluateSolvability(board, geos);
     if (sol.klass === 'DEAD') continue; // never ship a dead batch
     if (solvPolicy && solvPolicy[sol.klass] <= 0) continue; // class disallowed by level
-    candidates.push({ shapes, sol, score: candidateScore(geos, sol) });
+    candidates.push({ shapes, sol, score: candidateScore(geos, sol), bestClear: bestInstantClear(board, geos) });
   }
 
   if (candidates.length === 0) {
@@ -271,10 +312,16 @@ export function generateBatch(
   }
 
   // weight the pick by candidateScore × the class share the level wants, so we
-  // keep variety instead of always taking the single best candidate.
+  // keep variety instead of always taking the single best candidate. Batches
+  // that let a SINGLE piece clear a line ("rescue" moves) are damped so the
+  // player more often must set a clear up over two placements — fewer easy
+  // one-piece escapes, and bigger clears when lines finally go (dev feedback).
   const picks = candidates.map((c) => ({
     ...c,
-    weight: Math.max(0.001, c.score) * (solvPolicy ? Math.max(0.001, solvPolicy[c.sol.klass]) : 1),
+    weight:
+      Math.max(0.001, c.score) *
+      (solvPolicy ? Math.max(0.001, solvPolicy[c.sol.klass]) : 1) *
+      (c.bestClear >= 2 ? MULTI_CLEAR_REWARD : (INSTANT_CLEAR_BIAS[c.bestClear] ?? 1)),
   }));
   const chosen = weightedPick(picks, rngPieces());
   return { shapes: chosen.shapes, klass: chosen.sol.klass };
