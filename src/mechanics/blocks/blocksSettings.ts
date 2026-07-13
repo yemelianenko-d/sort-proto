@@ -8,11 +8,8 @@ export const BLOCKS_SETTINGS = {
   // Scoring/combo formulas live in blocksScoring.ts (Balance Spec v3 §9),
   // deterministic and unit-tested; the model owns the combo chain state.
   layout: {
-    /** Cell size ceiling (logical px). High enough that on a large/desktop
-     * panel the board+tray grow to FILL the available height (like sorting)
-     * instead of sitting small with empty space below; on a phone the width
-     * still binds first, so mobile sizing is unchanged. */
-    maxCell: 74,
+    /** Cell size ceiling (logical px). */
+    maxCell: 46,
     /** Vertical band reserved ABOVE the board (portrait) for the button row +
      * score/goal panel, so on tall/narrow phones the panel never rides up into
      * the top buttons. Mechanic-owned — the shared hudHeight (92) is untouched. */
@@ -33,7 +30,7 @@ export const BLOCKS_SETTINGS = {
      * and tiles) so the playfield reads darker and the colour tiles pop. Set
      * boardTintAlpha to 0 to disable. Tune both freely — pure visual. */
     boardTint: 0x8c8060,
-    boardTintAlpha: 0.4,
+    boardTintAlpha: 0.28,
     /** Tray strip height in cells (pieces render at trayScale inside). */
     trayHeightCells: 3.6,
     /** Tray preview tile scale relative to the board cell. Smaller than a
