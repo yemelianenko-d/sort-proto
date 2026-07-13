@@ -64,6 +64,12 @@ export const GAME_SETTINGS = {
   },
   animation: {
     landDurationMs: 200,
+    /** Landing squash-and-stretch (juice): impact scale + settle timing.
+     * Paper cut-outs — keep it subtle, not cartoonish. */
+    landSquashX: 1.12,
+    landSquashY: 0.86,
+    landSquashMs: 55,
+    landSettleMs: 120,
     revealDurationMs: 260,
     pulseDurationMs: 450,
     clearBlockDurationMs: 320,

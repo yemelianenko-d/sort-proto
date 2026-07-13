@@ -167,15 +167,24 @@ export class SortingView implements SortingViewContract {
           b.setScale(1.03);
         }
         if (opts.landedColumn === ci && bi >= column.length - (opts.landedCount ?? 0)) {
+          const A = GAME_SETTINGS.animation;
           const targetY = b.y;
           b.y = targetY - 22;
-          b.setScale(0.92);
-          this.scene.tweens.add({
+          b.setScale(1);
+          // Squash-and-stretch: accelerate into the ground, squash on impact,
+          // then settle back with a little overshoot — gives every move weight.
+          this.scene.tweens.chain({
             targets: b,
-            y: targetY,
-            scale: 1,
-            duration: GAME_SETTINGS.animation.landDurationMs,
-            ease: 'Back.easeOut',
+            tweens: [
+              { y: targetY, duration: A.landDurationMs, ease: 'Quad.easeIn' },
+              {
+                scaleX: A.landSquashX,
+                scaleY: A.landSquashY,
+                duration: A.landSquashMs,
+                ease: 'Quad.easeOut',
+              },
+              { scaleX: 1, scaleY: 1, duration: A.landSettleMs, ease: 'Back.easeOut' },
+            ],
           });
         }
         // "flip open" the block that just turned face-up
