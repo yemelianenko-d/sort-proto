@@ -154,11 +154,32 @@ export class SortingController {
     });
 
     const ghostChain = result.chainRemoved ?? undefined;
+    // A move flies its group from the source column in an arc, unless the
+    // outcome triggers its own follow-up rebuild/animation that would wipe the
+    // in-flight ghosts (chain, key, tape). A flying COMPLETION defers its
+    // done-marker + win/deadlock check until the group lands (guarded by busy).
+    const flyable =
+      !ghostChain &&
+      result.keysApplied.length === 0 &&
+      result.keysDissolved.length === 0 &&
+      result.tapeBroken === null;
+    const flyingComplete = flyable && result.readyToClear !== null;
+    if (flyingComplete) this.busy = true;
+
     this.view.rebuild({
       landedColumn: to,
       landedCount: result.count,
       revealed: result.revealed,
       ghostChain,
+      flyFrom: flyable ? from : undefined,
+      onLanded: flyingComplete
+        ? () => {
+            this.busy = false;
+            this.view.markColumnDone(result.readyToClear as number);
+            this.callbacks.onStateChanged();
+            this.afterChange();
+          }
+        : undefined,
     });
     if (result.keysDissolved.length > 0) this.view.animateKeyDissolve(result.keysDissolved);
     if (result.tapeBroken !== null) this.view.animateTapePeel(result.tapeBroken);
@@ -171,6 +192,8 @@ export class SortingController {
       }
     }
     this.callbacks.onStateChanged();
+
+    if (flyingComplete) return; // done-marker + afterChange run in onLanded above
 
     if (result.readyToClear !== null) {
       const column = result.readyToClear;

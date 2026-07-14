@@ -23,8 +23,9 @@ class StubView implements SortingViewContract {
   rebuilds = 0;
   shakes: number[] = [];
   clears: number[] = [];
-  rebuild(): void {
+  rebuild(opts?: { onLanded?: () => void }): void {
     this.rebuilds += 1;
+    opts?.onLanded?.(); // nothing flies in tests → settle immediately
   }
   animateClear(columnIndex: number, onDone: () => void): void {
     this.clears.push(columnIndex);

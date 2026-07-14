@@ -106,6 +106,12 @@ export interface SortingViewContract {
     /** Keep the just-removed seal visually hanging until its break plays
      * (column: the sealed column it belongs to). */
     ghostChain?: { column: number; value: number; index: number };
+    /** Source column of a move: its landed group flies from there in an arc
+     * instead of dropping in. Skipped for chain/key/tape outcomes. */
+    flyFrom?: number;
+    /** Called once the landed group settles (immediately when nothing flies).
+     * A flying completion defers its done-marker + win check until then. */
+    onLanded?: () => void;
   }): void;
   animateClear(columnIndex: number, onDone: () => void): void;
   /** A completed set stays in place (no-clear rule); mark it done. */

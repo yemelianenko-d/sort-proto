@@ -75,6 +75,11 @@ export const GAME_SETTINGS = {
     liftRiseMs: 130,
     /** Level-win: per-column stagger for the celebration wave. */
     winWaveStaggerMs: 70,
+    /** Landing: per-block cascade for a multi-block group (0 = land in unison). */
+    landStaggerMs: 30,
+    /** Move flight: a move's group arcs from source to target column. */
+    flyMoveMs: 205,
+    flyArcPeak: 46,
     revealDurationMs: 260,
     pulseDurationMs: 450,
     clearBlockDurationMs: 320,

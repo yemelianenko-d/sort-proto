@@ -116,6 +116,8 @@ export class SortingView implements SortingViewContract {
       revealed?: number[];
       hideTopGroup?: number;
       ghostChain?: { column: number; value: number; index: number };
+      flyFrom?: number;
+      onLanded?: () => void;
     } = {},
   ): void {
     this.clearPulse();
@@ -141,6 +143,16 @@ export class SortingView implements SortingViewContract {
     // that keeps it selected.
     const freshSelect = selected >= 0 && selected !== this.lastSelected;
     this.lastSelected = selected;
+    // Plain-move flight: the landed group flies from `flyFrom`. Collect the
+    // landed blocks (hidden until they arrive) and run the arc after the board
+    // is built (so ghosts add last = render on top).
+    const flyFrom = opts.flyFrom;
+    const flyLanded: {
+      b: Phaser.GameObjects.Container;
+      groupIndex: number;
+      destX: number;
+      destY: number;
+    }[] = [];
 
     this.targetGhosts.clear();
     this.tapeOverlays.clear();
@@ -200,24 +212,32 @@ export class SortingView implements SortingViewContract {
           }
         }
         if (opts.landedColumn === ci && bi >= column.length - (opts.landedCount ?? 0)) {
-          const targetY = b.y;
-          b.y = targetY - 22;
-          b.setScale(1);
-          // Squash-and-stretch: accelerate into the ground, squash on impact,
-          // then settle back with a little overshoot — gives every move weight.
-          this.scene.tweens.chain({
-            targets: b,
-            tweens: [
-              { y: targetY, duration: A.landDurationMs, ease: 'Quad.easeIn' },
-              {
-                scaleX: A.landSquashX,
-                scaleY: A.landSquashY,
-                duration: A.landSquashMs,
-                ease: 'Quad.easeOut',
-              },
-              { scaleX: 1, scaleY: 1, duration: A.landSettleMs, ease: 'Back.easeOut' },
-            ],
-          });
+          const groupIndex = bi - (column.length - (opts.landedCount ?? 0)); // 0 = bottom
+          if (flyFrom !== undefined) {
+            // Flies in from the source column — hide until the ghost arrives.
+            b.setVisible(false);
+            flyLanded.push({ b, groupIndex, destX: container.x + b.x, destY: container.y + b.y });
+          } else {
+            const targetY = b.y;
+            b.y = targetY - 22;
+            b.setScale(1);
+            // Squash-and-stretch, cascaded so a multi-block group settles
+            // bottom-up: accelerate in, squash on impact, settle back.
+            this.scene.tweens.chain({
+              targets: b,
+              delay: groupIndex * A.landStaggerMs,
+              tweens: [
+                { y: targetY, duration: A.landDurationMs, ease: 'Quad.easeIn' },
+                {
+                  scaleX: A.landSquashX,
+                  scaleY: A.landSquashY,
+                  duration: A.landSquashMs,
+                  ease: 'Quad.easeOut',
+                },
+                { scaleX: 1, scaleY: 1, duration: A.landSettleMs, ease: 'Back.easeOut' },
+              ],
+            });
+          }
         }
         // "flip open" the block that just turned face-up
         if (opts.revealed?.includes(ci) && bi === column.length - 1 && !block.hidden) {
@@ -241,8 +261,12 @@ export class SortingView implements SortingViewContract {
         this.tapeOverlays.set(ci, tape);
       }
       // done clip sits IN FRONT, clamped over the top edge (loop above, arms
-      // over the first block) — added last so it renders on top
-      if (this.isColumnDone(ci)) this.addDoneTape(container, ci);
+      // over the first block) — added last so it renders on top. While a
+      // completion flies in, the target isn't visually done yet: its ribbon is
+      // added and unrolled by markColumnDone once the group lands, so skip it
+      // here (else the full ribbon shows during the flight, then re-unrolls).
+      const flyingTarget = flyFrom !== undefined && ci === opts.landedColumn;
+      if (this.isColumnDone(ci) && !flyingTarget) this.addDoneTape(container, ci);
 
       setContainerTapArea(container, this.layout.colWidth, this.layout.colHeights[ci], 'topLeft');
       container.on('pointerdown', (p: Phaser.Input.Pointer) => this.onColumnDown(ci, p));
@@ -251,6 +275,12 @@ export class SortingView implements SortingViewContract {
       this.columnContainers.push(container);
       this.blockContainers.push(blocks);
     });
+
+    if (flyFrom !== undefined && flyLanded.length > 0) {
+      this.flyMove(flyFrom, opts.landedColumn ?? -1, flyLanded, opts.onLanded);
+    } else {
+      opts.onLanded?.();
+    }
   }
 
   private blockLocalPos(blockIndex: number, columnIndex: number): { x: number; y: number } {
@@ -1442,6 +1472,68 @@ export class SortingView implements SortingViewContract {
       this.pulseTarget.setScale(1);
     }
     this.pulseTarget = null;
+  }
+
+  /** Plain-move flight: ghost copies of the landed group arc from the source
+   * column to their resting slots, then the real (hidden) blocks appear with a
+   * small squash. Ghosts live in `root`, added last so they render on top; a
+   * later rebuild destroys them, which just cuts the flight short (harmless). */
+  private flyMove(
+    fromColumn: number,
+    toColumn: number,
+    landed: { b: Phaser.GameObjects.Container; groupIndex: number; destX: number; destY: number }[],
+    onDone?: () => void,
+  ): void {
+    const A = GAME_SETTINGS.animation;
+    const toCol = this.model.columns[toColumn];
+    const color = toCol && toCol.length > 0 ? toCol[toCol.length - 1].color : -1;
+    const srcLen = this.model.columns[fromColumn]?.length ?? 0;
+    const srcPos = this.layout.positions[fromColumn];
+    if (!srcPos || color < 0) {
+      landed.forEach(({ b }) => b.setVisible(true)); // safety: never leave hidden
+      onDone?.();
+      return;
+    }
+    let remaining = landed.length;
+    for (const { b, groupIndex, destX, destY } of landed) {
+      const srcLocal = this.blockLocalPos(srcLen + groupIndex, fromColumn);
+      const sx = this.area.x + srcPos.x + srcLocal.x;
+      const sy = this.area.y + srcPos.y + srcLocal.y;
+      const ghost = this.buildBlock(color);
+      ghost.setPosition(sx, sy);
+      this.root.add(ghost);
+      const peak = Math.min(sy, destY) - A.flyArcPeak;
+      const st = { t: 0 };
+      this.scene.tweens.add({
+        targets: st,
+        t: 1,
+        duration: A.flyMoveMs,
+        ease: 'Sine.easeInOut',
+        onUpdate: () => {
+          if (!ghost.active) return;
+          const t = st.t;
+          const x = (1 - t) * sx + t * destX;
+          const y = (1 - t) * (1 - t) * sy + 2 * (1 - t) * t * peak + t * t * destY;
+          ghost.setPosition(x, y);
+        },
+        onComplete: () => {
+          if (ghost.active) ghost.destroy();
+          if (b.active) {
+            b.setVisible(true);
+            b.setScale(A.landSquashX, A.landSquashY);
+            this.scene.tweens.add({
+              targets: b,
+              scaleX: 1,
+              scaleY: 1,
+              duration: A.landSettleMs,
+              ease: 'Back.easeOut',
+            });
+          }
+          remaining -= 1;
+          if (remaining === 0) onDone?.();
+        },
+      });
+    }
   }
 
   /** Level-win flourish: a left-to-right wave of little bobs + colour sparks
